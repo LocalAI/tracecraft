@@ -1,0 +1,294 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[dependency-groups]
+dev = [
+    "typer>=0.21.1"
+]
+
+[project]
+authors = [
+    {name = "AgentTrace Contributors"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Monitoring"
+]
+dependencies = [
+    "pydantic>=2.0",
+    "rich>=13.0",
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20"
+]
+description = "Vendor-neutral LLM observability SDK - instrument once, observe anywhere"
+keywords = [
+    "llm",
+    "observability",
+    "tracing",
+    "opentelemetry",
+    "langchain",
+    "llamaindex",
+    "agents",
+    "ai"
+]
+license = {text = "Apache-2.0"}
+name = "agenttrace"
+readme = "README.md"
+requires-python = ">=3.11"
+version = "0.1.0"
+
+[project.optional-dependencies]
+alerting = [
+    "httpx>=0.25"
+]
+all = [
+    "agenttrace[otlp,auto,langchain,llamaindex,pydantic-ai,tiktoken,cli,tui,mlflow,deepeval,ragas,langfuse,datasets,alerting,claude-sdk]"
+]
+auto = [
+    "opentelemetry-instrumentation-openai>=0.40",
+    "opentelemetry-instrumentation-anthropic>=0.40"
+]
+aws = [
+    "boto3>=1.26"
+]
+aws-agentcore = [
+    "boto3>=1.26",
+    "opentelemetry-exporter-otlp>=1.20"
+]
+azure = [
+    "azure-identity>=1.12"
+]
+azure-foundry = [
+    "azure-identity>=1.12",
+    "opentelemetry-exporter-otlp>=1.20"
+]
+claude-sdk = [
+    "claude-code-sdk>=0.0.1"
+]
+cli = [
+    "typer>=0.9"
+]
+cloud = [
+    "agenttrace[aws-agentcore,azure-foundry,gcp-vertex-agent]"
+]
+datasets = [
+    "datasets>=2.0"
+]
+deepeval = [
+    "deepeval>=0.21"
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=4.0",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "pre-commit>=3.5",
+    "bandit[toml]>=1.7",
+    "httpx>=0.25"  # For alerting tests
+]
+# Convenience bundles for Phase 2 integrations
+eval = [
+    "agenttrace[deepeval,ragas]"
+]
+gcp = [
+    "google-auth>=2.0",
+    "google-cloud-trace>=1.0"
+]
+gcp-vertex-agent = [
+    "google-auth>=2.0",
+    "google-cloud-trace>=1.0",
+    "opentelemetry-exporter-otlp>=1.20"
+]
+integrations = [
+    "agenttrace[deepeval,ragas,langfuse]"
+]
+langchain = [
+    "langchain-core>=0.1"
+]
+langfuse = [
+    "langfuse>=2.0"
+]
+llamaindex = [
+    "llama-index-core>=0.10"
+]
+mlflow = [
+    "mlflow>=2.14",
+    "pandas>=2.0"
+]
+otlp = [
+    "opentelemetry-exporter-otlp>=1.20"
+]
+# Convenience bundle for Phase 3 production features
+production = [
+    "agenttrace[otlp,alerting]"
+]
+pydantic-ai = [
+    "pydantic-ai>=0.0.1"
+]
+ragas = [
+    "ragas>=0.1",
+    "datasets>=2.0"
+]
+tiktoken = [
+    "tiktoken>=0.5"
+]
+tui = [
+    "textual>=0.80"
+]
+
+[project.scripts]
+agenttrace = "agenttrace.cli.main:app"
+
+[project.urls]
+Documentation = "https://agenttrace.dev"
+Homepage = "https://github.com/agenttrace/agenttrace"
+Repository = "https://github.com/agenttrace/agenttrace"
+
+[tool.bandit]
+exclude_dirs = ["tests", "examples"]
+skips = ["B101"]  # Allow assert statements
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:"
+]
+fail_under = 80
+
+[tool.coverage.run]
+branch = true
+source = ["src/agenttrace"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agenttrace"]
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = [
+    "opentelemetry.*",
+    "langchain.*",
+    "langchain_core.*",
+    "llama_index.*",
+    "tiktoken.*",
+    "deepeval.*",
+    "ragas.*",
+    "mlflow.*",
+    "langfuse.*",
+    "datasets.*",
+    "pandas.*",
+    "claude_agent_sdk.*",
+    "claude_code_sdk.*",
+    "textual.*",
+    "httpx.*",
+    "openai.*",
+    "anthropic.*",
+    "guardrails.*",
+    "google.auth.*",
+    "pyperclip.*",
+    "pydantic_ai.*",
+    "yaml.*",
+    "rich.*"
+]
+
+# Allow untyped defs in top-level init for convenience functions
+[[tool.mypy.overrides]]
+disable_error_code = ["misc", "no-any-return", "attr-defined", "assignment", "operator", "arg-type", "unused-ignore", "type-arg"]
+module = [
+    "agenttrace.adapters.*",
+    "agenttrace.integrations.*",
+    "agenttrace.contrib.evaluation",
+    "agenttrace.tui.*",
+    "agenttrace.playground.*",
+    "agenttrace.processors.base"
+]
+
+[[tool.mypy.overrides]]
+disable_error_code = ["assignment", "attr-defined", "type-arg"]
+module = ["agenttrace.cli.main"]
+
+[[tool.mypy.overrides]]
+disable_error_code = ["no-untyped-def"]
+disallow_untyped_defs = false
+module = ["agenttrace", "agenttrace.integrations"]
+
+[[tool.mypy.overrides]]
+disable_error_code = ["union-attr"]
+module = ["agenttrace.exporters.async_pipeline"]
+
+[[tool.mypy.overrides]]
+disable_error_code = ["arg-type"]
+module = ["agenttrace.core.runtime", "agenttrace.contrib.aws"]
+
+[[tool.mypy.overrides]]
+disable_error_code = ["no-any-return"]
+module = ["agenttrace.storage.sqlite"]
+
+[[tool.mypy.overrides]]
+disable_error_code = ["no-redef"]
+module = ["agenttrace.processors.enrichment"]
+
+[tool.pytest.ini_options]
+addopts = "-v --tb=short"
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+target-version = "py311"
+
+[tool.ruff.lint]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+    "B905"  # zip strict
+]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # Pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG",  # flake8-unused-arguments
+    "SIM"  # flake8-simplify
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["agenttrace"]
+
+[tool.ruff.lint.per-file-ignores]
+# Example files often have mock functions with unused arguments for demonstration
+# They also have intentional patterns for clarity (nested with, unused vars)
+"examples/**/*.py" = ["ARG001", "ARG002", "F841", "SIM102", "SIM105", "SIM117", "B007", "UP038"]
+# Allow stylistic choices in core library code
+"src/agenttrace/**/*.py" = ["UP038", "B904", "SIM102", "SIM108", "B027", "SIM118", "F401"]
+# Adapter modules have interface requirements from external libraries
+"src/agenttrace/adapters/*.py" = ["ARG002", "SIM102"]
+# CLI has unused arguments for Typer interface
+"src/agenttrace/cli/*.py" = ["ARG001"]
+# Test files have similar patterns plus test-specific exceptions
+"tests/**/*.py" = ["ARG001", "ARG002", "ARG005", "F841", "SIM102", "SIM105", "SIM117", "B007", "B017", "UP038", "E731"]

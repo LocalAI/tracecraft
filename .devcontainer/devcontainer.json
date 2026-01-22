@@ -1,0 +1,62 @@
+{
+  "name": "AgentTrace Development",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "ms-python.mypy-type-checker",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "eamodio.gitlens",
+        "github.copilot"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/workspace/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit",
+            "source.fixAll": "explicit"
+          }
+        },
+        "ruff.organizeImports": true,
+        "ruff.fixAll": true,
+        "mypy-type-checker.args": ["--config-file=pyproject.toml"],
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["tests"],
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/.pytest_cache": true,
+          "**/.mypy_cache": true,
+          "**/.ruff_cache": true,
+          "**/*.egg-info": true
+        }
+      }
+    }
+  },
+  "postCreateCommand": "uv sync --all-extras && uv run pre-commit install",
+  "postStartCommand": "uv sync",
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONUNBUFFERED": "1"
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder}/.venv,target=/workspace/.venv,type=bind,consistency=cached"
+  ],
+  "forwardPorts": [],
+  "portsAttributes": {},
+  "runArgs": ["--init"]
+}

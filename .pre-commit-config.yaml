@@ -1,0 +1,103 @@
+# Pre-commit configuration for AgentTrace
+# See https://pre-commit.com for more information
+# Run `pre-commit install` to set up the git hooks
+# Run `pre-commit run --all-files` to run all hooks on all files
+
+default_language_version:
+  python: python3.11
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-yaml
+        args: ['--unsafe']
+      - id: debug-statements
+      - id: detect-private-key
+        exclude: ^tests/
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: trailing-whitespace
+        args: ['--markdown-linebreak-ext=md']
+
+  # Python security linting
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.3
+    hooks:
+      - id: bandit
+        args: ['-c', 'pyproject.toml']
+        additional_dependencies: ['bandit[toml]']
+        exclude: ^tests/
+
+  # Ruff - Fast Python linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.1
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: ['--fix', '--exit-non-zero-on-fix']
+        types_or: [python, pyi]
+      # Run the formatter
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  # Type checking with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
+    hooks:
+      - id: mypy
+        args: ['--config-file=pyproject.toml']
+        additional_dependencies:
+          - pydantic>=2.0
+          - rich>=13.0
+          - typer>=0.9
+          - types-setuptools
+        pass_filenames: false
+        entry: mypy src/
+
+  # TOML formatting
+  - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+    rev: v2.14.0
+    hooks:
+      - id: pretty-format-toml
+        args: ['--autofix', '--indent=4']
+        exclude: ^uv\.lock$
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix', '--disable', 'MD013', 'MD033', 'MD041', '--']
+
+  # Conventional commits
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.0.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: ['--strict']
+
+# CI configuration
+ci:
+  autofix_commit_msg: |
+    chore: auto-fix pre-commit hooks
+
+    [pre-commit.ci]
+  autofix_prs: true
+  autoupdate_branch: 'main'
+  autoupdate_commit_msg: 'chore: update pre-commit hooks'
+  autoupdate_schedule: monthly
+  skip: [mypy]  # Skip mypy in CI (runs separately with full deps)
+  submodules: false

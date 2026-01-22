@@ -1,0 +1,111 @@
+# Migrating from LangSmith to AgentTrace
+
+This guide helps you migrate from LangSmith to AgentTrace for LLM observability.
+
+## Key Differences
+
+| Feature | LangSmith | AgentTrace |
+|---------|-----------|------------|
+| Vendor Lock-in | LangChain ecosystem | Vendor-neutral |
+| Export Formats | Proprietary | OTLP, JSONL, HTML |
+| Local-first | Cloud-required | Works offline |
+| Pricing | Per-trace pricing | Self-hosted, free |
+
+## Migration Steps
+
+### 1. Install AgentTrace
+
+```bash
+pip install agenttrace
+# or
+uv add agenttrace
+```
+
+### 2. Replace LangSmith Tracing
+
+**Before (LangSmith):**
+
+```python
+import os
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_API_KEY"] = "ls_..."
+
+from langchain_openai import ChatOpenAI
+llm = ChatOpenAI()
+```
+
+**After (AgentTrace):**
+
+```python
+import agenttrace
+from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+
+# Initialize AgentTrace
+agenttrace.init(console=True, jsonl=True)
+
+# Use the callback handler
+handler = AgentTraceCallbackHandler()
+llm = ChatOpenAI()
+
+# Pass handler to invoke
+result = llm.invoke("Hello", config={"callbacks": [handler]})
+```
+
+### 3. Update Chain Invocations
+
+**Before:**
+
+```python
+chain = prompt | llm | parser
+result = chain.invoke({"query": "test"})
+```
+
+**After:**
+
+```python
+from agenttrace.core.context import run_context
+from agenttrace.core.models import AgentRun
+from datetime import UTC, datetime
+
+handler = AgentTraceCallbackHandler()
+run = AgentRun(name="my_chain", start_time=datetime.now(UTC))
+
+with run_context(run):
+    result = chain.invoke(
+        {"query": "test"},
+        config={"callbacks": [handler]}
+    )
+```
+
+### 4. Export to OTLP (Optional)
+
+If you want to send traces to Jaeger, Honeycomb, or other OTLP backends:
+
+```python
+from agenttrace.exporters.otlp import OTLPExporter
+
+otlp = OTLPExporter(
+    endpoint="http://localhost:4317",
+    service_name="my-app"
+)
+
+agenttrace.init(exporters=[otlp])
+```
+
+## Feature Mapping
+
+| LangSmith Feature | AgentTrace Equivalent |
+|-------------------|----------------------|
+| `@traceable` decorator | `@agenttrace.trace_agent` |
+| Run trees | Nested Steps with parent_id |
+| LangSmith Hub | N/A (use your own prompts) |
+| Feedback collection | Custom attributes |
+| Dataset creation | Export to JSONL |
+
+## Benefits of Migration
+
+1. **No vendor lock-in**: Export to any OTLP-compatible backend
+2. **Local development**: Full tracing without internet
+3. **Cost savings**: No per-trace charges
+4. **Privacy**: Your data stays on your infrastructure
+5. **Framework agnostic**: Works with LangChain, LlamaIndex, PydanticAI

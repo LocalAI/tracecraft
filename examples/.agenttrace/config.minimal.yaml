@@ -1,0 +1,12 @@
+# Minimal AgentTrace Configuration
+# Copy this to .agenttrace/config.yaml in your project
+
+env: development
+
+default:
+  storage:
+    type: jsonl
+    jsonl_path: traces/agenttrace.jsonl
+  exporters:
+    console: true
+    jsonl: true
