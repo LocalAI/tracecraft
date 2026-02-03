@@ -1,5 +1,5 @@
 """
-View toggle widget for switching between Traces, Projects, and Agents views.
+View toggle widget for switching between Traces and Projects views.
 
 Provides a horizontal toggle bar for selecting the main view mode.
 NOIR SIGNAL theme styling.
@@ -36,8 +36,6 @@ class ViewMode(str, Enum):
 
     TRACES = "traces"
     PROJECTS = "projects"
-    AGENTS = "agents"
-    EVALS = "evals"
 
 
 class ClickableLabel(Label if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
@@ -60,7 +58,7 @@ class ViewToggle(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[m
     """
     Toggle bar for switching between view modes.
 
-    Displays three clickable options: TRACES | PROJECTS | AGENTS
+    Displays two clickable options: TRACES | PROJECTS
     """
 
     class ViewChanged(Message if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
@@ -119,10 +117,6 @@ class ViewToggle(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[m
         yield ClickableLabel("TRACES", id="view-traces", classes="view-active")
         yield Label("|", classes="view-separator")
         yield ClickableLabel("PROJECTS", id="view-projects")
-        yield Label("|", classes="view-separator")
-        yield ClickableLabel("AGENTS", id="view-agents")
-        yield Label("|", classes="view-separator")
-        yield ClickableLabel("EVALS", id="view-evals")
 
     @property
     def mode(self) -> ViewMode:
@@ -149,7 +143,7 @@ class ViewToggle(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[m
     def _update_styles(self) -> None:
         """Update the toggle styles based on current mode."""
         # Reset all options
-        for option_id in ["view-traces", "view-projects", "view-agents", "view-evals"]:
+        for option_id in ["view-traces", "view-projects"]:
             try:
                 option = self.query_one(f"#{option_id}", ClickableLabel)
                 option.remove_class("view-active")
@@ -171,7 +165,3 @@ class ViewToggle(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[m
             self._select_mode(ViewMode.TRACES)
         elif label_id == "view-projects":
             self._select_mode(ViewMode.PROJECTS)
-        elif label_id == "view-agents":
-            self._select_mode(ViewMode.AGENTS)
-        elif label_id == "view-evals":
-            self._select_mode(ViewMode.EVALS)

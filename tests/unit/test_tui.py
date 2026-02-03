@@ -361,14 +361,15 @@ class TestTUIScreensImport:
 
     def test_screens_init_exports(self) -> None:
         """Test screens __init__ exports all new screens."""
+        from tracecraft.tui import screens
 
         # These may be None if textual not installed, but should be importable
-        assert "LLMPickerScreen" in dir()
-        assert "PlaygroundScreen" in dir()
-        assert "ProjectManagerScreen" in dir()
-        assert "ProjectCreateScreen" in dir()
-        assert "TraceAssignScreen" in dir()
-        assert "ConfirmScreen" in dir()
+        assert "LLMPickerScreen" in dir(screens)
+        assert "PlaygroundScreen" in dir(screens)
+        assert "ProjectManagerScreen" in dir(screens)
+        assert "ProjectCreateScreen" in dir(screens)
+        assert "TraceAssignScreen" in dir(screens)
+        assert "ConfirmScreen" in dir(screens)
 
 
 class TestFilterBarProject:

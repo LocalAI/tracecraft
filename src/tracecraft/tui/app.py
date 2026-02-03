@@ -56,8 +56,6 @@ def _get_bindings() -> list[Any]:
         Binding("p", "playground", "Play"),  # Open playground for LLM steps
         Binding("P", "project_manager", "Projects"),  # Shift+P opens project manager
         Binding("A", "assign_project", "Assign"),  # Shift+A assigns trace to project
-        Binding("M", "agent_manager", "Agents"),  # Shift+M opens agent manager
-        Binding("B", "assign_agent", "Assign Agent"),  # Shift+B assigns trace to agent
         Binding("tab", "cycle_view", "Cycle View"),
         Binding("t", "toggle_format", "Table/JSON"),  # Toggle display format
         Binding("question_mark", "help", "Help"),
@@ -65,18 +63,6 @@ def _get_bindings() -> list[Any]:
         # View mode switching
         Binding("1", "view_traces", "Traces", show=False),
         Binding("2", "view_projects", "Projects", show=False),
-        Binding("3", "view_agents", "Agents", show=False),
-        Binding("4", "view_evals", "Evals", show=False),
-        Binding("E", "create_eval_set", "New Eval"),  # Shift+E creates eval set
-        Binding("R", "run_eval", "Run Eval"),  # Run evaluation on selected set
-        Binding("ctrl+e", "add_to_eval", "Add to Eval"),  # Add trace/step to eval set
-        Binding("C", "create_eval_case", "New Case"),  # Shift+C creates manual eval case
-        Binding("g", "goto_source", "Goto Source"),  # Jump to source trace from eval case
-        Binding("V", "show_trace_evals", "View Evals"),  # Shift+V shows eval associations
-        # Eval viewing actions (when eval set selected)
-        Binding("c", "view_eval_cases", "Cases"),  # View cases for selected eval
-        Binding("H", "view_eval_history", "History"),  # Shift+H shows run history
-        Binding("L", "view_latest_run", "Latest"),  # Shift+L shows latest run results
         # j/k navigation is built into Textual's Tree widget
     ]
 
@@ -337,7 +323,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self._current_run: AgentRun | None = None
         self._current_step: Step | None = None
         self._current_project: dict[str, Any] | None = None  # Current project filter
-        self._current_agent: dict[str, Any] | None = None  # Current agent filter
         self._view_mode: ViewMode | None = None  # Current view mode (imported on demand)
 
     def compose(self) -> ComposeResult:
@@ -517,10 +502,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             view_name = "Traces"
             if self._view_mode == ViewMode.PROJECTS:
                 view_name = "Projects"
-            elif self._view_mode == ViewMode.AGENTS:
-                view_name = "Agents"
-            elif self._view_mode == ViewMode.EVALS:
-                view_name = "Evals"
             breadcrumb.push(view_name, {"type": "view", "mode": self._view_mode})
 
     def on_tree_node_selected(self, event: Any) -> None:  # noqa: ARG002
@@ -556,26 +537,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             else:
                 # Just show project info in detail panel
                 self._show_project_details(data)
-            return
-
-        # Handle agent selection
-        if node_type == "agent":
-            if is_activation:
-                # Drill down into agent - show its traces
-                self._drill_into_agent(data)
-            else:
-                # Just show agent info in detail panel
-                self._show_agent_details(data)
-            return
-
-        # Handle eval selection
-        if node_type == "eval":
-            if is_activation:
-                # Drill down into eval - show its cases or run it
-                self._drill_into_eval(data)
-            else:
-                # Just show eval info in detail panel
-                self._show_eval_details(data)
             return
 
         # Handle folder selection (in project tree view)
@@ -652,47 +613,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
 
         self.notify(f"Viewing project: {project_name}", title="PROJECT", timeout=2)
 
-    def _drill_into_agent(self, agent_data: dict[str, Any]) -> None:
-        """Load and display traces for an agent."""
-        from tracecraft.tui.widgets.filter_bar import FilterBar
-        from tracecraft.tui.widgets.run_tree import RunTree
-
-        if not self._loader or not self._loader.is_sqlite:
-            return
-
-        agent_id = agent_data.get("id")
-        agent_name = agent_data.get("name", "Unknown")
-
-        # Get traces for this agent - try both FK-based and JSON-based methods
-        # First-class agents use the agent_id column
-        traces_by_fk = self._loader.store.get_traces_by_agent_id(agent_id)
-        # Legacy agents use JSON fields (agent_id or agent_name in trace data)
-        traces_by_json = self._loader.store.get_traces_by_agent(agent_id)
-
-        # Combine results, avoiding duplicates by trace ID
-        seen_ids = {str(t.id) for t in traces_by_fk}
-        traces = list(traces_by_fk)
-        for trace in traces_by_json:
-            if str(trace.id) not in seen_ids:
-                traces.append(trace)
-                seen_ids.add(str(trace.id))
-
-        # Update tree to show these traces
-        tree = self.query_one("#run-tree", RunTree)
-        tree.show_traces(traces)
-
-        # Update filter bar to show agent filter
-        filter_bar = self.query_one("#filter-bar", FilterBar)
-        filter_bar.update_result_count(len(traces), len(traces))
-
-        # Store current agent
-        self._current_agent = {"id": agent_id, "name": agent_name}
-
-        # Update breadcrumb
-        self._update_breadcrumb({"label": agent_name, "data": {"type": "agent", "id": agent_id}})
-
-        self.notify(f"Showing traces for agent: {agent_name}", title="AGENT", timeout=2)
-
     def _show_project_details(self, project_data: dict[str, Any]) -> None:
         """Show project information in the detail panel."""
         from tracecraft.tui.widgets.io_viewer import IOViewer
@@ -716,82 +636,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
 
             # Clear IO viewer or show project description
             io_viewer.show_project(project)
-
-    def _show_agent_details(self, agent_data: dict[str, Any]) -> None:
-        """Show agent information in the detail panel."""
-        from tracecraft.tui.widgets.io_viewer import IOViewer
-        from tracecraft.tui.widgets.metrics_panel import MetricsPanel
-
-        if not self._loader or not self._loader.is_sqlite:
-            return
-
-        agent_id = agent_data.get("id")
-
-        # Get agent stats
-        stats = self._loader.store.get_agent_stats(agent_id)
-        agent = agent_data  # We already have the agent data
-
-        metrics = self.query_one("#metrics", MetricsPanel)
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-
-        # Show agent in metrics panel
-        metrics.show_agent(agent, stats)
-
-        # Clear IO viewer
-        io_viewer.show_agent(agent)
-
-    def _drill_into_eval(self, eval_data: dict[str, Any]) -> None:
-        """Show evaluation set details and allow running."""
-        if not self._loader or not self._loader.is_sqlite:
-            return
-
-        eval_id = eval_data.get("id")
-        eval_name = eval_data.get("name", "Unknown")
-
-        # Get full eval set with cases
-        eval_set = self._loader.store.get_evaluation_set(eval_id)
-        if not eval_set:
-            return
-
-        # Update breadcrumb
-        self._update_breadcrumb({"label": eval_name, "data": {"type": "eval", "id": eval_id}})
-
-        # Show eval details
-        self._show_eval_details(eval_data)
-
-        # Offer to run evaluation
-        self.notify(
-            f"Press R to run evaluation '{eval_name}'",
-            title="EVAL SELECTED",
-            timeout=3,
-        )
-
-    def _show_eval_details(self, eval_data: dict[str, Any]) -> None:
-        """Show evaluation set information in the detail panel."""
-        from tracecraft.tui.widgets.io_viewer import IOViewer
-        from tracecraft.tui.widgets.metrics_panel import MetricsPanel
-
-        if not self._loader or not self._loader.is_sqlite:
-            return
-
-        eval_id = eval_data.get("id")
-
-        # Get full eval set with stats
-        eval_set = self._loader.store.get_evaluation_set(eval_id)
-        if not eval_set:
-            return
-
-        stats = self._loader.store.get_evaluation_set_stats(eval_id)
-        eval_set.update(stats)
-
-        metrics = self.query_one("#metrics", MetricsPanel)
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-
-        # Show eval set in metrics panel
-        metrics.show_eval_set(eval_set)
-
-        # Show eval set details in IO viewer
-        io_viewer.show_eval_set(eval_set)
 
     def _handle_folder_activation(self, folder_data: dict[str, Any]) -> None:
         """Handle activation of a folder node (expand/collapse or load items)."""
@@ -991,23 +835,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
                     self._current_project = project
                     self._drill_into_project(project)
 
-        elif segment_type == "agent":
-            # Navigate back to an agent
-            agent_id = data.get("id")
-            if agent_id and self._loader and self._loader.is_sqlite:
-                agent = self._loader.store.get_agent(agent_id)
-                if agent:
-                    self._current_agent = agent
-                    self._drill_into_agent(agent)
-
-        elif segment_type == "eval":
-            # Navigate back to an eval set
-            eval_id = data.get("id")
-            if eval_id and self._loader and self._loader.is_sqlite:
-                eval_set = self._loader.store.get_evaluation_set(eval_id)
-                if eval_set:
-                    self._drill_into_eval(eval_set)
-
     def _update_tree_for_view(self) -> None:
         """Update the tree based on the current view mode."""
         from tracecraft.tui.widgets.filter_bar import FilterBar
@@ -1035,30 +862,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             else:
                 tree.show_traces([])
                 self.notify("Projects require SQLite storage.", severity="warning")
-
-        elif self._view_mode == ViewMode.AGENTS:
-            # Show agents (if SQLite backend)
-            if self._loader.is_sqlite:
-                agents = self._loader.store.list_agents()
-                tree.show_agents(agents)
-                filter_bar.update_result_count(len(agents), len(agents))
-            else:
-                tree.show_traces([])
-                self.notify("Agents require SQLite storage.", severity="warning")
-
-        elif self._view_mode == ViewMode.EVALS:
-            # Show evaluation sets (if SQLite backend)
-            if self._loader.is_sqlite:
-                evals = self._loader.store.list_evaluation_sets()
-                # Add stats to each eval set for display
-                for eval_set in evals:
-                    stats = self._loader.store.get_evaluation_set_stats(eval_set["id"])
-                    eval_set.update(stats)
-                tree.show_evals(evals)
-                filter_bar.update_result_count(len(evals), len(evals))
-            else:
-                tree.show_traces([])
-                self.notify("Evals require SQLite storage.", severity="warning")
 
     # Actions
 
@@ -1157,27 +960,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             try:
                 view_toggle = self.query_one("#view-toggle", ViewToggle)
                 view_toggle.set_mode(ViewMode.PROJECTS)
-            except Exception:
-                pass
-            # Pop breadcrumb
-            try:
-                breadcrumb = self.query_one("#breadcrumb", Breadcrumb)
-                breadcrumb.pop()
-            except Exception:
-                pass
-            return
-
-        if self._current_agent and self._view_mode == ViewMode.TRACES:
-            # Clear agent filter and return to agents view
-            self._current_agent = None
-            self._view_mode = ViewMode.AGENTS
-            self._update_tree_for_view()
-            # Update view toggle to show AGENTS
-            from tracecraft.tui.widgets.view_toggle import ViewToggle
-
-            try:
-                view_toggle = self.query_one("#view-toggle", ViewToggle)
-                view_toggle.set_mode(ViewMode.AGENTS)
             except Exception:
                 pass
             # Pop breadcrumb
@@ -1391,7 +1173,10 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
                 return
 
             # Find project name for notification
-            projects = self._loader.store.list_projects()
+            if self._loader and hasattr(self._loader.store, "list_projects"):
+                projects = self._loader.store.list_projects()  # type: ignore[union-attr]
+            else:
+                projects = []
             project = next((p for p in projects if p["id"] == project_id), None)
             if project:
                 self.notify(f"Assigned to {project['name']}.", title="ASSIGNED")
@@ -1402,73 +1187,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             TraceAssignScreen(trace=self._current_run, store=self._loader.store),
             on_project_assigned,
         )
-
-    def action_agent_manager(self) -> None:
-        """Open the agent manager screen."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.screens.agent_manager import AgentManagerScreen
-
-        def on_agent_selected(agent: dict[str, Any] | None) -> None:
-            if agent is None:
-                return  # Cancelled
-
-            if agent.get("id") is None:
-                # "All Agents" selected - go to agents view
-                self._current_agent = None
-                self.action_view_agents()
-            else:
-                # Specific agent selected - drill down to show its traces
-                self._drill_into_agent(agent)
-
-        self.push_screen(AgentManagerScreen(store=self._loader.store), on_agent_selected)
-
-    def action_assign_agent(self) -> None:
-        """Assign the current trace to an agent."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        if not self._current_run:
-            self.notify(
-                "No trace selected. Navigate with j/k, select with Enter.",
-                title="NO SELECTION",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.screens.agent_manager import AgentManagerScreen
-
-        def on_agent_assigned(agent: dict[str, Any] | None) -> None:
-            if agent is None:
-                return  # Cancelled
-
-            agent_id = agent.get("id")
-            trace_id = str(self._current_run.id)
-
-            try:
-                self._loader.store.assign_trace_to_agent(trace_id, agent_id)
-                if agent_id:
-                    self.notify(
-                        f"Trace assigned to '{agent['name']}'.",
-                        title="ASSIGNED",
-                    )
-                else:
-                    self.notify("Trace unassigned from agent.", title="UNASSIGNED")
-            except Exception as e:
-                self.notify(f"Assignment failed: {e}", title="ERROR", severity="error")
-
-        self.push_screen(AgentManagerScreen(store=self._loader.store), on_agent_assigned)
 
     def action_help(self) -> None:
         """Show help modal with all keybindings."""
@@ -1486,7 +1204,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
 
         self._view_mode = ViewMode.TRACES
         self._current_project = None
-        self._current_agent = None
 
         # Update the view toggle widget
         try:
@@ -1508,7 +1225,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
 
         self._view_mode = ViewMode.PROJECTS
         self._current_project = None
-        self._current_agent = None
 
         # Update the view toggle widget
         try:
@@ -1518,455 +1234,3 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             pass
 
         self._update_tree_for_view()
-
-    def action_view_agents(self) -> None:
-        """Switch to agents view."""
-        from tracecraft.tui.widgets.view_toggle import ViewMode, ViewToggle
-
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify("Agents require SQLite storage.", severity="warning")
-            return
-
-        self._view_mode = ViewMode.AGENTS
-        self._current_project = None
-        self._current_agent = None
-
-        # Update the view toggle widget
-        try:
-            view_toggle = self.query_one("#view-toggle", ViewToggle)
-            view_toggle.set_mode(ViewMode.AGENTS)
-        except Exception:
-            pass
-
-        self._update_tree_for_view()
-
-    def action_view_evals(self) -> None:
-        """Switch to evaluations view."""
-        from tracecraft.tui.widgets.view_toggle import ViewMode, ViewToggle
-
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify("Evals require SQLite storage.", severity="warning")
-            return
-
-        self._view_mode = ViewMode.EVALS
-        self._current_project = None
-        self._current_agent = None
-
-        # Update the view toggle widget
-        try:
-            view_toggle = self.query_one("#view-toggle", ViewToggle)
-            view_toggle.set_mode(ViewMode.EVALS)
-        except Exception:
-            pass
-
-        self._update_tree_for_view()
-
-    def action_create_eval_set(self) -> None:
-        """Create a new evaluation set."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.screens.eval_set_creator import EvalSetCreatorScreen
-
-        def on_eval_created(result: dict[str, Any] | None) -> None:
-            if result is None:
-                return  # Cancelled
-
-            self.notify(
-                f"Created: {result['name']}",
-                title="EVAL SET CREATED",
-            )
-
-            # Refresh the view if we're in evals mode
-            from tracecraft.tui.widgets.view_toggle import ViewMode
-
-            if self._view_mode == ViewMode.EVALS:
-                self._update_tree_for_view()
-
-        self.push_screen(
-            EvalSetCreatorScreen(store=self._loader.store),
-            on_eval_created,
-        )
-
-    def action_run_eval(self) -> None:
-        """Run the selected evaluation set."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.widgets.run_tree import RunTree
-
-        tree = self.query_one("#run-tree", RunTree)
-        eval_set = tree.get_selected_eval()
-
-        if not eval_set:
-            self.notify(
-                "No evaluation set selected. Switch to EVALS view.",
-                title="NO SELECTION",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.screens.eval_runner import EvalRunnerScreen
-
-        def on_run_complete(result: dict[str, Any] | None) -> None:
-            if result:
-                passed = result.get("passed", False)
-                pass_rate = result.get("pass_rate", 0) * 100
-                if passed:
-                    self.notify(
-                        f"Pass rate: {pass_rate:.0f}%",
-                        title="EVAL PASSED",
-                    )
-                else:
-                    self.notify(
-                        f"Pass rate: {pass_rate:.0f}%",
-                        title="EVAL FAILED",
-                        severity="warning",
-                    )
-
-            # Refresh the view
-            from tracecraft.tui.widgets.view_toggle import ViewMode
-
-            if self._view_mode == ViewMode.EVALS:
-                self._update_tree_for_view()
-
-        self.push_screen(
-            EvalRunnerScreen(eval_set=eval_set, store=self._loader.store),
-            on_run_complete,
-        )
-
-    def action_add_to_eval(self) -> None:
-        """Add the selected trace/step to an evaluation set as a test case."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        # Get the current trace and step selection
-        if not self._current_run:
-            self.notify(
-                "Select a trace first.",
-                title="NO TRACE SELECTED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.screens.eval_case_selector import EvalCaseSelectorScreen
-
-        def on_case_added(result: dict[str, Any] | None) -> None:
-            if result is None:
-                return  # Cancelled
-
-            self.notify(
-                f"Added to: {result['eval_set_name']}",
-                title="CASE ADDED",
-            )
-
-        self.push_screen(
-            EvalCaseSelectorScreen(
-                trace=self._current_run,
-                step=self._current_step,
-                store=self._loader.store,
-            ),
-            on_case_added,
-        )
-
-    def action_create_eval_case(self) -> None:
-        """Create a manual evaluation test case."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.widgets.run_tree import RunTree
-
-        tree = self.query_one("#run-tree", RunTree)
-        eval_set = tree.get_selected_eval()
-
-        if not eval_set:
-            self.notify(
-                "Select an evaluation set first (view EVALS with key '4').",
-                title="NO EVAL SET SELECTED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.screens.eval_case_creator import EvalCaseCreatorScreen
-
-        def on_case_created(result: dict[str, Any] | None) -> None:
-            if result is None:
-                return  # Cancelled
-
-            self.notify(
-                f"Created case: {result['name']}",
-                title="CASE CREATED",
-            )
-
-            # Refresh the eval set details
-            self._show_eval_details(eval_set)
-
-        self.push_screen(
-            EvalCaseCreatorScreen(
-                eval_set_id=eval_set["id"],
-                store=self._loader.store,
-            ),
-            on_case_created,
-        )
-
-    def action_goto_source(self) -> None:
-        """Navigate to source trace from an eval case."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.widgets.run_tree import RunTree
-
-        tree = self.query_one("#run-tree", RunTree)
-        selected = tree.cursor_node
-
-        if not selected or not selected.data:
-            self.notify(
-                "Select an eval case to navigate to its source.",
-                title="NO SELECTION",
-                severity="warning",
-            )
-            return
-
-        node_data = selected.data
-        node_type = node_data.get("type")
-
-        # Handle eval case node
-        if node_type == "eval_case":
-            case_data = node_data.get("data", {})
-            source_trace_id = case_data.get("source_trace_id")
-
-            if source_trace_id:
-                # Switch to traces view and select the source trace
-                from tracecraft.tui.widgets.view_toggle import ViewMode, ViewToggle
-
-                self._view_mode = ViewMode.TRACES
-                self._update_tree_for_view()
-
-                # Update view toggle
-                try:
-                    view_toggle = self.query_one("#view-toggle", ViewToggle)
-                    view_toggle.set_mode(ViewMode.TRACES)
-                except Exception:
-                    pass
-
-                # Try to select the trace
-                self._select_trace_by_id(source_trace_id)
-                self.notify("Jumped to source trace")
-            else:
-                self.notify(
-                    "This case has no source trace.",
-                    title="NO SOURCE",
-                    severity="warning",
-                )
-        else:
-            self.notify(
-                "Select an eval case to navigate to its source.",
-                title="INVALID SELECTION",
-                severity="warning",
-            )
-
-    def _select_trace_by_id(self, trace_id: str) -> None:
-        """Select a trace in the tree by its ID."""
-        from tracecraft.tui.widgets.run_tree import RunTree
-
-        tree = self.query_one("#run-tree", RunTree)
-
-        # Search through tree nodes to find matching trace
-        # Note: Tree may use "trace" or "run" as the type depending on view mode
-        for node in tree.root.children:
-            if node.data:
-                node_type = node.data.get("type")
-                node_id = node.data.get("id")
-                if node_type in ("trace", "run") and node_id == trace_id:
-                    tree.select_node(node)
-                    # Also show the trace details
-                    trace = self._loader.store.get(trace_id)
-                    if trace:
-                        self._show_trace_details(trace)
-                    return
-
-        # If not found in current tree, load and show it directly
-        trace = self._loader.store.get(trace_id)
-        if trace:
-            self._show_trace_details(trace)
-            self.notify(f"Loaded trace: {trace.name}")
-        else:
-            # Safe slicing for display
-            display_id = trace_id[:8] if trace_id else "unknown"
-            self.notify(
-                f"Trace not found: {display_id}...",
-                title="NOT FOUND",
-                severity="warning",
-            )
-
-    def action_show_trace_evals(self) -> None:
-        """Show evaluation associations for the current trace."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required for eval associations.",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        if not self._current_run:
-            self.notify(
-                "Select a trace first.",
-                title="NO TRACE SELECTED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.widgets.io_viewer import IOViewer
-
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-        io_viewer.show_trace_eval_associations(
-            str(self._current_run.id),
-            self._loader.store,
-        )
-
-    def action_view_eval_cases(self) -> None:
-        """View cases for the selected evaluation set."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.widgets.run_tree import RunTree
-
-        tree = self.query_one("#run-tree", RunTree)
-        eval_set = tree.get_selected_eval()
-
-        if not eval_set:
-            self.notify(
-                "No evaluation set selected. Switch to EVALS view.",
-                title="NO SELECTION",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.screens.eval_cases_viewer import EvalCasesViewerScreen
-
-        def on_cases_viewer_dismiss(result: dict | None) -> None:
-            """Handle cases viewer dismiss callback."""
-            if result and result.get("action") == "goto_trace":
-                trace_id = result.get("trace_id")
-                if trace_id:
-                    # Switch to TRACES view and navigate to the trace
-                    from tracecraft.tui.widgets.view_toggle import ViewMode, ViewToggle
-
-                    self._view_mode = ViewMode.TRACES
-                    try:
-                        view_toggle = self.query_one("#view-toggle", ViewToggle)
-                        view_toggle.mode = ViewMode.TRACES
-                    except Exception:
-                        pass  # View toggle not mounted
-                    self._update_tree_for_view()
-                    self._update_breadcrumb()
-                    self._select_trace_by_id(trace_id)
-
-        self.push_screen(
-            EvalCasesViewerScreen(eval_set=eval_set, store=self._loader.store),
-            on_cases_viewer_dismiss,
-        )
-
-    def action_view_eval_history(self) -> None:
-        """View run history for the selected evaluation set."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.widgets.run_tree import RunTree
-
-        tree = self.query_one("#run-tree", RunTree)
-        eval_set = tree.get_selected_eval()
-
-        if not eval_set:
-            self.notify(
-                "No evaluation set selected. Switch to EVALS view.",
-                title="NO SELECTION",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.screens.eval_run_history import EvalRunHistoryScreen
-
-        self.push_screen(EvalRunHistoryScreen(eval_set=eval_set, store=self._loader.store))
-
-    def action_view_latest_run(self) -> None:
-        """View results of the latest run for the selected evaluation set."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.widgets.run_tree import RunTree
-
-        tree = self.query_one("#run-tree", RunTree)
-        eval_set = tree.get_selected_eval()
-
-        if not eval_set:
-            self.notify(
-                "No evaluation set selected. Switch to EVALS view.",
-                title="NO SELECTION",
-                severity="warning",
-            )
-            return
-
-        # Get the latest run for this eval set
-        runs = self._loader.store.list_evaluation_runs(set_id=eval_set["id"])
-        if not runs:
-            self.notify(
-                "No runs found for this evaluation set. Run an evaluation first.",
-                title="NO RUNS",
-                severity="warning",
-            )
-            return
-
-        # Get the most recent run (first in list, assumed sorted by date desc)
-        latest_run = runs[0]
-
-        from tracecraft.tui.screens.eval_results_viewer import EvalResultsViewerScreen
-
-        self.push_screen(
-            EvalResultsViewerScreen(
-                eval_run=latest_run,
-                eval_set=eval_set,
-                store=self._loader.store,
-            )
-        )

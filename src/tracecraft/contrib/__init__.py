@@ -17,9 +17,6 @@ from tracecraft.contrib.memory import (
 # Use: from tracecraft.contrib.azure import create_appinsights_exporter
 # Use: from tracecraft.contrib.gcp import create_cloudtrace_exporter
 
-# Evaluation helpers - lazy import to avoid requiring mlflow
-# Use: from tracecraft.contrib.evaluation import evaluation_step
-
 __all__ = [
     # Async helpers
     "gather_with_context",

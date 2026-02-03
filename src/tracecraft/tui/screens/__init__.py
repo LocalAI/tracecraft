@@ -3,14 +3,6 @@
 from __future__ import annotations
 
 try:
-    from tracecraft.tui.screens.agent_manager import AgentEditScreen, AgentManagerScreen
-    from tracecraft.tui.screens.eval_case_creator import EvalCaseCreatorScreen
-    from tracecraft.tui.screens.eval_case_selector import EvalCaseSelectorScreen
-    from tracecraft.tui.screens.eval_cases_viewer import EvalCasesViewerScreen
-    from tracecraft.tui.screens.eval_results_viewer import EvalResultsViewerScreen
-    from tracecraft.tui.screens.eval_run_history import EvalRunHistoryScreen
-    from tracecraft.tui.screens.eval_runner import EvalRunnerScreen
-    from tracecraft.tui.screens.eval_set_creator import EvalSetCreatorScreen
     from tracecraft.tui.screens.help_screen import HelpScreen
     from tracecraft.tui.screens.llm_picker import LLMPickerScreen
     from tracecraft.tui.screens.playground import PlaygroundScreen
@@ -22,15 +14,6 @@ try:
     TEXTUAL_AVAILABLE = True
 except ImportError:
     TEXTUAL_AVAILABLE = False
-    AgentEditScreen = None  # type: ignore[misc,assignment]
-    AgentManagerScreen = None  # type: ignore[misc,assignment]
-    EvalCaseCreatorScreen = None  # type: ignore[misc,assignment]
-    EvalCaseSelectorScreen = None  # type: ignore[misc,assignment]
-    EvalCasesViewerScreen = None  # type: ignore[misc,assignment]
-    EvalResultsViewerScreen = None  # type: ignore[misc,assignment]
-    EvalRunHistoryScreen = None  # type: ignore[misc,assignment]
-    EvalRunnerScreen = None  # type: ignore[misc,assignment]
-    EvalSetCreatorScreen = None  # type: ignore[misc,assignment]
     HelpScreen = None  # type: ignore[misc,assignment]
     LLMPickerScreen = None  # type: ignore[misc,assignment]
     PlaygroundScreen = None  # type: ignore[misc,assignment]
@@ -41,16 +24,7 @@ except ImportError:
     TraceAssignScreen = None  # type: ignore[misc,assignment]
 
 __all__ = [
-    "AgentEditScreen",
-    "AgentManagerScreen",
     "ConfirmScreen",
-    "EvalCaseCreatorScreen",
-    "EvalCaseSelectorScreen",
-    "EvalCasesViewerScreen",
-    "EvalResultsViewerScreen",
-    "EvalRunHistoryScreen",
-    "EvalRunnerScreen",
-    "EvalSetCreatorScreen",
     "HelpScreen",
     "LLMPickerScreen",
     "PlaygroundScreen",

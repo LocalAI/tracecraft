@@ -265,28 +265,6 @@ class TestExampleDataCreation:
             project_names = [p["name"] for p in projects]
             assert "Example Project" in project_names
 
-    def test_create_example_data_creates_agents(self):
-        """_create_example_data should create 3 agents linked to project."""
-        from tracecraft.core.init import _create_example_data
-        from tracecraft.storage.sqlite import SQLiteTraceStore
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = Path(tmpdir) / "test.db"
-            store = SQLiteTraceStore(db_path)
-            store.close()
-
-            _create_example_data(db_path)
-
-            store = SQLiteTraceStore(db_path)
-            agents = store.list_agents()
-            store.close()
-
-            assert len(agents) == 3
-            agent_names = [a["name"] for a in agents]
-            assert "Research Assistant" in agent_names
-            assert "Code Helper" in agent_names
-            assert "Customer Support" in agent_names
-
     def test_create_example_data_creates_traces(self):
         """_create_example_data should create example traces."""
         from tracecraft.core.init import _create_example_data
@@ -303,90 +281,8 @@ class TestExampleDataCreation:
             traces = store.list_all(limit=50)
             store.close()
 
-            # Should have 13 traces (5 research + 4 code + 4 support)
-            assert len(traces) >= 10  # At least 10 traces created
-
-    def test_create_example_data_creates_eval_sets(self):
-        """_create_example_data should create 3 evaluation sets with cases."""
-        from tracecraft.core.init import _create_example_data
-        from tracecraft.storage.sqlite import SQLiteTraceStore
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = Path(tmpdir) / "test.db"
-            store = SQLiteTraceStore(db_path)
-            store.close()
-
-            _create_example_data(db_path)
-
-            store = SQLiteTraceStore(db_path)
-            eval_sets = store.list_evaluation_sets()
-            store.close()
-
-            assert len(eval_sets) == 3
-            set_names = [s["name"] for s in eval_sets]
-            assert "Response Quality Eval" in set_names
-            assert "Code Generation Eval" in set_names
-            assert "Safety & Compliance Eval" in set_names
-
-    def test_create_example_data_creates_eval_runs(self):
-        """_create_example_data should create evaluation runs with results."""
-        from tracecraft.core.init import _create_example_data
-        from tracecraft.storage.sqlite import SQLiteTraceStore
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = Path(tmpdir) / "test.db"
-            store = SQLiteTraceStore(db_path)
-            store.close()
-
-            _create_example_data(db_path)
-
-            store = SQLiteTraceStore(db_path)
-            eval_sets = store.list_evaluation_sets()
-
-            # Check first eval set has runs
-            runs = store.list_evaluation_runs(eval_sets[0]["id"])
-            store.close()
-
-            # Should have at least 1 run (first set gets 2 runs)
-            assert len(runs) >= 1
-
-            # Verify run has status
-            assert runs[0]["status"] == "completed"
-
-    def test_create_example_data_has_mix_of_pass_fail(self):
-        """Example data should include both passing and failing eval results."""
-        from tracecraft.core.init import _create_example_data
-        from tracecraft.storage.sqlite import SQLiteTraceStore
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = Path(tmpdir) / "test.db"
-            store = SQLiteTraceStore(db_path)
-            store.close()
-
-            _create_example_data(db_path)
-
-            store = SQLiteTraceStore(db_path)
-            eval_sets = store.list_evaluation_sets()
-
-            # Collect all runs
-            has_passed = False
-            has_failed = False
-
-            for eval_set in eval_sets:
-                runs = store.list_evaluation_runs(eval_set["id"])
-                for run in runs:
-                    passed_val = run.get("passed")
-                    if passed_val:
-                        has_passed = True
-                    # SQLite returns 0/1 for booleans, so check for falsy but not None
-                    if passed_val is not None and not passed_val:
-                        has_failed = True
-
-            store.close()
-
-            # Should have mix of pass/fail
-            assert has_passed, "Should have at least one passing run"
-            assert has_failed, "Should have at least one failing run"
+            # Should have 5 example traces
+            assert len(traces) >= 5
 
     def test_initialize_creates_example_data_by_default(self):
         """initialize() with create_sample_project=True should create example data."""
@@ -407,16 +303,12 @@ class TestExampleDataCreation:
 
             store = SQLiteTraceStore(result.database_path)
             projects = store.list_projects()
-            agents = store.list_agents()
-            eval_sets = store.list_evaluation_sets()
+            traces = store.list_all(limit=50)
             store.close()
 
             # Should have Example Project
             project_names = [p["name"] for p in projects]
             assert "Example Project" in project_names
 
-            # Should have agents
-            assert len(agents) == 3
-
-            # Should have eval sets
-            assert len(eval_sets) == 3
+            # Should have traces
+            assert len(traces) >= 5

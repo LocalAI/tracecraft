@@ -47,10 +47,6 @@ class TreeViewMode(str, Enum):
 
     TRACES = "traces"
     PROJECTS = "projects"
-    AGENTS = "agents"
-    EVALS = "evals"
-    EVAL_CASES = "eval_cases"  # Hierarchical view of eval cases
-    EVAL_RUNS = "eval_runs"  # Hierarchical view of eval runs
     PROJECT_TREE = "project_tree"  # Hierarchical view of a single project
 
 
@@ -144,8 +140,6 @@ class RunTree(Tree if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self._selected_step_id: str | None = None
         self._view_mode: TreeViewMode = TreeViewMode.TRACES
         self._projects: list[dict[str, Any]] = []  # Cached projects
-        self._agents: list[dict[str, Any]] = []  # Cached agents
-        self._evals: list[dict[str, Any]] = []  # Cached evaluation sets
 
     def update_runs(self, runs: list[AgentRun], *, is_filtered: bool = False) -> None:
         """
@@ -210,63 +204,13 @@ class RunTree(Tree if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
 
         self.root.expand()
 
-    def show_agents(self, agents: list[dict[str, Any]]) -> None:
-        """
-        Show agents view - list of agents that can be expanded.
-
-        Args:
-            agents: List of agent dicts from SQLite store.
-        """
-        self._view_mode = TreeViewMode.AGENTS
-        self._agents = agents
-        self._runs = []
-        self._step_cache.clear()
-        self.clear()
-
-        if not agents:
-            empty_label = Text(
-                "No agents found. Agent data is extracted from traces.", style=TEXT_MUTED
-            )
-            self.root.add(empty_label, data={"type": "empty"})
-        else:
-            for agent in agents:
-                self._add_agent_node(agent)
-
-        self.root.expand()
-
-    def show_evals(self, evals: list[dict[str, Any]]) -> None:
-        """
-        Show evaluation sets view - list of eval sets that can be expanded.
-
-        Args:
-            evals: List of evaluation set dicts from SQLite store.
-        """
-        self._view_mode = TreeViewMode.EVALS
-        self._evals = evals
-        self._runs = []
-        self._step_cache.clear()
-        self.clear()
-
-        if not evals:
-            empty_label = Text(
-                "No evaluation sets found. Create one with Shift+E.", style=TEXT_MUTED
-            )
-            self.root.add(empty_label, data={"type": "empty"})
-        else:
-            for eval_set in evals:
-                self._add_eval_node(eval_set)
-
-        self.root.expand()
-
     def show_project_tree(self, structure: dict[str, Any]) -> None:
         """
-        Show hierarchical project tree - project with agents, evals, and traces.
+        Show hierarchical project tree - project with traces.
 
         Args:
             structure: Project structure dict from get_project_structure() containing:
                 - project: Project info dict
-                - agents: List of agent dicts
-                - eval_sets: List of eval set dicts
                 - trace_count: Number of traces
                 - traces: Optional list of trace dicts (for preview)
         """
@@ -276,8 +220,6 @@ class RunTree(Tree if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self.clear()
 
         project = structure.get("project", {})
-        agents = structure.get("agents", [])
-        eval_sets = structure.get("eval_sets", [])
         trace_count = structure.get("trace_count", 0)
         traces = structure.get("traces", [])
 
@@ -290,22 +232,6 @@ class RunTree(Tree if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         # Update root label with project name
         project_name = project.get("name", "Unknown Project")
         self.root.set_label(Text(f"📁 {project_name}", style=f"{TEXT_PRIMARY} bold"))
-
-        # Agents folder
-        agents_folder = self.root.add(
-            self._create_folder_label("Agents", len(agents), ACCENT_AMBER),
-            data={"type": "folder", "folder_type": "agents", "project_id": project["id"]},
-        )
-        for agent in agents:
-            self._add_agent_child_node(agents_folder, agent)
-
-        # Evals folder
-        evals_folder = self.root.add(
-            self._create_folder_label("Evaluations", len(eval_sets), INFO_BLUE),
-            data={"type": "folder", "folder_type": "evals", "project_id": project["id"]},
-        )
-        for eval_set in eval_sets:
-            self._add_eval_child_node(evals_folder, eval_set)
 
         # Traces folder (shows count, can expand to load traces)
         traces_folder = self.root.add(
@@ -323,9 +249,6 @@ class RunTree(Tree if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             )
 
         self.root.expand()
-        # Expand folders by default for visibility
-        agents_folder.expand()
-        evals_folder.expand()
         traces_folder.expand()
 
     def _create_folder_label(self, name: str, count: int, color: str) -> Text:
@@ -335,22 +258,6 @@ class RunTree(Tree if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         text.append(name, style=f"{TEXT_PRIMARY} bold")
         text.append(f" ({count})", style=TEXT_MUTED)
         return text
-
-    def _add_agent_child_node(self, parent: TreeNode, agent: dict[str, Any]) -> TreeNode:
-        """Add an agent node as child of a folder."""
-        label = self._create_agent_label(agent)
-        return parent.add(
-            label,
-            data={"type": "agent", "id": agent["id"], "name": agent["name"]},
-        )
-
-    def _add_eval_child_node(self, parent: TreeNode, eval_set: dict[str, Any]) -> TreeNode:
-        """Add an eval set node as child of a folder."""
-        label = self._create_eval_label(eval_set)
-        return parent.add(
-            label,
-            data={"type": "eval", "id": eval_set["id"], "name": eval_set["name"]},
-        )
 
     def _add_trace_child_node(self, parent: TreeNode, trace: dict[str, Any]) -> TreeNode:
         """Add a trace node as child of a folder (from dict, not AgentRun)."""
@@ -385,26 +292,6 @@ class RunTree(Tree if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         # Projects are collapsed by default - user clicks to expand/load traces
         return node
 
-    def _add_agent_node(self, agent: dict[str, Any]) -> TreeNode:
-        """Add an agent node to the tree."""
-        label = self._create_agent_label(agent)
-        node = self.root.add(
-            label,
-            data={"type": "agent", "id": agent["id"], "name": agent["name"]},
-        )
-        # Agents are collapsed by default - user clicks to expand/load traces
-        return node
-
-    def _add_eval_node(self, eval_set: dict[str, Any]) -> TreeNode:
-        """Add an evaluation set node to the tree."""
-        label = self._create_eval_label(eval_set)
-        node = self.root.add(
-            label,
-            data={"type": "eval", "id": eval_set["id"], "name": eval_set["name"]},
-        )
-        # Eval sets are collapsed by default - user clicks to expand/view cases
-        return node
-
     def _create_project_label(self, project: dict[str, Any]) -> Text:
         """Create a rich text label for a project."""
         text = Text()
@@ -423,132 +310,6 @@ class RunTree(Tree if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
 
         return text
 
-    def _create_agent_label(self, agent: dict[str, Any]) -> Text:
-        """Create a rich text label for an agent."""
-        text = Text()
-
-        # Agent icon (diamond for agents)
-        if agent.get("error_count", 0) > 0:
-            text.append("+ ", style=DANGER_RED)
-        else:
-            text.append("+ ", style=ACCENT_AMBER)
-
-        # Agent name
-        name = truncate_with_ellipsis(agent["name"], self.MAX_NAME_LENGTH)
-        text.append(name, style=f"{TEXT_PRIMARY} bold")
-
-        # Trace count
-        trace_count = agent.get("trace_count", 0)
-        text.append(f" ({trace_count} traces)", style=TEXT_MUTED)
-
-        # Token count
-        if agent.get("total_tokens", 0) > 0:
-            text.append(f" {agent['total_tokens']}t", style=TEXT_MUTED)
-
-        # Cost
-        if agent.get("total_cost_usd", 0) > 0:
-            text.append(f" ${agent['total_cost_usd']:.4f}", style=TEXT_MUTED)
-
-        return text
-
-    def _get_eval_status_icon(self, eval_set: dict[str, Any]) -> str:
-        """
-        Return colored status icon based on latest run result.
-
-        Args:
-            eval_set: Eval set dict with optional latest_run info.
-
-        Returns:
-            Rich markup string with colored icon.
-        """
-        latest_run = eval_set.get("latest_run")
-        if not latest_run:
-            return "◇"  # No runs yet (neutral)
-
-        status = latest_run.get("status", "pending")
-        passed = latest_run.get("passed")
-
-        if status == "running":
-            return f"[{ACCENT_AMBER}]◆[/{ACCENT_AMBER}]"  # Amber/running
-        elif status == "completed":
-            if passed:
-                return f"[{SUCCESS_GREEN}]◆[/{SUCCESS_GREEN}]"  # Green/passed
-            else:
-                return f"[{DANGER_RED}]◆[/{DANGER_RED}]"  # Red/failed
-        elif status == "failed":
-            return f"[{DANGER_RED}]✗[/{DANGER_RED}]"  # Error
-        return "◇"
-
-    def _get_run_status_icon(self, run: dict[str, Any]) -> str:
-        """
-        Return colored status icon for an evaluation run.
-
-        Args:
-            run: Eval run dict with status and passed fields.
-
-        Returns:
-            Rich markup string with colored icon.
-        """
-        status = run.get("status", "pending")
-        passed = run.get("passed")
-
-        if status == "running":
-            return f"[{ACCENT_AMBER}]◆[/{ACCENT_AMBER}]"
-        elif status == "completed":
-            if passed:
-                return f"[{SUCCESS_GREEN}]◆[/{SUCCESS_GREEN}]"
-            else:
-                return f"[{DANGER_RED}]◆[/{DANGER_RED}]"
-        elif status == "failed":
-            return f"[{DANGER_RED}]✗[/{DANGER_RED}]"
-        return f"[{TEXT_MUTED}]◇[/{TEXT_MUTED}]"
-
-    def _create_eval_label(self, eval_set: dict[str, Any]) -> Text:
-        """Create a rich text label for an evaluation set."""
-        text = Text()
-
-        # Eval icon (diamond for evaluation)
-        # Color based on latest run pass/fail status
-        latest_run = eval_set.get("latest_run")
-        if latest_run:
-            if latest_run.get("passed") is True:
-                text.append("◈ ", style=SUCCESS_GREEN)
-            elif latest_run.get("passed") is False:
-                text.append("◈ ", style=DANGER_RED)
-            elif latest_run.get("status") == "running":
-                text.append("◈ ", style=ACCENT_AMBER)
-            else:
-                text.append("◈ ", style=TEXT_MUTED)
-        else:
-            text.append("◈ ", style=INFO_BLUE)
-
-        # Eval set name
-        name = truncate_with_ellipsis(eval_set["name"], self.MAX_NAME_LENGTH)
-        text.append(name, style=f"{TEXT_PRIMARY} bold")
-
-        # Case count
-        case_count = eval_set.get("case_count", len(eval_set.get("metrics", [])))
-        if case_count > 0:
-            text.append(f" ({case_count} cases)", style=TEXT_MUTED)
-
-        # Latest pass rate
-        if latest_run and latest_run.get("overall_pass_rate") is not None:
-            pass_rate = latest_run["overall_pass_rate"] * 100
-            if pass_rate >= 90:
-                style = SUCCESS_GREEN
-            elif pass_rate >= 70:
-                style = ACCENT_AMBER
-            else:
-                style = DANGER_RED
-            text.append(f" {pass_rate:.0f}%", style=style)
-
-        # Description if available
-        if eval_set.get("description"):
-            desc = truncate_with_ellipsis(eval_set["description"], 25)
-            text.append(f" - {desc}", style=TEXT_MUTED)
-
-        return text
-
     @property
     def view_mode(self) -> TreeViewMode:
         """Get the current view mode."""
@@ -562,26 +323,6 @@ class RunTree(Tree if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             for project in self._projects:
                 if project["id"] == project_id:
                     return project
-        return None
-
-    def get_selected_agent(self) -> dict[str, Any] | None:
-        """Get the currently selected agent."""
-        data = self.get_selected_data()
-        if data and data.get("type") == "agent":
-            agent_id = data.get("id")
-            for agent in self._agents:
-                if agent["id"] == agent_id:
-                    return agent
-        return None
-
-    def get_selected_eval(self) -> dict[str, Any] | None:
-        """Get the currently selected evaluation set."""
-        data = self.get_selected_data()
-        if data and data.get("type") == "eval":
-            eval_id = data.get("id")
-            for eval_set in self._evals:
-                if eval_set["id"] == eval_id:
-                    return eval_set
         return None
 
     def _cache_steps(self, steps: list[Step]) -> None:

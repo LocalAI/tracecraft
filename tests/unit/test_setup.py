@@ -216,7 +216,7 @@ class TestInitialize:
         store.close()
 
         assert len(projects) >= 1
-        assert any(p["name"] == "Default Project" for p in projects)
+        assert any(p["name"] == "Example Project" for p in projects)
 
     def test_initialize_idempotent(self, tmp_path: Path) -> None:
         """Test initialization can be run multiple times."""
@@ -318,6 +318,7 @@ class TestSetupWizardScreen:
 
     def test_screens_init_exports_setup_wizard(self) -> None:
         """Test screens __init__ exports SetupWizardScreen."""
+        from tracecraft.tui import screens
 
         # May be None if textual not installed, but should be importable
-        assert "SetupWizardScreen" in dir()
+        assert "SetupWizardScreen" in dir(screens)
