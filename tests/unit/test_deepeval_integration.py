@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.models import AgentRun, Step, StepType
 
 # Skip all tests if deepeval isn't installed
 pytestmark = pytest.mark.skipif(
@@ -100,7 +100,7 @@ class TestDeepEvalHelperFunctions:
 
     def test_flatten_steps(self):
         """Test flattening nested steps."""
-        from agenttrace.integrations.deepeval import _flatten_steps
+        from tracecraft.integrations.deepeval import _flatten_steps
 
         trace_id = uuid4()
         child_step = Step(
@@ -128,7 +128,7 @@ class TestDeepEvalHelperFunctions:
 
     def test_handles_deeply_nested_steps(self):
         """Test handling deeply nested step hierarchy."""
-        from agenttrace.integrations.deepeval import _flatten_steps
+        from tracecraft.integrations.deepeval import _flatten_steps
 
         trace_id = uuid4()
         grandchild = Step(
@@ -164,7 +164,7 @@ class TestDeepEvalHelperFunctions:
 
     def test_default_extract_input_from_messages(self, sample_traces):
         """Test extracting input from messages format."""
-        from agenttrace.integrations.deepeval import _default_extract_input
+        from tracecraft.integrations.deepeval import _default_extract_input
 
         step = sample_traces[0].steps[0]
         result = _default_extract_input(step)
@@ -173,7 +173,7 @@ class TestDeepEvalHelperFunctions:
 
     def test_default_extract_input_from_prompt(self, sample_traces):
         """Test extracting input from prompt field."""
-        from agenttrace.integrations.deepeval import _default_extract_input
+        from tracecraft.integrations.deepeval import _default_extract_input
 
         step = sample_traces[1].steps[0]
         result = _default_extract_input(step)
@@ -182,7 +182,7 @@ class TestDeepEvalHelperFunctions:
 
     def test_default_extract_output_from_response(self, sample_traces):
         """Test extracting output from response field."""
-        from agenttrace.integrations.deepeval import _default_extract_output
+        from tracecraft.integrations.deepeval import _default_extract_output
 
         step = sample_traces[0].steps[0]
         result = _default_extract_output(step)
@@ -191,7 +191,7 @@ class TestDeepEvalHelperFunctions:
 
     def test_default_extract_output_from_result(self, sample_traces):
         """Test extracting output from result field."""
-        from agenttrace.integrations.deepeval import _default_extract_output
+        from tracecraft.integrations.deepeval import _default_extract_output
 
         step = sample_traces[1].steps[0]
         result = _default_extract_output(step)
@@ -200,7 +200,7 @@ class TestDeepEvalHelperFunctions:
 
     def test_default_extract_context_list(self, sample_traces):
         """Test extracting context list."""
-        from agenttrace.integrations.deepeval import _default_extract_context
+        from tracecraft.integrations.deepeval import _default_extract_context
 
         step = sample_traces[1].steps[0]
         result = _default_extract_context(step)
@@ -209,7 +209,7 @@ class TestDeepEvalHelperFunctions:
 
     def test_default_extract_context_none_when_missing(self, sample_traces):
         """Test that None is returned when no context exists."""
-        from agenttrace.integrations.deepeval import _default_extract_context
+        from tracecraft.integrations.deepeval import _default_extract_context
 
         step = sample_traces[0].steps[0]
         result = _default_extract_context(step)
@@ -218,7 +218,7 @@ class TestDeepEvalHelperFunctions:
 
     def test_load_traces_from_jsonl(self, traces_jsonl):
         """Test loading traces from JSONL file."""
-        from agenttrace.integrations.deepeval import _load_traces_from_jsonl
+        from tracecraft.integrations.deepeval import _load_traces_from_jsonl
 
         traces = _load_traces_from_jsonl(traces_jsonl)
 
@@ -227,7 +227,7 @@ class TestDeepEvalHelperFunctions:
 
     def test_load_traces_file_not_found(self, tmp_path):
         """Test FileNotFoundError for non-existent file."""
-        from agenttrace.integrations.deepeval import _load_traces_from_jsonl
+        from tracecraft.integrations.deepeval import _load_traces_from_jsonl
 
         with pytest.raises(FileNotFoundError):
             _load_traces_from_jsonl(tmp_path / "nonexistent.jsonl")

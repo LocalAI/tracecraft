@@ -16,28 +16,28 @@ class TestOTLPExporterInitialization:
 
     def test_otlp_exporter_with_endpoint(self) -> None:
         """OTLP exporter should initialize with an endpoint."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         exporter = OTLPExporter(endpoint="http://localhost:4317")
         assert exporter.endpoint == "http://localhost:4317"
 
     def test_otlp_exporter_default_protocol_grpc(self) -> None:
         """OTLP exporter should default to gRPC protocol."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         exporter = OTLPExporter(endpoint="http://localhost:4317")
         assert exporter.protocol == "grpc"
 
     def test_otlp_exporter_http_protocol(self) -> None:
         """OTLP exporter should support HTTP protocol."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         exporter = OTLPExporter(endpoint="http://localhost:4318", protocol="http")
         assert exporter.protocol == "http"
 
     def test_otlp_exporter_with_headers(self) -> None:
         """OTLP exporter should accept custom headers."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         headers = {"Authorization": "Bearer token123"}
         exporter = OTLPExporter(endpoint="http://localhost:4317", headers=headers)
@@ -45,28 +45,28 @@ class TestOTLPExporterInitialization:
 
     def test_otlp_exporter_with_service_name(self) -> None:
         """OTLP exporter should accept a service name."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         exporter = OTLPExporter(endpoint="http://localhost:4317", service_name="my-agent")
         assert exporter.service_name == "my-agent"
 
     def test_otlp_exporter_default_service_name(self) -> None:
         """OTLP exporter should have default service name."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         exporter = OTLPExporter(endpoint="http://localhost:4317")
-        assert exporter.service_name == "agenttrace"
+        assert exporter.service_name == "tracecraft"
 
     def test_otlp_exporter_with_timeout(self) -> None:
         """OTLP exporter should accept a timeout."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         exporter = OTLPExporter(endpoint="http://localhost:4317", timeout_ms=5000)
         assert exporter.timeout_ms == 5000
 
     def test_otlp_exporter_default_timeout(self) -> None:
         """OTLP exporter should have default timeout."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         exporter = OTLPExporter(endpoint="http://localhost:4317")
         assert exporter.timeout_ms == 10000
@@ -77,15 +77,15 @@ class TestOTLPExporterBaseClass:
 
     def test_otlp_exporter_is_base_exporter(self) -> None:
         """OTLP exporter should inherit from BaseExporter."""
-        from agenttrace.exporters.base import BaseExporter
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.base import BaseExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         exporter = OTLPExporter(endpoint="http://localhost:4317")
         assert isinstance(exporter, BaseExporter)
 
     def test_otlp_exporter_has_export_method(self) -> None:
         """OTLP exporter should have an export method."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         exporter = OTLPExporter(endpoint="http://localhost:4317")
         assert hasattr(exporter, "export")
@@ -93,7 +93,7 @@ class TestOTLPExporterBaseClass:
 
     def test_otlp_exporter_has_close_method(self) -> None:
         """OTLP exporter should have a close method."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         exporter = OTLPExporter(endpoint="http://localhost:4317")
         assert hasattr(exporter, "close")
@@ -105,8 +105,8 @@ class TestStepToSpanConversion:
 
     def test_step_to_span_basic_conversion(self, sample_timestamp: datetime) -> None:
         """A Step should convert to an OTel span with correct attributes."""
-        from agenttrace.core.models import AgentRun, Step, StepType
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.core.models import AgentRun, Step, StepType
+        from tracecraft.exporters.otlp import OTLPExporter
 
         run_id = uuid4()
         step = Step(
@@ -130,8 +130,8 @@ class TestStepToSpanConversion:
 
     def test_step_to_span_llm_attributes(self, sample_timestamp: datetime) -> None:
         """LLM steps should include GenAI attributes."""
-        from agenttrace.core.models import AgentRun, Step, StepType
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.core.models import AgentRun, Step, StepType
+        from tracecraft.exporters.otlp import OTLPExporter
 
         run_id = uuid4()
         step = Step(
@@ -166,8 +166,8 @@ class TestSpanHierarchy:
 
     def test_parent_child_relationship(self, sample_timestamp: datetime) -> None:
         """Child steps should reference parent span ID."""
-        from agenttrace.core.models import AgentRun, Step, StepType
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.core.models import AgentRun, Step, StepType
+        from tracecraft.exporters.otlp import OTLPExporter
 
         run_id = uuid4()
         parent_id = uuid4()
@@ -202,8 +202,8 @@ class TestSpanHierarchy:
 
     def test_root_step_no_parent(self, sample_timestamp: datetime) -> None:
         """Root steps should not have a parent span ID."""
-        from agenttrace.core.models import AgentRun, Step, StepType
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.core.models import AgentRun, Step, StepType
+        from tracecraft.exporters.otlp import OTLPExporter
 
         run_id = uuid4()
         step = Step(
@@ -229,15 +229,15 @@ class TestSchemaDialects:
 
     def test_default_dialect_is_both(self) -> None:
         """Default schema dialect should include both conventions."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         exporter = OTLPExporter(endpoint="http://localhost:4317")
         assert exporter.schema_dialect == "both"
 
     def test_otel_genai_dialect(self, sample_timestamp: datetime) -> None:
         """OTel GenAI dialect should only include GenAI attributes."""
-        from agenttrace.core.models import Step, StepType
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.core.models import Step, StepType
+        from tracecraft.exporters.otlp import OTLPExporter
 
         run_id = uuid4()
         step = Step(
@@ -260,8 +260,8 @@ class TestSchemaDialects:
 
     def test_openinference_dialect(self, sample_timestamp: datetime) -> None:
         """OpenInference dialect should only include OpenInference attributes."""
-        from agenttrace.core.models import Step, StepType
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.core.models import Step, StepType
+        from tracecraft.exporters.otlp import OTLPExporter
 
         run_id = uuid4()
         step = Step(
@@ -284,8 +284,8 @@ class TestSchemaDialects:
 
     def test_both_dialects(self, sample_timestamp: datetime) -> None:
         """Both dialect should include all attributes."""
-        from agenttrace.core.models import Step, StepType
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.core.models import Step, StepType
+        from tracecraft.exporters.otlp import OTLPExporter
 
         run_id = uuid4()
         step = Step(
@@ -311,8 +311,8 @@ class TestExportExecution:
 
     def test_export_creates_spans_for_all_steps(self, sample_timestamp: datetime) -> None:
         """Export should create spans for all steps in a run."""
-        from agenttrace.core.models import AgentRun, Step, StepType
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.core.models import AgentRun, Step, StepType
+        from tracecraft.exporters.otlp import OTLPExporter
 
         run_id = uuid4()
         steps = [
@@ -339,8 +339,8 @@ class TestExportExecution:
 
     def test_export_handles_nested_steps(self, sample_timestamp: datetime) -> None:
         """Export should flatten nested steps into spans."""
-        from agenttrace.core.models import AgentRun, Step, StepType
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.core.models import AgentRun, Step, StepType
+        from tracecraft.exporters.otlp import OTLPExporter
 
         run_id = uuid4()
         parent_id = uuid4()
@@ -379,8 +379,8 @@ class TestErrorHandling:
 
     def test_export_handles_connection_error_gracefully(self, sample_timestamp: datetime) -> None:
         """Export should handle connection errors gracefully."""
-        from agenttrace.core.models import AgentRun, Step, StepType
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.core.models import AgentRun, Step, StepType
+        from tracecraft.exporters.otlp import OTLPExporter
 
         run_id = uuid4()
         step = Step(
@@ -402,8 +402,8 @@ class TestErrorHandling:
 
     def test_export_handles_empty_run(self, sample_timestamp: datetime) -> None:
         """Export should handle runs with no steps."""
-        from agenttrace.core.models import AgentRun
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.core.models import AgentRun
+        from tracecraft.exporters.otlp import OTLPExporter
 
         run = AgentRun(name="empty_run", start_time=sample_timestamp)
 
@@ -420,7 +420,7 @@ class TestContextManager:
 
     def test_exporter_as_context_manager(self) -> None:
         """OTLP exporter should work as a context manager."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         with OTLPExporter(endpoint="http://localhost:4317") as exporter:
             assert exporter is not None
@@ -428,7 +428,7 @@ class TestContextManager:
 
     def test_close_called_on_exit(self) -> None:
         """Close should be called when exiting context."""
-        from agenttrace.exporters.otlp import OTLPExporter
+        from tracecraft.exporters.otlp import OTLPExporter
 
         with patch.object(OTLPExporter, "close") as mock_close:
             with OTLPExporter(endpoint="http://localhost:4317"):

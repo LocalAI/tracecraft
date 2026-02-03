@@ -5,7 +5,7 @@ Demonstrates exporting traces to Grafana Tempo via OTLP for visualization
 in Grafana with support for trace correlation and log linking.
 
 Prerequisites:
-    - AgentTrace installed
+    - TraceCraft installed
     - Docker (for Tempo and Grafana)
 
 Environment Variables:
@@ -32,11 +32,11 @@ from __future__ import annotations
 import os
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
-from agenttrace.exporters.otlp import OTLPExporter
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+import tracecraft
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from tracecraft.exporters.otlp import OTLPExporter
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
 
 def get_tempo_endpoint() -> str:
@@ -47,11 +47,11 @@ def get_tempo_endpoint() -> str:
 # Initialize with OTLP exporter for Tempo
 otlp_exporter = OTLPExporter(
     endpoint=get_tempo_endpoint(),
-    service_name="agenttrace-tempo-example",
+    service_name="tracecraft-tempo-example",
     protocol="grpc",
 )
 
-runtime = agenttrace.init(
+runtime = tracecraft.init(
     console=True,
     jsonl=False,  # Disable JSONL, only export to Tempo
     exporters=[otlp_exporter],
@@ -89,7 +89,7 @@ def qa_agent(question: str) -> str:
 def main() -> None:
     """Run the Tempo export example."""
     print("=" * 60)
-    print("AgentTrace OTLP Export to Grafana Tempo")
+    print("TraceCraft OTLP Export to Grafana Tempo")
     print("=" * 60)
 
     tempo_endpoint = get_tempo_endpoint()

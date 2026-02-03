@@ -1,6 +1,6 @@
 # Feature Evaluation: Proposed Enhancements
 
-This document evaluates proposed features for AgentTrace, analyzing their value proposition, implementation approach, and integration with existing architecture.
+This document evaluates proposed features for TraceCraft, analyzing their value proposition, implementation approach, and integration with existing architecture.
 
 ---
 
@@ -21,7 +21,7 @@ All four features are worth implementing. They build naturally on the existing a
 
 ### Current State
 
-The SQLite backend (`src/agenttrace/storage/sqlite.py`) provides solid trace storage with:
+The SQLite backend (`src/tracecraft/storage/sqlite.py`) provides solid trace storage with:
 
 - Denormalized schema for fast queries (traces, steps, trace_tags tables)
 - WAL mode for concurrency
@@ -97,7 +97,7 @@ CREATE INDEX idx_traces_project ON traces(project_id);
 
 #### 2. Storage Layer Changes
 
-Extend `SQLiteTraceStore` in `src/agenttrace/storage/sqlite.py`:
+Extend `SQLiteTraceStore` in `src/tracecraft/storage/sqlite.py`:
 
 ```python
 class SQLiteTraceStore(BaseTraceStore):
@@ -138,7 +138,7 @@ class SQLiteTraceStore(BaseTraceStore):
 
 #### 3. Playground Integration
 
-Modify `src/agenttrace/playground/runner.py` to persist iterations:
+Modify `src/tracecraft/playground/runner.py` to persist iterations:
 
 ```python
 async def replay_step(
@@ -190,11 +190,11 @@ def _ensure_schema(self) -> None:
 
 | File | Changes |
 |------|---------|
-| `src/agenttrace/storage/sqlite.py` | Schema extensions, new methods |
-| `src/agenttrace/storage/base.py` | Add versioning protocol methods |
-| `src/agenttrace/playground/runner.py` | Persistence integration |
-| `src/agenttrace/playground/comparison.py` | Remove file-based `IterationHistory.save/load`, use store |
-| `src/agenttrace/tui/app.py` | Project selection, version navigation |
+| `src/tracecraft/storage/sqlite.py` | Schema extensions, new methods |
+| `src/tracecraft/storage/base.py` | Add versioning protocol methods |
+| `src/tracecraft/playground/runner.py` | Persistence integration |
+| `src/tracecraft/playground/comparison.py` | Remove file-based `IterationHistory.save/load`, use store |
+| `src/tracecraft/tui/app.py` | Project selection, version navigation |
 
 ---
 
@@ -225,7 +225,7 @@ There is no log capture or display mechanism.
 
 Create a log handler that captures logs during traced execution:
 
-**New file: `src/agenttrace/instrumentation/log_capture.py`**
+**New file: `src/tracecraft/instrumentation/log_capture.py`**
 
 ```python
 import logging
@@ -250,7 +250,7 @@ class TracingLogHandler(logging.Handler):
     """Handler that captures logs during traced execution."""
 
     def emit(self, record: logging.LogRecord) -> None:
-        from agenttrace.core.context import get_current_run, get_current_step
+        from tracecraft.core.context import get_current_run, get_current_step
 
         buffer = _log_buffer.get()
         run = get_current_run()
@@ -286,7 +286,7 @@ def clear_captured_logs() -> None:
 
 #### 2. Extend Data Models
 
-Add logs to `AgentRun` in `src/agenttrace/core/models.py`:
+Add logs to `AgentRun` in `src/tracecraft/core/models.py`:
 
 ```python
 @dataclass
@@ -322,7 +322,7 @@ CREATE INDEX idx_logs_message ON trace_logs(message);  -- For search
 
 #### 4. TUI Log Viewer Widget
 
-**New file: `src/agenttrace/tui/widgets/log_viewer.py`**
+**New file: `src/tracecraft/tui/widgets/log_viewer.py`**
 
 ```python
 from textual.widgets import DataTable, Input
@@ -384,7 +384,7 @@ class LogViewer(Vertical):
 Add log viewer as a new mode in `app.py`:
 
 ```python
-class AgentTraceApp(App):
+class TraceCraftApp(App):
     BINDINGS = [
         # ... existing bindings ...
         ("l", "show_logs", "Logs"),
@@ -403,11 +403,11 @@ class AgentTraceApp(App):
 
 | File | Changes |
 |------|---------|
-| `src/agenttrace/instrumentation/log_capture.py` | **New** - Log capture handler |
-| `src/agenttrace/core/models.py` | Add `logs` field to `AgentRun` |
-| `src/agenttrace/storage/sqlite.py` | Add `trace_logs` table, query methods |
-| `src/agenttrace/tui/widgets/log_viewer.py` | **New** - Log display widget |
-| `src/agenttrace/tui/app.py` | Add log viewer, keybinding, layout |
+| `src/tracecraft/instrumentation/log_capture.py` | **New** - Log capture handler |
+| `src/tracecraft/core/models.py` | Add `logs` field to `AgentRun` |
+| `src/tracecraft/storage/sqlite.py` | Add `trace_logs` table, query methods |
+| `src/tracecraft/tui/widgets/log_viewer.py` | **New** - Log display widget |
+| `src/tracecraft/tui/app.py` | Add log viewer, keybinding, layout |
 
 ---
 
@@ -417,10 +417,10 @@ class AgentTraceApp(App):
 
 Evaluation capabilities exist but are code-only:
 
-- `src/agenttrace/contrib/evaluation.py` - Context managers and decorators
-- `src/agenttrace/datasets/converters.py` - Export to CSV, HuggingFace, JSONL, golden datasets
-- `src/agenttrace/integrations/ragas.py` - RAGAS integration
-- `src/agenttrace/integrations/deepeval.py` - DeepEval integration
+- `src/tracecraft/contrib/evaluation.py` - Context managers and decorators
+- `src/tracecraft/datasets/converters.py` - Export to CSV, HuggingFace, JSONL, golden datasets
+- `src/tracecraft/integrations/ragas.py` - RAGAS integration
+- `src/tracecraft/integrations/deepeval.py` - DeepEval integration
 
 The TUI has no evaluation functionality - users cannot:
 
@@ -439,7 +439,7 @@ The TUI has no evaluation functionality - users cannot:
 
 #### 1. Evaluation Set Data Model
 
-**New file: `src/agenttrace/evaluation/models.py`**
+**New file: `src/tracecraft/evaluation/models.py`**
 
 ```python
 from dataclasses import dataclass, field
@@ -554,7 +554,7 @@ CREATE TABLE eval_results (
 
 #### 3. TUI Screens
 
-**New file: `src/agenttrace/tui/screens/eval_set_builder.py`**
+**New file: `src/tracecraft/tui/screens/eval_set_builder.py`**
 
 ```python
 from textual.screen import Screen
@@ -601,7 +601,7 @@ class EvalSetBuilderScreen(Screen):
         ...
 ```
 
-**New file: `src/agenttrace/tui/screens/eval_results.py`**
+**New file: `src/tracecraft/tui/screens/eval_results.py`**
 
 ```python
 from textual.screen import Screen
@@ -635,7 +635,7 @@ class EvalResultsScreen(Screen):
 Add keybindings and actions to `app.py`:
 
 ```python
-class AgentTraceApp(App):
+class TraceCraftApp(App):
     BINDINGS = [
         # ... existing ...
         ("E", "create_eval_set", "Create Eval Set"),
@@ -656,12 +656,12 @@ class AgentTraceApp(App):
 
 | File | Changes |
 |------|---------|
-| `src/agenttrace/evaluation/models.py` | **New** - EvalSet, EvalCase, EvalResult |
-| `src/agenttrace/storage/sqlite.py` | Add eval tables, CRUD methods |
-| `src/agenttrace/tui/screens/eval_set_builder.py` | **New** - Creation screen |
-| `src/agenttrace/tui/screens/eval_results.py` | **New** - Results screen |
-| `src/agenttrace/tui/app.py` | Add keybindings, screen navigation |
-| `src/agenttrace/evaluation/runner.py` | **New** - Orchestrate evaluation runs |
+| `src/tracecraft/evaluation/models.py` | **New** - EvalSet, EvalCase, EvalResult |
+| `src/tracecraft/storage/sqlite.py` | Add eval tables, CRUD methods |
+| `src/tracecraft/tui/screens/eval_set_builder.py` | **New** - Creation screen |
+| `src/tracecraft/tui/screens/eval_results.py` | **New** - Results screen |
+| `src/tracecraft/tui/app.py` | Add keybindings, screen navigation |
+| `src/tracecraft/evaluation/runner.py` | **New** - Orchestrate evaluation runs |
 
 ---
 
@@ -689,7 +689,7 @@ This is time-consuming and requires expertise.
 
 #### 1. Inspector Module
 
-**New file: `src/agenttrace/evaluation/inspector.py`**
+**New file: `src/tracecraft/evaluation/inspector.py`**
 
 ```python
 from dataclasses import dataclass
@@ -834,7 +834,7 @@ class AIInspector:
 
 #### 2. TUI Integration
 
-**New file: `src/agenttrace/tui/screens/ai_inspect.py`**
+**New file: `src/tracecraft/tui/screens/ai_inspect.py`**
 
 ```python
 from textual.screen import Screen
@@ -955,10 +955,10 @@ class EvalResultsScreen(Screen):
 
 | File | Changes |
 |------|---------|
-| `src/agenttrace/evaluation/inspector.py` | **New** - AI inspection logic |
-| `src/agenttrace/tui/screens/ai_inspect.py` | **New** - Single case inspection |
-| `src/agenttrace/tui/screens/batch_inspect.py` | **New** - Batch pattern analysis |
-| `src/agenttrace/tui/screens/eval_results.py` | Add AI inspect keybindings |
+| `src/tracecraft/evaluation/inspector.py` | **New** - AI inspection logic |
+| `src/tracecraft/tui/screens/ai_inspect.py` | **New** - Single case inspection |
+| `src/tracecraft/tui/screens/batch_inspect.py` | **New** - Batch pattern analysis |
+| `src/tracecraft/tui/screens/eval_results.py` | Add AI inspect keybindings |
 
 ---
 
@@ -992,4 +992,4 @@ All four features are recommended for implementation:
 | Evaluation Sets in TUI | No-code evaluation, iteration | UI complexity, evaluator integration |
 | AI Inspect | Automated root cause analysis | LLM cost, response quality |
 
-Each feature builds naturally on AgentTrace's existing architecture and addresses genuine workflow gaps for LLM application developers.
+Each feature builds naturally on TraceCraft's existing architecture and addresses genuine workflow gaps for LLM application developers.

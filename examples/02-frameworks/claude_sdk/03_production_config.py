@@ -3,7 +3,7 @@
 Claude Agent SDK - Production Configuration
 
 Demonstrates production-ready configuration patterns for tracing
-Claude agents with AgentTrace.
+Claude agents with TraceCraft.
 
 This example shows:
 - Environment-aware configuration
@@ -13,7 +13,7 @@ This example shows:
 - Error handling
 
 Prerequisites:
-    - pip install agenttrace claude-code-sdk
+    - pip install tracecraft claude-code-sdk
     - ANTHROPIC_API_KEY environment variable
 
 Usage:
@@ -25,23 +25,23 @@ from __future__ import annotations
 import asyncio
 import os
 
-from agenttrace import AgentTraceRuntime
-from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
-from agenttrace.core.config import (
-    AgentTraceConfig,
+from tracecraft import TraceCraftRuntime
+from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
+from tracecraft.core.config import (
     ProcessorOrder,
     RedactionConfig,
     SamplingConfig,
+    TraceCraftConfig,
 )
 
 
-def create_production_runtime() -> tuple[AgentTraceRuntime, AgentTraceConfig]:
+def create_production_runtime() -> tuple[TraceCraftRuntime, TraceCraftConfig]:
     """Create a production-optimized runtime.
 
     Returns:
         Tuple of (runtime, config) for access to configuration settings.
     """
-    config = AgentTraceConfig(
+    config = TraceCraftConfig(
         service_name="claude-agent-production",
         # Processor ordering: redact PII before sampling decision
         processor_order=ProcessorOrder.SAFETY,
@@ -63,7 +63,7 @@ def create_production_runtime() -> tuple[AgentTraceRuntime, AgentTraceConfig]:
         jsonl_path="traces/claude_agent.jsonl",
     )
 
-    runtime = AgentTraceRuntime(
+    runtime = TraceCraftRuntime(
         console=config.console_enabled,
         jsonl=config.jsonl_enabled,
         jsonl_path=config.jsonl_path,
@@ -72,13 +72,13 @@ def create_production_runtime() -> tuple[AgentTraceRuntime, AgentTraceConfig]:
     return runtime, config
 
 
-def create_development_runtime() -> tuple[AgentTraceRuntime, AgentTraceConfig]:
+def create_development_runtime() -> tuple[TraceCraftRuntime, TraceCraftConfig]:
     """Create a development-optimized runtime.
 
     Returns:
         Tuple of (runtime, config) for access to configuration settings.
     """
-    config = AgentTraceConfig(
+    config = TraceCraftConfig(
         service_name="claude-agent-dev",
         # Full capture in development
         sampling=SamplingConfig(rate=1.0),
@@ -89,7 +89,7 @@ def create_development_runtime() -> tuple[AgentTraceRuntime, AgentTraceConfig]:
         jsonl_enabled=True,
     )
 
-    runtime = AgentTraceRuntime(
+    runtime = TraceCraftRuntime(
         console=config.console_enabled,
         jsonl=config.jsonl_enabled,
         config=config,
@@ -109,7 +109,7 @@ async def main() -> None:
         runtime, config = create_development_runtime()
         print("Using DEVELOPMENT configuration")
 
-    tracer = ClaudeAgentTracer(runtime=runtime)
+    tracer = ClaudeTraceCraftr(runtime=runtime)
 
     print("\nConfiguration:")
     print(f"  Service: {config.service_name}")
@@ -165,13 +165,13 @@ def print_usage_example() -> None:
     print(
         """
 ```python
-from agenttrace import AgentTraceRuntime
-from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+from tracecraft import TraceCraftRuntime
+from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 from claude_code_sdk import query
 
 # Production configuration
 runtime = create_production_runtime()
-tracer = ClaudeAgentTracer(runtime=runtime)
+tracer = ClaudeTraceCraftr(runtime=runtime)
 
 with runtime.run("task_name") as run:
     async for message in query(

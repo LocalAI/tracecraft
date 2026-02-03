@@ -1,1 +1,1 @@
-"""Integration tests for AgentTrace."""
+"""Integration tests for TraceCraft."""

@@ -7,7 +7,7 @@ OpenTelemetry’s GenAI semantic conventions are explicitly in a “Development�
 This matters because you cannot rely on “prompt/completion as span attributes” staying stable, and some backends already feel this pain when semconv versions change.  ￼
  2. Polyglot schema: support both OTel GenAI and OpenInference namespaces
 OpenInference defines agent-native kinds and conventions (tool, retriever, etc.) and is what Phoenix and other AI-native systems expect.  ￼
-AgentTrace TAL should treat this as a “dual dialect” problem, not a “pick one” problem.
+TraceCraft TAL should treat this as a “dual dialect” problem, not a “pick one” problem.
  3. Thread context propagation is a real, recurring breakage point
 OpenLLMetry documents that ThreadPoolExecutor can cause broken traces unless you explicitly propagate context.  ￼
 Gemini’s suggestion of a context-aware executor utility is very practical.
@@ -19,7 +19,7 @@ This aligns with how you should implement adapters rather than monkey-patching i
 
  5. PydanticAI is already OTel-first, so you should intercept providers rather than “add tracing”
 PydanticAI/Logfire uses the global OpenTelemetry providers by default and supports providing a tracer_provider.  ￼
-So AgentTrace should integrate by providing or wrapping the TracerProvider and enforcing governance there.
+So TraceCraft should integrate by providing or wrapping the TracerProvider and enforcing governance there.
  6. Governance via SpanProcessor has limits: mutation at on_end is not uniformly supported
 The spec ecosystem has long-running issues about mutating spans at on_end and the immutability model of ReadableSpan in some languages.  ￼
 So your redaction design must not assume you can safely mutate ended spans. You should design for “sanitize before export” (export-time transform) and/or “sanitize at capture time” (recommended for strict environments).
@@ -31,13 +31,13 @@ Gemini’s D3 collapsible tree plus a simple timeline view is a compelling wedge
 
 ⸻
 
-Updated Research Report: AgentTrace TAL Implementation Blueprint
+Updated Research Report: TraceCraft TAL Implementation Blueprint
 
 1) Core dependency stack and why
 
 OpenTelemetry foundations
 
-AgentTrace TAL should be built on:
+TraceCraft TAL should be built on:
  • opentelemetry-api, opentelemetry-sdk
  • opentelemetry-exporter-otlp (HTTP and/or gRPC)
  • A configurable TracerProvider, IdGenerator, Sampler, and SpanProcessors pipeline
@@ -47,7 +47,7 @@ Why: OTel is the only realistic “route anywhere” substrate, and GenAI conven
 Build on OpenLLMetry for library-level instrumentation
 
 OpenLLMetry already focuses on instrumenting common LLM libraries and documents real-world pitfalls like threading context propagation.  ￼
-AgentTrace should treat OpenLLMetry as the “span capture engine” for low-level calls, and focus on:
+TraceCraft should treat OpenLLMetry as the “span capture engine” for low-level calls, and focus on:
  • agent-native structure
  • local-first DX
  • governance
@@ -76,7 +76,7 @@ Why you need this
 
 Concrete approach
 
-AgentTrace TAL should maintain a canonical internal schema, then generate:
+TraceCraft TAL should maintain a canonical internal schema, then generate:
  • OTel GenAI attributes and events (gen_ai.* plus GenAI events)
  • OpenInference attributes (input.value, output.value, tool.name, retrieval docs, span kinds)
 
@@ -100,8 +100,8 @@ A recurring pain point: OTel context does not automatically propagate into threa
 
 Implementation requirement
 Ship a tiny utility module:
- • agenttrace.contrib.context.propagating_executor.ThreadPoolExecutor
- • agenttrace.contrib.context.wrap_callable(copy_context().run(...))
+ • tracecraft.contrib.context.propagating_executor.ThreadPoolExecutor
+ • tracecraft.contrib.context.wrap_callable(copy_context().run(...))
 
 And document it as:
  • “Use this executor for parallel tool calls or embedding calls that run in threads.”
@@ -151,9 +151,9 @@ PydanticAI / Logfire integration
 
 This is interception, not instrumentation:
  • Logfire config sets global tracer provider by default and allows setting custom providers.  ￼
-So AgentTrace should offer:
- • agenttrace.integrations.pydanticai.configure(tracer_provider=...)
- • or a “wrap provider” mode that installs AgentTrace processors/exporters while letting Logfire span creation continue
+So TraceCraft should offer:
+ • tracecraft.integrations.pydanticai.configure(tracer_provider=...)
+ • or a “wrap provider” mode that installs TraceCraft processors/exporters while letting Logfire span creation continue
 
 ⸻
 

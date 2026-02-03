@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun
+from tracecraft.core.models import AgentRun
 
 
 class TestCloudTraceContextPropagator:
@@ -19,7 +19,7 @@ class TestCloudTraceContextPropagator:
 
     def test_inject_creates_both_headers(self, sample_run: AgentRun) -> None:
         """inject should create both W3C and Cloud Trace headers by default."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -33,7 +33,7 @@ class TestCloudTraceContextPropagator:
 
     def test_inject_legacy_format(self, sample_run: AgentRun) -> None:
         """inject with use_legacy_format should create Cloud Trace header."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator(use_legacy_format=True)
         carrier: dict[str, str] = {}
@@ -48,7 +48,7 @@ class TestCloudTraceContextPropagator:
 
     def test_inject_cloud_trace_format(self, sample_run: AgentRun) -> None:
         """inject should create Cloud Trace in format TRACE_ID/SPAN_ID;o=OPTIONS."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -70,7 +70,7 @@ class TestCloudTraceContextPropagator:
 
     def test_inject_session_id_header(self, sample_run_with_session: AgentRun) -> None:
         """inject should add session ID header when available."""
-        from agenttrace.propagation.cloudtrace import (
+        from tracecraft.propagation.cloudtrace import (
             CLOUD_TRACE_SESSION_HEADER,
             CloudTraceContextPropagator,
         )
@@ -85,7 +85,7 @@ class TestCloudTraceContextPropagator:
 
     def test_inject_no_session_id_when_none(self, sample_run: AgentRun) -> None:
         """inject should not add session ID header when not set."""
-        from agenttrace.propagation.cloudtrace import (
+        from tracecraft.propagation.cloudtrace import (
             CLOUD_TRACE_SESSION_HEADER,
             CloudTraceContextPropagator,
         )
@@ -99,7 +99,7 @@ class TestCloudTraceContextPropagator:
 
     def test_inject_sampled_flag(self, sample_run: AgentRun) -> None:
         """inject should respect sampled parameter."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
 
@@ -115,7 +115,7 @@ class TestCloudTraceContextPropagator:
 
     def test_extract_parses_w3c_header(self) -> None:
         """extract should parse W3C traceparent headers first."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         carrier = {"traceparent": "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"}
@@ -131,7 +131,7 @@ class TestCloudTraceContextPropagator:
 
     def test_extract_parses_cloud_trace_header(self) -> None:
         """extract should parse legacy Cloud Trace header."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         # Span ID in decimal
@@ -151,7 +151,7 @@ class TestCloudTraceContextPropagator:
 
     def test_extract_handles_unsampled(self) -> None:
         """extract should handle unsampled flag."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         carrier = {"X-Cloud-Trace-Context": "105445aa7843bc8bf206b12000100000/123;o=0"}
@@ -164,7 +164,7 @@ class TestCloudTraceContextPropagator:
 
     def test_extract_with_session_id(self) -> None:
         """extract should return session ID when present."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         carrier = {
@@ -180,7 +180,7 @@ class TestCloudTraceContextPropagator:
 
     def test_extract_returns_none_for_missing_header(self) -> None:
         """extract should return None when no trace header is present."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -191,7 +191,7 @@ class TestCloudTraceContextPropagator:
 
     def test_extract_returns_none_for_invalid_format(self) -> None:
         """extract should return None for invalid Cloud Trace header."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
 
@@ -207,7 +207,7 @@ class TestCloudTraceContextPropagator:
 
     def test_extract_without_options(self) -> None:
         """extract should handle Cloud Trace header without options."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         carrier = {"X-Cloud-Trace-Context": "105445aa7843bc8bf206b12000100000/123"}
@@ -224,7 +224,7 @@ class TestCloudTraceW3CConversion:
 
     def test_to_w3c_format(self) -> None:
         """to_w3c_format should convert Cloud Trace to traceparent."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         # Span ID 123 in hex is 000000000000007b
@@ -243,7 +243,7 @@ class TestCloudTraceW3CConversion:
 
     def test_to_w3c_format_unsampled(self) -> None:
         """to_w3c_format should handle unsampled traces."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         cloud_trace = "105445aa7843bc8bf206b12000100000/123;o=0"
@@ -255,7 +255,7 @@ class TestCloudTraceW3CConversion:
 
     def test_to_w3c_format_invalid_returns_none(self) -> None:
         """to_w3c_format should return None for invalid input."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
 
@@ -265,7 +265,7 @@ class TestCloudTraceW3CConversion:
 
     def test_from_w3c_format(self) -> None:
         """from_w3c_format should convert traceparent to Cloud Trace."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         traceparent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"
@@ -278,7 +278,7 @@ class TestCloudTraceW3CConversion:
 
     def test_from_w3c_format_unsampled(self) -> None:
         """from_w3c_format should handle unsampled traces."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         traceparent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00"
@@ -290,7 +290,7 @@ class TestCloudTraceW3CConversion:
 
     def test_from_w3c_format_invalid_returns_none(self) -> None:
         """from_w3c_format should return None for invalid input."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
 
@@ -304,7 +304,7 @@ class TestCloudTraceHelpers:
 
     def test_span_id_to_decimal(self) -> None:
         """span_id_to_decimal should convert hex to decimal string."""
-        from agenttrace.propagation.cloudtrace import span_id_to_decimal
+        from tracecraft.propagation.cloudtrace import span_id_to_decimal
 
         # b7ad6b7169203331 in decimal is 13235353014750950193
         result = span_id_to_decimal("b7ad6b7169203331")
@@ -313,7 +313,7 @@ class TestCloudTraceHelpers:
 
     def test_decimal_to_span_id(self) -> None:
         """decimal_to_span_id should convert decimal to 16-char hex."""
-        from agenttrace.propagation.cloudtrace import decimal_to_span_id
+        from tracecraft.propagation.cloudtrace import decimal_to_span_id
 
         result = decimal_to_span_id("13235353014750950193")
 
@@ -322,7 +322,7 @@ class TestCloudTraceHelpers:
 
     def test_decimal_to_span_id_small_number(self) -> None:
         """decimal_to_span_id should pad small numbers."""
-        from agenttrace.propagation.cloudtrace import decimal_to_span_id
+        from tracecraft.propagation.cloudtrace import decimal_to_span_id
 
         result = decimal_to_span_id("123")
 
@@ -335,7 +335,7 @@ class TestCloudTraceContextIntegration:
 
     def test_inject_extract_roundtrip(self, sample_run: AgentRun) -> None:
         """inject and extract should round-trip correctly."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -354,7 +354,7 @@ class TestCloudTraceContextIntegration:
 
     def test_inject_extract_with_session(self, sample_run_with_session: AgentRun) -> None:
         """inject and extract should preserve session ID."""
-        from agenttrace.propagation.cloudtrace import CloudTraceContextPropagator
+        from tracecraft.propagation.cloudtrace import CloudTraceContextPropagator
 
         propagator = CloudTraceContextPropagator()
         carrier: dict[str, str] = {}

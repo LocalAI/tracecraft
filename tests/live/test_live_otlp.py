@@ -22,12 +22,12 @@ class TestLiveOTLPBasic:
     @requires_otlp_endpoint
     def test_otlp_export_simple_run(self, otlp_endpoint: str) -> None:
         """Test that a simple run exports to OTLP collector."""
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent, trace_tool
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent, trace_tool
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=False,
             otlp=True,
@@ -67,12 +67,12 @@ class TestLiveOTLPBasic:
         """Test OTLP export with real LLM call."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=False,
             otlp=True,
@@ -112,12 +112,12 @@ class TestLiveOTLPSchemaDialects:
     @requires_otlp_endpoint
     def test_otel_genai_dialect(self, otlp_endpoint: str) -> None:
         """Test export with OTel GenAI semantic conventions."""
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=False,
             otlp=True,
@@ -143,12 +143,12 @@ class TestLiveOTLPSchemaDialects:
     @requires_otlp_endpoint
     def test_openinference_dialect(self, otlp_endpoint: str) -> None:
         """Test export with OpenInference semantic conventions."""
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=False,
             otlp=True,
@@ -174,12 +174,12 @@ class TestLiveOTLPSchemaDialects:
     @requires_otlp_endpoint
     def test_both_dialects(self, otlp_endpoint: str) -> None:
         """Test export with both schema dialects."""
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=False,
             otlp=True,
@@ -209,12 +209,12 @@ class TestLiveOTLPHierarchy:
     @requires_otlp_endpoint
     def test_nested_spans_hierarchy(self, otlp_endpoint: str) -> None:
         """Test that nested spans maintain correct parent-child relationships."""
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent, trace_tool
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent, trace_tool
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=False,
             otlp=True,
@@ -267,12 +267,12 @@ class TestLiveOTLPComplex:
         """Test exporting a complete agent workflow with tools."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=False,
             otlp=True,
@@ -329,12 +329,12 @@ class TestLiveOTLPComplex:
 
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=False,
             otlp=True,

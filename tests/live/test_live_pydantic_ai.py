@@ -27,15 +27,15 @@ class TestLivePydanticAIBasic:
 
         from pydantic_ai import Agent
 
-        import agenttrace
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
         # Note: PydanticAI uses Logfire/OpenTelemetry internally
         # We intercept via our SpanProcessor
-        runtime = agenttrace.init(console=True, jsonl=True, jsonl_path=temp_jsonl_path)
-        processor = AgentTraceSpanProcessor()
+        runtime = tracecraft.init(console=True, jsonl=True, jsonl_path=temp_jsonl_path)
+        processor = TraceCraftSpanProcessor()
 
         # Create a simple agent
         agent = Agent(
@@ -64,13 +64,13 @@ class TestLivePydanticAIBasic:
         from pydantic import BaseModel
         from pydantic_ai import Agent
 
-        import agenttrace
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        agenttrace.init(console=True, jsonl=False)
-        processor = AgentTraceSpanProcessor()
+        tracecraft.init(console=True, jsonl=False)
+        processor = TraceCraftSpanProcessor()
 
         class MathResult(BaseModel):
             expression: str
@@ -105,13 +105,13 @@ class TestLivePydanticAITools:
 
         from pydantic_ai import Agent
 
-        import agenttrace
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
-        from agenttrace.core.context import run_context as trace_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+        from tracecraft.core.context import run_context as trace_context
+        from tracecraft.core.models import AgentRun
 
-        agenttrace.init(console=True, jsonl=False)
-        processor = AgentTraceSpanProcessor()
+        tracecraft.init(console=True, jsonl=False)
+        processor = TraceCraftSpanProcessor()
 
         agent = Agent(
             live_test_model,
@@ -151,13 +151,13 @@ class TestLivePydanticAIAsync:
 
         from pydantic_ai import Agent
 
-        import agenttrace
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        agenttrace.init(console=True, jsonl=False)
-        processor = AgentTraceSpanProcessor()
+        tracecraft.init(console=True, jsonl=False)
+        processor = TraceCraftSpanProcessor()
 
         agent = Agent(
             live_test_model,
@@ -186,13 +186,13 @@ class TestLivePydanticAIStreaming:
 
         from pydantic_ai import Agent
 
-        import agenttrace
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        agenttrace.init(console=True, jsonl=False)
-        processor = AgentTraceSpanProcessor()
+        tracecraft.init(console=True, jsonl=False)
+        processor = TraceCraftSpanProcessor()
 
         agent = Agent(
             live_test_model,
@@ -225,13 +225,13 @@ class TestLivePydanticAIComplex:
 
         from pydantic_ai import Agent
 
-        import agenttrace
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        runtime = agenttrace.init(console=True, jsonl=False)
-        processor = AgentTraceSpanProcessor()
+        runtime = tracecraft.init(console=True, jsonl=False)
+        processor = TraceCraftSpanProcessor()
 
         agent = Agent(
             live_test_model,

@@ -10,30 +10,30 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
-from agenttrace.core.config import (
-    AgentTraceConfig,
+from tracecraft.core.config import (
     ExporterConfig,
     RedactionConfig,
     SamplingConfig,
+    TraceCraftConfig,
     load_config,
     load_config_from_env,
 )
-from agenttrace.processors.redaction import RedactionMode
+from tracecraft.processors.redaction import RedactionMode
 
 
-class TestAgentTraceConfig:
-    """Tests for AgentTraceConfig dataclass."""
+class TestTraceCraftConfig:
+    """Tests for TraceCraftConfig dataclass."""
 
     def test_config_default_values(self) -> None:
         """Should have sensible defaults."""
-        config = AgentTraceConfig()
+        config = TraceCraftConfig()
         assert config.console_enabled is True
         assert config.jsonl_enabled is True
-        assert config.service_name == "agenttrace"
+        assert config.service_name == "tracecraft"
 
     def test_config_custom_values(self) -> None:
         """Should accept custom values."""
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             service_name="my-service",
             console_enabled=False,
             jsonl_enabled=True,
@@ -45,14 +45,14 @@ class TestAgentTraceConfig:
 
     def test_config_immutable_defaults(self) -> None:
         """Default instances should not share mutable state."""
-        config1 = AgentTraceConfig()
-        config2 = AgentTraceConfig()
+        config1 = TraceCraftConfig()
+        config2 = TraceCraftConfig()
         config1.tags.append("test")
         assert "test" not in config2.tags
 
     def test_config_with_nested_configs(self) -> None:
         """Should support nested configuration objects."""
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             redaction=RedactionConfig(enabled=True),
             sampling=SamplingConfig(rate=0.5),
         )
@@ -152,31 +152,31 @@ class TestLoadConfigFromEnv:
 
     def test_env_var_service_name(self) -> None:
         """Should load service name from env var."""
-        with patch.dict(os.environ, {"AGENTTRACE_SERVICE_NAME": "test-service"}):
+        with patch.dict(os.environ, {"TRACECRAFT_SERVICE_NAME": "test-service"}):
             config = load_config_from_env()
             assert config.service_name == "test-service"
 
     def test_env_var_console_enabled(self) -> None:
         """Should load console enabled from env var."""
-        with patch.dict(os.environ, {"AGENTTRACE_CONSOLE_ENABLED": "false"}):
+        with patch.dict(os.environ, {"TRACECRAFT_CONSOLE_ENABLED": "false"}):
             config = load_config_from_env()
             assert config.console_enabled is False
 
     def test_env_var_console_enabled_true(self) -> None:
         """Should parse true values correctly."""
-        with patch.dict(os.environ, {"AGENTTRACE_CONSOLE_ENABLED": "true"}):
+        with patch.dict(os.environ, {"TRACECRAFT_CONSOLE_ENABLED": "true"}):
             config = load_config_from_env()
             assert config.console_enabled is True
 
     def test_env_var_jsonl_path(self) -> None:
         """Should load JSONL path from env var."""
-        with patch.dict(os.environ, {"AGENTTRACE_JSONL_PATH": "/custom/path.jsonl"}):
+        with patch.dict(os.environ, {"TRACECRAFT_JSONL_PATH": "/custom/path.jsonl"}):
             config = load_config_from_env()
             assert config.jsonl_path == "/custom/path.jsonl"
 
     def test_env_var_sampling_rate(self) -> None:
         """Should load sampling rate from env var."""
-        with patch.dict(os.environ, {"AGENTTRACE_SAMPLING_RATE": "0.5"}):
+        with patch.dict(os.environ, {"TRACECRAFT_SAMPLING_RATE": "0.5"}):
             config = load_config_from_env()
             assert config.sampling.rate == 0.5
 
@@ -185,8 +185,8 @@ class TestLoadConfigFromEnv:
         with patch.dict(
             os.environ,
             {
-                "AGENTTRACE_OTLP_ENABLED": "true",
-                "AGENTTRACE_OTLP_ENDPOINT": "http://collector:4317",
+                "TRACECRAFT_OTLP_ENABLED": "true",
+                "TRACECRAFT_OTLP_ENDPOINT": "http://collector:4317",
             },
         ):
             config = load_config_from_env()
@@ -196,20 +196,20 @@ class TestLoadConfigFromEnv:
     def test_env_var_redaction_enabled(self) -> None:
         """Should load redaction enabled from env var."""
         # Redaction is enabled by default, verify explicit true still works
-        with patch.dict(os.environ, {"AGENTTRACE_REDACTION_ENABLED": "true"}):
+        with patch.dict(os.environ, {"TRACECRAFT_REDACTION_ENABLED": "true"}):
             config = load_config_from_env()
             assert config.redaction.enabled is True
 
     def test_env_var_redaction_disabled(self) -> None:
         """Should be able to explicitly disable redaction via env var."""
-        with patch.dict(os.environ, {"AGENTTRACE_REDACTION_ENABLED": "false"}):
+        with patch.dict(os.environ, {"TRACECRAFT_REDACTION_ENABLED": "false"}):
             config = load_config_from_env()
             assert config.redaction.enabled is False
 
     def test_env_var_redaction_default_is_enabled(self) -> None:
         """Redaction should be enabled by default (privacy-first)."""
         with patch.dict(os.environ, {}, clear=True):
-            env = {k: v for k, v in os.environ.items() if not k.startswith("AGENTTRACE_")}
+            env = {k: v for k, v in os.environ.items() if not k.startswith("TRACECRAFT_")}
             with patch.dict(os.environ, env, clear=True):
                 config = load_config_from_env()
                 assert config.redaction.enabled is True  # Privacy-first default
@@ -217,11 +217,11 @@ class TestLoadConfigFromEnv:
     def test_env_var_defaults_when_not_set(self) -> None:
         """Should use defaults when env vars not set."""
         with patch.dict(os.environ, {}, clear=True):
-            # Clear any AGENTTRACE_ vars
-            env = {k: v for k, v in os.environ.items() if not k.startswith("AGENTTRACE_")}
+            # Clear any TRACECRAFT_ vars
+            env = {k: v for k, v in os.environ.items() if not k.startswith("TRACECRAFT_")}
             with patch.dict(os.environ, env, clear=True):
                 config = load_config_from_env()
-                assert config.service_name == "agenttrace"
+                assert config.service_name == "tracecraft"
                 assert config.console_enabled is True
 
 
@@ -231,18 +231,18 @@ class TestLoadConfig:
     def test_load_config_returns_config(self) -> None:
         """Should return a valid config object."""
         config = load_config()
-        assert isinstance(config, AgentTraceConfig)
+        assert isinstance(config, TraceCraftConfig)
 
     def test_load_config_merges_env_and_kwargs(self) -> None:
         """Should merge env vars and keyword arguments."""
-        with patch.dict(os.environ, {"AGENTTRACE_SERVICE_NAME": "env-service"}):
+        with patch.dict(os.environ, {"TRACECRAFT_SERVICE_NAME": "env-service"}):
             # Kwargs should override env vars
             config = load_config(service_name="kwarg-service")
             assert config.service_name == "kwarg-service"
 
     def test_load_config_env_fallback(self) -> None:
         """Should fall back to env vars when kwargs not provided."""
-        with patch.dict(os.environ, {"AGENTTRACE_SERVICE_NAME": "env-service"}):
+        with patch.dict(os.environ, {"TRACECRAFT_SERVICE_NAME": "env-service"}):
             config = load_config()
             assert config.service_name == "env-service"
 
@@ -252,17 +252,17 @@ class TestConfigEdgeCases:
 
     def test_config_with_empty_tags(self) -> None:
         """Should handle empty tags list."""
-        config = AgentTraceConfig(tags=[])
+        config = TraceCraftConfig(tags=[])
         assert config.tags == []
 
     def test_config_with_tags(self) -> None:
         """Should accept tags list."""
-        config = AgentTraceConfig(tags=["prod", "v1"])
+        config = TraceCraftConfig(tags=["prod", "v1"])
         assert config.tags == ["prod", "v1"]
 
     def test_config_with_path_object(self) -> None:
         """Should accept Path objects for file paths."""
-        config = AgentTraceConfig(jsonl_path=Path("/tmp/traces.jsonl"))
+        config = TraceCraftConfig(jsonl_path=Path("/tmp/traces.jsonl"))
         assert config.jsonl_path == Path("/tmp/traces.jsonl")
 
     def test_env_var_boolean_variations(self) -> None:
@@ -280,6 +280,6 @@ class TestConfigEdgeCases:
             ("no", False),
         ]
         for value, expected in test_cases:
-            with patch.dict(os.environ, {"AGENTTRACE_CONSOLE_ENABLED": value}):
+            with patch.dict(os.environ, {"TRACECRAFT_CONSOLE_ENABLED": value}):
                 config = load_config_from_env()
                 assert config.console_enabled is expected, f"Failed for {value}"

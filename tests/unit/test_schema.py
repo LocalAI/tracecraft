@@ -11,10 +11,10 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import Step, StepType
-from agenttrace.schema.canonical import SchemaDialect, SchemaEngine
-from agenttrace.schema.openinference import OpenInferenceMapper
-from agenttrace.schema.otel_genai import OTelGenAIMapper
+from tracecraft.core.models import Step, StepType
+from tracecraft.schema.canonical import SchemaDialect, SchemaEngine
+from tracecraft.schema.openinference import OpenInferenceMapper
+from tracecraft.schema.otel_genai import OTelGenAIMapper
 
 
 @pytest.fixture
@@ -294,13 +294,13 @@ class TestSchemaEngine:
         """Should include step type in common attributes."""
         engine = SchemaEngine()
         attrs = engine.map_step(llm_step)
-        assert attrs.get("agenttrace.step.type") == "llm"
+        assert attrs.get("tracecraft.step.type") == "llm"
 
     def test_engine_includes_step_name(self, llm_step: Step) -> None:
         """Should include step name in common attributes."""
         engine = SchemaEngine()
         attrs = engine.map_step(llm_step)
-        assert attrs.get("agenttrace.step.name") == "chat_completion"
+        assert attrs.get("tracecraft.step.name") == "chat_completion"
 
 
 class TestSchemaEngineEdgeCases:

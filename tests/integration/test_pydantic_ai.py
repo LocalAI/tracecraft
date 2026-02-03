@@ -10,25 +10,25 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun, StepType
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun, StepType
 
 
 class TestPydanticAIAdapter:
-    """Tests for AgentTraceSpanProcessor."""
+    """Tests for TraceCraftSpanProcessor."""
 
     def test_processor_creation(self) -> None:
         """Should create a span processor."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         assert processor is not None
 
     def test_processor_requires_active_run(self) -> None:
         """Should require an active run to capture spans."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         # No active run - should not create steps
         span = MockSpan(name="test_span")
         processor.on_start(span, parent_context=None)
@@ -37,10 +37,10 @@ class TestPydanticAIAdapter:
 
     def test_processor_with_active_run(self) -> None:
         """Should create steps when run is active."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         span = MockSpan(name="test_span")
 
         with run_context(run):
@@ -55,10 +55,10 @@ class TestSpanTypeInference:
 
     def test_infer_llm_type_from_attributes(self) -> None:
         """Should infer LLM type from gen_ai attributes."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         span = MockSpan(
             name="chat",
             attributes={
@@ -78,10 +78,10 @@ class TestSpanTypeInference:
 
     def test_infer_tool_type(self) -> None:
         """Should infer TOOL type from tool span names."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         span = MockSpan(
             name="tool:calculator",
             attributes={"tool.name": "calculator"},
@@ -97,10 +97,10 @@ class TestSpanTypeInference:
 
     def test_infer_agent_type(self) -> None:
         """Should infer AGENT type from agent span names."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         span = MockSpan(name="pydantic_ai.agent.run")
 
         with run_context(run):
@@ -112,10 +112,10 @@ class TestSpanTypeInference:
 
     def test_default_workflow_type(self) -> None:
         """Should default to WORKFLOW for unknown spans."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         span = MockSpan(name="some_operation")
 
         with run_context(run):
@@ -131,10 +131,10 @@ class TestTokenCapture:
 
     def test_capture_tokens_from_attributes(self) -> None:
         """Should capture token counts from gen_ai attributes."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         span = MockSpan(
             name="chat",
             attributes={
@@ -154,10 +154,10 @@ class TestTokenCapture:
 
     def test_update_run_totals(self) -> None:
         """Should update run total_tokens."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
 
         with run_context(run):
             # First LLM span
@@ -200,10 +200,10 @@ class TestSpanHierarchy:
 
     def test_nested_spans(self) -> None:
         """Should track span hierarchy via context."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
 
         # Note: Full hierarchy testing requires OTel context propagation
         # which is complex to mock. Basic test that spans are created.
@@ -225,10 +225,10 @@ class TestErrorHandling:
 
     def test_capture_span_error(self) -> None:
         """Should capture errors from span status."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         span = MockSpan(
             name="failing_operation",
             status=MockStatus(is_error=True, description="Connection refused"),
@@ -243,10 +243,10 @@ class TestErrorHandling:
 
     def test_error_increments_run_count(self) -> None:
         """Should increment run.error_count on errors."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
 
         with run_context(run):
             span1 = MockSpan(
@@ -279,9 +279,9 @@ class TestSpanProcessorProtocol:
 
     def test_has_required_methods(self) -> None:
         """Should implement the SpanProcessor protocol methods."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
 
         # Required SpanProcessor methods
         assert hasattr(processor, "on_start")
@@ -299,10 +299,10 @@ class TestEdgeCases:
 
     def test_span_with_no_attributes(self) -> None:
         """Should handle spans with no attributes."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         span = MockSpan(name="basic_span", attributes={})
 
         with run_context(run):
@@ -314,10 +314,10 @@ class TestEdgeCases:
 
     def test_end_without_start(self) -> None:
         """Should handle end without corresponding start."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         span = MockSpan(name="untracked")
 
         with run_context(run):
@@ -416,10 +416,10 @@ class TestThreadSafety:
         """Should handle concurrent span creation from multiple threads."""
         import threading
 
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         errors: list[Exception] = []
         num_threads = 10
 
@@ -451,10 +451,10 @@ class TestThreadSafety:
         """Should handle concurrent nested span creation."""
         import threading
 
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         errors: list[Exception] = []
         num_threads = 5
 

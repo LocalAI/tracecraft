@@ -5,7 +5,7 @@ Learn how to use context managers for grouping traces, handling
 async operations, and managing concurrent workloads.
 
 Prerequisites:
-    - AgentTrace installed (pip install agenttrace)
+    - TraceCraft installed (pip install tracecraft)
     - Completed 01_hello_world.py and 02_decorators.py
     - Basic understanding of Python async/await
 
@@ -27,11 +27,11 @@ from __future__ import annotations
 
 import asyncio
 
-import agenttrace
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+import tracecraft
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
-# Initialize AgentTrace
-runtime = agenttrace.init(console=True, jsonl=True)
+# Initialize TraceCraft
+runtime = tracecraft.init(console=True, jsonl=True)
 
 
 # ============================================================================
@@ -226,8 +226,8 @@ def demo_manual_management() -> None:
 
     from datetime import UTC, datetime
 
-    from agenttrace.core.context import run_context
-    from agenttrace.core.models import AgentRun
+    from tracecraft.core.context import run_context
+    from tracecraft.core.models import AgentRun
 
     # Create a run manually
     run = AgentRun(name="manual_example", start_time=datetime.now(UTC))
@@ -287,7 +287,7 @@ async def run_all_demos() -> None:
 def main() -> None:
     """Run the context managers example."""
     print("=" * 60)
-    print("AgentTrace Context Managers Example")
+    print("TraceCraft Context Managers Example")
     print("=" * 60)
 
     # Sync patterns

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""OpenAI Streaming - Trace streaming responses with AgentTrace.
+"""OpenAI Streaming - Trace streaming responses with TraceCraft.
 
 Demonstrates how to trace OpenAI streaming responses at the token level
-using AgentTrace decorators.
+using TraceCraft decorators.
 
 Prerequisites:
     - pip install openai
@@ -29,10 +29,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
-from agenttrace.instrumentation.decorators import trace_llm
+import tracecraft
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from tracecraft.instrumentation.decorators import trace_llm
 
 
 def check_prerequisites() -> bool:
@@ -51,8 +51,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -286,7 +286,7 @@ def multi_turn_example() -> None:
 def main() -> None:
     """Run the OpenAI streaming examples."""
     print("=" * 60)
-    print("AgentTrace OpenAI Streaming")
+    print("TraceCraft OpenAI Streaming")
     print("=" * 60)
 
     basic_streaming_example()

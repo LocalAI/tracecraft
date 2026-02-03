@@ -4,12 +4,12 @@ Tests for environment configuration system.
 
 import pytest
 
-from agenttrace.core.env_config import (
-    AgentTraceEnvConfig,
+from tracecraft.core.env_config import (
     EnvironmentSettings,
     ExporterConfig,
     ProcessorConfig,
     StorageConfig,
+    TraceCraftEnvConfig,
     _expand_env_vars,
     get_config,
     load_config,
@@ -95,12 +95,12 @@ class TestEnvironmentValidation:
         """Known environments should not trigger warnings."""
         import warnings
 
-        from agenttrace.core.env_config import KNOWN_ENVIRONMENTS
+        from tracecraft.core.env_config import KNOWN_ENVIRONMENTS
 
         for env in KNOWN_ENVIRONMENTS:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                config = AgentTraceEnvConfig(env=env)
+                config = TraceCraftEnvConfig(env=env)
                 # Should not have any warnings
                 user_warnings = [x for x in w if issubclass(x.category, UserWarning)]
                 assert len(user_warnings) == 0, f"Unexpected warning for known env: {env}"
@@ -112,7 +112,7 @@ class TestEnvironmentValidation:
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            config = AgentTraceEnvConfig(env="my_custom_env")
+            config = TraceCraftEnvConfig(env="my_custom_env")
             # Should have exactly one UserWarning
             user_warnings = [x for x in w if issubclass(x.category, UserWarning)]
             assert len(user_warnings) == 1
@@ -127,10 +127,10 @@ class TestEnvironmentValidation:
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             # Known environments in different cases should normalize
-            config = AgentTraceEnvConfig(env="PRODUCTION")
+            config = TraceCraftEnvConfig(env="PRODUCTION")
             assert config.env == "production"
 
-            config = AgentTraceEnvConfig(env="Development")
+            config = TraceCraftEnvConfig(env="Development")
             assert config.env == "development"
 
     def test_arbitrary_environment_string_works(self):
@@ -139,32 +139,32 @@ class TestEnvironmentValidation:
 
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
-            config = AgentTraceEnvConfig(env="canary")  # Known env
+            config = TraceCraftEnvConfig(env="canary")  # Known env
             assert config.env == "canary"
 
-            config = AgentTraceEnvConfig(env="blue-green-deploy")  # Unknown
+            config = TraceCraftEnvConfig(env="blue-green-deploy")  # Unknown
             assert config.env == "blue-green-deploy"
 
 
-class TestAgentTraceEnvConfig:
-    """Tests for AgentTraceEnvConfig model."""
+class TestTraceCraftEnvConfig:
+    """Tests for TraceCraftEnvConfig model."""
 
     def test_defaults(self):
         """Test default values."""
-        config = AgentTraceEnvConfig()
+        config = TraceCraftEnvConfig()
         assert config.env == "development"
         assert config.default is not None
         assert config.environments == {}
 
     def test_get_settings_default(self):
         """Test get_settings returns default when no env override."""
-        config = AgentTraceEnvConfig()
+        config = TraceCraftEnvConfig()
         settings = config.get_settings()
         assert settings.storage.type == "jsonl"
 
     def test_get_settings_with_override(self):
         """Test get_settings merges environment overrides."""
-        config = AgentTraceEnvConfig(
+        config = TraceCraftEnvConfig(
             env="production",
             default=EnvironmentSettings(
                 storage=StorageConfig(type="jsonl"),
@@ -187,7 +187,7 @@ class TestAgentTraceEnvConfig:
 
     def test_get_settings_missing_env(self):
         """Test get_settings returns default for missing environment."""
-        config = AgentTraceEnvConfig(env="staging")
+        config = TraceCraftEnvConfig(env="staging")
         settings = config.get_settings()
         assert settings.storage.type == "jsonl"
 
@@ -245,8 +245,8 @@ class TestLoadConfig:
         assert config.env == "production"
 
     def test_load_from_env_var(self, monkeypatch):
-        """Test loading env from AGENTTRACE_ENV."""
-        monkeypatch.setenv("AGENTTRACE_ENV", "staging")
+        """Test loading env from TRACECRAFT_ENV."""
+        monkeypatch.setenv("TRACECRAFT_ENV", "staging")
         config = load_config()
         assert config.env == "staging"
 
@@ -254,7 +254,7 @@ class TestLoadConfig:
         """Test loading from YAML config file."""
         pytest.importorskip("yaml")
 
-        config_dir = tmp_path / ".agenttrace"
+        config_dir = tmp_path / ".tracecraft"
         config_dir.mkdir()
         config_file = config_dir / "config.yaml"
 
@@ -294,7 +294,7 @@ env: test
         """Test that env parameter overrides file value."""
         pytest.importorskip("yaml")
 
-        config_dir = tmp_path / ".agenttrace"
+        config_dir = tmp_path / ".tracecraft"
         config_dir.mkdir()
         config_file = config_dir / "config.yaml"
 
@@ -335,7 +335,7 @@ class TestGlobalConfig:
 
     def test_set_config(self):
         """Test set_config sets global config."""
-        custom_config = AgentTraceEnvConfig(env="staging")
+        custom_config = TraceCraftEnvConfig(env="staging")
         set_config(custom_config)
 
         config = get_config()

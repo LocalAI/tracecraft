@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""LangChain Streaming - Trace streaming responses with AgentTrace.
+"""LangChain Streaming - Trace streaming responses with TraceCraft.
 
 Demonstrates how to trace LangChain streaming responses, including
 token-by-token output and streaming callbacks.
@@ -29,10 +29,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -51,8 +51,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -68,7 +68,7 @@ def basic_streaming_example() -> None:
 
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, streaming=True)
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_basic_streaming", start_time=datetime.now(UTC))
 
     collected_tokens = []
@@ -108,7 +108,7 @@ def streaming_chain_example() -> None:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, streaming=True)
     chain = prompt | llm | StrOutputParser()
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_streaming_chain", start_time=datetime.now(UTC))
 
     collected_output = []
@@ -138,7 +138,7 @@ async def async_streaming_example() -> None:
 
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, streaming=True)
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_async_streaming", start_time=datetime.now(UTC))
 
     collected_tokens = []
@@ -177,7 +177,7 @@ def streaming_with_events_example() -> None:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7, streaming=True)
     chain = prompt | llm | StrOutputParser()
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_streaming_events", start_time=datetime.now(UTC))
 
     print("Haiku: ", end="", flush=True)
@@ -207,7 +207,7 @@ def batch_streaming_example() -> None:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     chain = prompt | llm | StrOutputParser()
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_batch_streaming", start_time=datetime.now(UTC))
 
     words = [{"word": "hello"}, {"word": "world"}, {"word": "goodbye"}]
@@ -226,7 +226,7 @@ def batch_streaming_example() -> None:
 def main() -> None:
     """Run the LangChain streaming examples."""
     print("=" * 60)
-    print("AgentTrace LangChain Streaming")
+    print("TraceCraft LangChain Streaming")
     print("=" * 60)
 
     basic_streaming_example()

@@ -1,5 +1,5 @@
 {
-  "name": "AgentTrace Development",
+  "name": "TraceCraft Development",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."

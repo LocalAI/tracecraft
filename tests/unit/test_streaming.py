@@ -10,8 +10,8 @@ import threading
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun, Step, StepType
 
 
 class TestStepStreamingFields:
@@ -67,9 +67,9 @@ class TestLangChainStreaming:
 
     def test_on_llm_new_token_captures_tokens(self) -> None:
         """on_llm_new_token should capture streaming tokens."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -94,9 +94,9 @@ class TestLangChainStreaming:
 
     def test_streaming_tokens_thread_safe(self) -> None:
         """Streaming token capture should be thread-safe."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         run_id = uuid4()
         errors: list[Exception] = []
@@ -137,9 +137,9 @@ class TestLlamaIndexStreaming:
 
     def test_on_llm_stream_captures_chunks(self) -> None:
         """on_llm_stream should capture streaming chunks."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -170,9 +170,9 @@ class TestPydanticAIStreaming:
 
     def test_on_event_captures_streaming_chunks(self) -> None:
         """on_event should capture gen_ai streaming chunks."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -211,9 +211,9 @@ class TestPydanticAIStreaming:
 
     def test_on_event_ignores_non_streaming_events(self) -> None:
         """on_event should ignore non-streaming event types."""
-        from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+        from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
-        processor = AgentTraceSpanProcessor()
+        processor = TraceCraftSpanProcessor()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):

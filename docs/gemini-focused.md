@@ -1,16 +1,16 @@
-Comprehensive Architectural Specification and Implementation Strategy for AgentTrace Telemetry Abstraction Layer (TAL)
+Comprehensive Architectural Specification and Implementation Strategy for TraceCraft Telemetry Abstraction Layer (TAL)
 
 1. Introduction: The Crisis of Observability in Agentic Systems
 The emergence of autonomous agentic frameworks—principally LangChain, LlamaIndex, and PydanticAI—has precipitated a fundamental shift in software architecture, transitioning from deterministic, procedural execution to non-deterministic, probabilistic reasoning loops. This paradigm shift has exposed severe deficiencies in traditional Application Performance Monitoring (APM) and observability standards. While OpenTelemetry (OTel) has established itself as the ubiquitous transport protocol for distributed tracing, its standard semantic conventions, designed primarily for HTTP-based microservices, fail to capture the cognitive nuances of agentic behaviors such as multi-step reasoning, tool selection, retrieval-augmented generation (RAG), and self-reflection.
-The AgentTrace Telemetry Abstraction Layer (TAL) is proposed as a necessary infrastructure component to bridge this gap. It functions not merely as a passive logger but as an active, intelligent middleware that intercepts, normalizes, governs, and semanticizes the execution flow of AI agents. The complexity of this undertaking is compounded by the fragmentation of the ecosystem: distinct frameworks employ radically different internal event models—LangChain utilizes a callback system, LlamaIndex employs a hierarchical event dispatcher, and PydanticAI integrates natively with OpenTelemetry but through an opinionated lens (Logfire). Furthermore, the standardization landscape is in flux, characterized by a schism between the official, albeit nascent, OpenTelemetry Semantic Conventions for Generative AI and the industry-led OpenInference standard, which offers richer, albeit non-standard, attribute schemas.
-This report provides an exhaustive, implementation-grade blueprint for the AgentTrace TAL. It dissects the architectural requirements for building a robust runtime capable of handling asynchronous context propagation in Python, specifies the precise adaptation logic required for major agent frameworks, defines a unified semantic schema that satisfies competing standards, and details the construction of governance engines and local debugging tools. The objective is to define a system that provides developers with "Flight Recorder" fidelity—the ability to replay, inspect, and debug the cognitive trajectory of an agent—while ensuring enterprise-grade governance and compatibility with the broader observability ecosystem.
+The TraceCraft Telemetry Abstraction Layer (TAL) is proposed as a necessary infrastructure component to bridge this gap. It functions not merely as a passive logger but as an active, intelligent middleware that intercepts, normalizes, governs, and semanticizes the execution flow of AI agents. The complexity of this undertaking is compounded by the fragmentation of the ecosystem: distinct frameworks employ radically different internal event models—LangChain utilizes a callback system, LlamaIndex employs a hierarchical event dispatcher, and PydanticAI integrates natively with OpenTelemetry but through an opinionated lens (Logfire). Furthermore, the standardization landscape is in flux, characterized by a schism between the official, albeit nascent, OpenTelemetry Semantic Conventions for Generative AI and the industry-led OpenInference standard, which offers richer, albeit non-standard, attribute schemas.
+This report provides an exhaustive, implementation-grade blueprint for the TraceCraft TAL. It dissects the architectural requirements for building a robust runtime capable of handling asynchronous context propagation in Python, specifies the precise adaptation logic required for major agent frameworks, defines a unified semantic schema that satisfies competing standards, and details the construction of governance engines and local debugging tools. The objective is to define a system that provides developers with "Flight Recorder" fidelity—the ability to replay, inspect, and debug the cognitive trajectory of an agent—while ensuring enterprise-grade governance and compatibility with the broader observability ecosystem.
 2. The Observability Landscape and Standardization Challenges
 Constructing a Telemetry Abstraction Layer requires a rigorous analysis of the underlying standards upon which it builds. The TAL must serve as a Rosetta Stone, translating framework-specific vernacular into a universal observability language. However, the definition of that "universal language" is currently a subject of active contention and development within the industry.
 2.1 The Schism: OpenTelemetry GenAI vs. OpenInference
 Two primary specifications compete to define how Generative AI operations should be represented in telemetry data: the official OpenTelemetry Semantic Conventions and the OpenInference standard developed by Arize AI.
 The OpenTelemetry Semantic Conventions for Generative AI represent the official effort to standardize LLM telemetry within the CNCF ecosystem. As of 2025, these conventions are in a "Development" status, implying that breaking changes are possible and stability guarantees are not yet met.1 The specification focuses heavily on the request-response model typical of API interactions. It defines span names such as chat and generate_content, and attributes are strictly namespaced under gen_ai.* (e.g., gen_ai.usage.input_tokens, gen_ai.response.model).2 A critical limitation identified in the research is the deprecation of content-bearing attributes like gen_ai.prompt and gen_ai.completion in favor of event-based logging, which, while technically cleaner for privacy, complicates the immediate debugging experience for developers who expect to see inputs and outputs directly on the span.4
 Conversely, OpenInference has emerged as a pragmatic, implementation-first standard, driven by the needs of AI engineers rather than protocol purists. It extends the semantic richness of traces to include concepts native to agents, such as "Tools" and "Retrievers," rather than treating everything as a generic dependency call. OpenInference uses a flatter, more direct attribute schema, prioritizing developer utility with keys like input.value, output.value, and tool.name.5 Crucially, OpenInference defines specific semantic conventions for RAG, including retrieval.documents (containing content, scores, and metadata IDs), which OpenTelemetry generic conventions currently lack.6
-Implications for TAL Architecture: The TAL cannot simply choose one standard over the other. Choosing OpenTelemetry ensures long-term infrastructure compatibility but sacrifices immediate debugging fidelity and RAG observability. Choosing OpenInference provides rich debugging features but risks vendor lock-in or non-compliance with strict OTel collectors. Therefore, the TAL must implement a Polyglot Schema Strategy, actively populating attributes from both standards simultaneously where non-conflicting, and providing configuration options to prioritize one namespace over the other during export. This "Dual-Dialect" approach ensures that a trace generated by AgentTrace TAL is valid in a strict Jaeger instance while simultaneously lighting up rich features in AI-specific backends like Arize Phoenix or Langfuse.
+Implications for TAL Architecture: The TAL cannot simply choose one standard over the other. Choosing OpenTelemetry ensures long-term infrastructure compatibility but sacrifices immediate debugging fidelity and RAG observability. Choosing OpenInference provides rich debugging features but risks vendor lock-in or non-compliance with strict OTel collectors. Therefore, the TAL must implement a Polyglot Schema Strategy, actively populating attributes from both standards simultaneously where non-conflicting, and providing configuration options to prioritize one namespace over the other during export. This "Dual-Dialect" approach ensures that a trace generated by TraceCraft TAL is valid in a strict Jaeger instance while simultaneously lighting up rich features in AI-specific backends like Arize Phoenix or Langfuse.
 2.2 Framework Fragmentation
 Beyond the output standards, the input sources—the agent frameworks—exhibit profound architectural differences that the TAL must abstract away.
 LangChain: Operates on a CallbackHandler architecture. Instrumentation relies on hooks like on_chain_start, on_llm_start, and on_tool_end. This model is event-driven and somewhat disconnected from the execution context, requiring the instrumentation layer to manually maintain the stack of active spans to correctly associate children with parents.7
@@ -119,7 +119,7 @@ The TAL must provide specialized adapters for the major frameworks. These adapte
 LlamaIndex's architecture is event-driven and hierarchical, utilizing a Dispatcher system that is highly amenable to instrumentation.
 4.1.1 The SpanHandler Implementation
 The core integration point is the BaseSpanHandler class.10 The TAL adapter must subclass this to intercept span lifecycle events.
-class_name: Must return a unique identifier, e.g., AgentTraceSpanHandler.
+class_name: Must return a unique identifier, e.g., TraceCraftSpanHandler.
 new_span: This method is called when a span starts. The adapter must:
 Extract id_and map it to OTel's Span ID.
 Parse bound_args to extract function inputs. Since LlamaIndex passes raw Python objects (like QueryBundle or Node), the adapter must perform Object Serialization. It should extract text content from Node objects and query strings from QueryBundle objects to populate input.value.
@@ -131,11 +131,11 @@ To ensure full coverage, the adapter must attach itself to the root dispatcher.
 Python
 
 import llama_index.core.instrumentation as instrument
-from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
 def instrument_llamaindex():
     dispatcher = instrument.get_dispatcher("llama_index.core.instrumentation.root_dispatcher")
-    handler = AgentTraceSpanHandler()
+    handler = TraceCraftSpanHandler()
     dispatcher.add_span_handler(handler)
 
 This registration should be idempotent to prevent duplicate span handling if the user calls the instrumentation function multiple times.9
@@ -161,7 +161,7 @@ PydanticAI allows for the configuration of a custom TracerProvider. The TAL must
 Python
 
 from opentelemetry import trace
-from agenttrace.runtime import TALTracerProvider
+from tracecraft.runtime import TALTracerProvider
 
 def instrument_pydantic_ai():
     # Instantiate the TAL provider with our processors (Redaction, Buffering)
@@ -176,7 +176,7 @@ This approach ensures that PydanticAI's spans flow through the TAL's governance 
 4.3.2 Attribute Enrichment
 Since the TAL does not control the creation of PydanticAI spans (the framework does), it cannot force the Polyglot Schema at creation time. Instead, the TAL must use a SpanProcessor to enrich these spans just before export. The processor inspects the PydanticAI-native attributes and injects the corresponding OpenInference/OTel GenAI attributes to ensure consistency with traces from other frameworks.
 5. Governance Engine Implementation
-The Governance Engine is a differentiator for the AgentTrace TAL. It moves observability from passive monitoring to active policy enforcement. This is implemented via a chain of SpanProcessors.
+The Governance Engine is a differentiator for the TraceCraft TAL. It moves observability from passive monitoring to active policy enforcement. This is implemented via a chain of SpanProcessors.
 5.1 PII Redaction Processor
 Redaction must occur in-memory, ensuring sensitive data never reaches the network layer or the local debug file.
 Architecture:
@@ -238,17 +238,17 @@ Data Inspection: Clicking a node opens a side panel displaying input.value and o
 Search: A Javascript-based client-side search to find spans containing specific text or error codes.
 6.3 The CLI Tool
 To streamline the developer experience, the TAL should include a CLI entry point.
-agenttrace run script.py: Runs the python script with the TAL instrumentation auto-injected.
-agenttrace view last: Opens the most recently generated HTML report in the default browser.
+tracecraft run script.py: Runs the python script with the TAL instrumentation auto-injected.
+tracecraft view last: Opens the most recently generated HTML report in the default browser.
 7. Deployment Topologies
 The TAL is designed to support flexible deployment models ranging from local development to scaled production Kubernetes environments.
 7.1 Local / Notebook Topology
-Configuration: export AGENTTRACE_MODE=LOCAL
+Configuration: export TRACECRAFT_MODE=LOCAL
 Components: Adapters + Buffering Processor + HTML Exporter.
 Output: Local .html files or console output.
 Use Case: Rapid prototyping in Jupyter notebooks or local IDE debugging.
 7.2 Production / Sidecar Topology
-Configuration: export AGENTTRACE_MODE=PRODUCTION
+Configuration: export TRACECRAFT_MODE=PRODUCTION
 Components: Adapters + Redaction Processor + OTLP Exporter.
 Output: Protocol Buffers over gRPC to an OpenTelemetry Collector.
 Mechanism: The OTLP exporter is configured to send data to localhost:4317 (Collector running as a sidecar) or a remote endpoint (Langfuse/Arize/Honeycomb).
@@ -258,7 +258,7 @@ In high-volume production, tracing every agent step is cost-prohibitive.
 Head Sampling: The TAL Runtime configures the OTel TraceIdRatioBased sampler to record only 1% of sessions.
 Tail Sampling: The TAL sends all traces to a local Collector sidecar, which is configured with a tail_sampling processor to forward only traces that contain errors or high latency, dropping the rest.21
 8. Conclusion and Future Outlook
-The AgentTrace Telemetry Abstraction Layer represents a critical piece of infrastructure for the maturing AI engineering stack. By strictly decoupling the application logic from the observability implementation, it solves the fragmentation problem inherent in the current ecosystem.
+The TraceCraft Telemetry Abstraction Layer represents a critical piece of infrastructure for the maturing AI engineering stack. By strictly decoupling the application logic from the observability implementation, it solves the fragmentation problem inherent in the current ecosystem.
 The proposed architecture specifically addresses the nuances of agentic systems:
 Context-Aware Runtime: Solves the broken trace problem in asynchronous RAG pipelines via custom executors and contextvars management.
 Polyglot Schema: Bridges the gap between the rigid OTel standard and the rich OpenInference standard, ensuring compatibility without sacrificing fidelity.

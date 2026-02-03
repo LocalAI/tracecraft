@@ -1,15 +1,15 @@
 # 02 - Framework Integrations
 
-Learn how to integrate AgentTrace with popular LLM frameworks. Each framework has its own integration approach tailored to its architecture.
+Learn how to integrate TraceCraft with popular LLM frameworks. Each framework has its own integration approach tailored to its architecture.
 
 ## Framework Overview
 
 | Framework | Adapter | Integration Style |
 |-----------|---------|-------------------|
-| [LangChain](langchain/) | `AgentTraceCallbackHandler` | Callback-based |
-| [LangGraph](langgraph/) | `AgentTraceCallbackHandler` | Same as LangChain |
-| [LlamaIndex](llamaindex/) | `AgentTraceSpanHandler` | Callback manager |
-| [PydanticAI](pydantic_ai/) | `AgentTraceSpanProcessor` | OpenTelemetry span processor |
+| [LangChain](langchain/) | `TraceCraftCallbackHandler` | Callback-based |
+| [LangGraph](langgraph/) | `TraceCraftCallbackHandler` | Same as LangChain |
+| [LlamaIndex](llamaindex/) | `TraceCraftSpanHandler` | Callback manager |
+| [PydanticAI](pydantic_ai/) | `TraceCraftSpanProcessor` | OpenTelemetry span processor |
 | [OpenAI](openai/) | Decorators | Manual decoration |
 
 ## Prerequisites
@@ -43,18 +43,18 @@ pip install openai
 ### LangChain
 
 ```python
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-handler = AgentTraceCallbackHandler()
+handler = TraceCraftCallbackHandler()
 chain.invoke(input, config={"callbacks": [handler]})
 ```
 
 ### LangGraph
 
 ```python
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-handler = AgentTraceCallbackHandler()
+handler = TraceCraftCallbackHandler()
 # LangGraph uses the same callback system as LangChain
 graph.invoke(state, config={"callbacks": [handler]})
 ```
@@ -62,27 +62,27 @@ graph.invoke(state, config={"callbacks": [handler]})
 ### LlamaIndex
 
 ```python
-from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 from llama_index.core import Settings
 from llama_index.core.callbacks import CallbackManager
 
-handler = AgentTraceSpanHandler()
+handler = TraceCraftSpanHandler()
 Settings.callback_manager = CallbackManager(handlers=[handler])
 ```
 
 ### PydanticAI
 
 ```python
-from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
+from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
 
-processor = AgentTraceSpanProcessor()
+processor = TraceCraftSpanProcessor()
 # PydanticAI uses OpenTelemetry internally; the processor intercepts spans
 ```
 
 ### OpenAI Direct
 
 ```python
-from agenttrace.instrumentation.decorators import trace_llm
+from tracecraft.instrumentation.decorators import trace_llm
 
 @trace_llm(name="chat", model="gpt-4o-mini", provider="openai")
 def chat(prompt: str) -> str:

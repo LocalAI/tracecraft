@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from agenttrace.integrations.langfuse_prompts import ChatPromptWrapper, PromptWrapper
+from tracecraft.integrations.langfuse_prompts import ChatPromptWrapper, PromptWrapper
 
 
 class TestPromptWrapper:

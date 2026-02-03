@@ -2,7 +2,7 @@
 """LangGraph Simple Graph - Trace basic LangGraph state graphs.
 
 Demonstrates how to trace LangGraph state graphs using the existing
-AgentTraceCallbackHandler. LangGraph uses the same callback system
+TraceCraftCallbackHandler. LangGraph uses the same callback system
 as LangChain, so no additional adapter is needed.
 
 Prerequisites:
@@ -30,10 +30,10 @@ import sys
 from datetime import UTC, datetime
 from typing import Annotated, TypedDict
 
-import agenttrace
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -53,8 +53,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -96,8 +96,8 @@ def simple_graph_example() -> None:
 
     app = graph.compile()
 
-    # Set up AgentTrace callback handler
-    handler = AgentTraceCallbackHandler()
+    # Set up TraceCraft callback handler
+    handler = TraceCraftCallbackHandler()
 
     run = AgentRun(name="langgraph_simple", start_time=datetime.now(UTC))
 
@@ -137,7 +137,7 @@ def multi_turn_example() -> None:
 
     app = graph.compile()
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
 
     run = AgentRun(name="langgraph_multi_turn", start_time=datetime.now(UTC))
 
@@ -163,7 +163,7 @@ def multi_turn_example() -> None:
 def main() -> None:
     """Run the LangGraph examples."""
     print("=" * 60)
-    print("AgentTrace LangGraph Integration")
+    print("TraceCraft LangGraph Integration")
     print("=" * 60)
 
     simple_graph_example()
@@ -174,7 +174,7 @@ def main() -> None:
     print("=" * 60)
     print("\nKey points:")
     print("  - LangGraph uses LangChain's callback system")
-    print("  - Use AgentTraceCallbackHandler (same as LangChain)")
+    print("  - Use TraceCraftCallbackHandler (same as LangChain)")
     print("  - Pass handler via config={'callbacks': [handler]}")
     print("  - Graph nodes and LLM calls are traced automatically")
     print("\nNext steps:")

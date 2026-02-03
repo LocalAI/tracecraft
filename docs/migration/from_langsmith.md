@@ -1,10 +1,10 @@
-# Migrating from LangSmith to AgentTrace
+# Migrating from LangSmith to TraceCraft
 
-This guide helps you migrate from LangSmith to AgentTrace for LLM observability.
+This guide helps you migrate from LangSmith to TraceCraft for LLM observability.
 
 ## Key Differences
 
-| Feature | LangSmith | AgentTrace |
+| Feature | LangSmith | TraceCraft |
 |---------|-----------|------------|
 | Vendor Lock-in | LangChain ecosystem | Vendor-neutral |
 | Export Formats | Proprietary | OTLP, JSONL, HTML |
@@ -13,12 +13,12 @@ This guide helps you migrate from LangSmith to AgentTrace for LLM observability.
 
 ## Migration Steps
 
-### 1. Install AgentTrace
+### 1. Install TraceCraft
 
 ```bash
-pip install agenttrace
+pip install tracecraft
 # or
-uv add agenttrace
+uv add tracecraft
 ```
 
 ### 2. Replace LangSmith Tracing
@@ -34,17 +34,17 @@ from langchain_openai import ChatOpenAI
 llm = ChatOpenAI()
 ```
 
-**After (AgentTrace):**
+**After (TraceCraft):**
 
 ```python
-import agenttrace
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+import tracecraft
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-# Initialize AgentTrace
-agenttrace.init(console=True, jsonl=True)
+# Initialize TraceCraft
+tracecraft.init(console=True, jsonl=True)
 
 # Use the callback handler
-handler = AgentTraceCallbackHandler()
+handler = TraceCraftCallbackHandler()
 llm = ChatOpenAI()
 
 # Pass handler to invoke
@@ -63,11 +63,11 @@ result = chain.invoke({"query": "test"})
 **After:**
 
 ```python
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 from datetime import UTC, datetime
 
-handler = AgentTraceCallbackHandler()
+handler = TraceCraftCallbackHandler()
 run = AgentRun(name="my_chain", start_time=datetime.now(UTC))
 
 with run_context(run):
@@ -82,21 +82,21 @@ with run_context(run):
 If you want to send traces to Jaeger, Honeycomb, or other OTLP backends:
 
 ```python
-from agenttrace.exporters.otlp import OTLPExporter
+from tracecraft.exporters.otlp import OTLPExporter
 
 otlp = OTLPExporter(
     endpoint="http://localhost:4317",
     service_name="my-app"
 )
 
-agenttrace.init(exporters=[otlp])
+tracecraft.init(exporters=[otlp])
 ```
 
 ## Feature Mapping
 
-| LangSmith Feature | AgentTrace Equivalent |
+| LangSmith Feature | TraceCraft Equivalent |
 |-------------------|----------------------|
-| `@traceable` decorator | `@agenttrace.trace_agent` |
+| `@traceable` decorator | `@tracecraft.trace_agent` |
 | Run trees | Nested Steps with parent_id |
 | LangSmith Hub | N/A (use your own prompts) |
 | Feedback collection | Custom attributes |

@@ -1,4 +1,4 @@
-# Development container for AgentTrace
+# Development container for TraceCraft
 FROM mcr.microsoft.com/devcontainers/python:1-3.11-bookworm
 
 # Set environment variables

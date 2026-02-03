@@ -15,13 +15,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from agenttrace.core.config import AgentTraceConfig, RedactionConfig
-from agenttrace.core.context import (
+from tracecraft.core.config import RedactionConfig, TraceCraftConfig
+from tracecraft.core.context import (
     get_current_runtime,
     runtime_context,
 )
-from agenttrace.core.runtime import TALRuntime
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+from tracecraft.core.runtime import TALRuntime
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
 
 class TestMultipleRuntimeInstances:
@@ -29,12 +29,12 @@ class TestMultipleRuntimeInstances:
 
     def test_create_multiple_runtimes(self) -> None:
         """Can create multiple runtime instances with different configs."""
-        config_a = AgentTraceConfig(
+        config_a = TraceCraftConfig(
             service_name="service-a",
             console_enabled=False,
             jsonl_enabled=False,
         )
-        config_b = AgentTraceConfig(
+        config_b = TraceCraftConfig(
             service_name="service-b",
             console_enabled=False,
             jsonl_enabled=False,
@@ -49,13 +49,13 @@ class TestMultipleRuntimeInstances:
 
     def test_runtimes_have_independent_configs(self) -> None:
         """Runtime instances maintain independent configurations."""
-        config_a = AgentTraceConfig(
+        config_a = TraceCraftConfig(
             service_name="tenant-a",
             console_enabled=False,
             jsonl_enabled=False,
             redaction=RedactionConfig(enabled=True),
         )
-        config_b = AgentTraceConfig(
+        config_b = TraceCraftConfig(
             service_name="tenant-b",
             console_enabled=False,
             jsonl_enabled=False,
@@ -128,12 +128,12 @@ class TestRuntimeIsolation:
         mock_exporter_a = MagicMock()
         mock_exporter_b = MagicMock()
 
-        config_a = AgentTraceConfig(
+        config_a = TraceCraftConfig(
             service_name="service-a",
             console_enabled=False,
             jsonl_enabled=False,
         )
-        config_b = AgentTraceConfig(
+        config_b = TraceCraftConfig(
             service_name="service-b",
             console_enabled=False,
             jsonl_enabled=False,
@@ -206,7 +206,7 @@ class TestDecoratorWithExplicitRuntime:
     def test_trace_agent_with_runtime_param(self) -> None:
         """@trace_agent with runtime parameter uses specified runtime."""
         mock_exporter = MagicMock()
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             service_name="test-service",
             console_enabled=False,
             jsonl_enabled=False,
@@ -280,7 +280,7 @@ class TestMultiTenantScenario:
     def test_tenant_specific_processing(self) -> None:
         """Different tenants can have different processor configurations."""
         # Tenant A: Redaction enabled
-        config_a = AgentTraceConfig(
+        config_a = TraceCraftConfig(
             service_name="tenant-a",
             console_enabled=False,
             jsonl_enabled=False,
@@ -288,7 +288,7 @@ class TestMultiTenantScenario:
         )
 
         # Tenant B: Redaction disabled
-        config_b = AgentTraceConfig(
+        config_b = TraceCraftConfig(
             service_name="tenant-b",
             console_enabled=False,
             jsonl_enabled=False,
@@ -317,7 +317,7 @@ class TestMultiTenantScenario:
 
         def get_runtime_for_tenant(tenant_id: str) -> TALRuntime:
             if tenant_id not in tenant_runtimes:
-                config = AgentTraceConfig(
+                config = TraceCraftConfig(
                     service_name=f"tenant-{tenant_id}",
                     console_enabled=False,
                     jsonl_enabled=False,
@@ -350,7 +350,7 @@ class TestAsyncContextHelpers:
     @pytest.mark.asyncio
     async def test_gather_with_context_preserves_runtime(self) -> None:
         """gather_with_context preserves runtime in all tasks."""
-        from agenttrace.contrib.async_helpers import gather_with_context
+        from tracecraft.contrib.async_helpers import gather_with_context
 
         runtime = TALRuntime(console=False, jsonl=False)
         results = []
@@ -374,7 +374,7 @@ class TestAsyncContextHelpers:
     @pytest.mark.asyncio
     async def test_capture_restore_context_with_runtime(self) -> None:
         """capture_context() and restore_context() work with runtime."""
-        from agenttrace.contrib.async_helpers import capture_context, restore_context
+        from tracecraft.contrib.async_helpers import capture_context, restore_context
 
         runtime = TALRuntime(console=False, jsonl=False)
 
@@ -397,7 +397,7 @@ class TestMaxStepDepthConfiguration:
 
     def test_default_max_step_depth(self) -> None:
         """Default max_step_depth is 100."""
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=False,
         )
@@ -405,7 +405,7 @@ class TestMaxStepDepthConfiguration:
 
     def test_custom_max_step_depth(self) -> None:
         """Can configure custom max_step_depth."""
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=False,
             max_step_depth=50,
@@ -414,7 +414,7 @@ class TestMaxStepDepthConfiguration:
 
     def test_unlimited_max_step_depth(self) -> None:
         """Can set max_step_depth to None for unlimited."""
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=False,
             max_step_depth=None,
@@ -423,7 +423,7 @@ class TestMaxStepDepthConfiguration:
 
     def test_runtime_uses_config_max_step_depth(self) -> None:
         """Runtime uses max_step_depth from config."""
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=False,
             max_step_depth=25,

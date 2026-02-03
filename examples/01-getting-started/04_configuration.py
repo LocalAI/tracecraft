@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Configuration - All AgentTrace configuration options.
+"""Configuration - All TraceCraft configuration options.
 
-Learn how to configure AgentTrace using environment variables,
+Learn how to configure TraceCraft using environment variables,
 configuration objects, and runtime settings.
 
 Prerequisites:
-    - AgentTrace installed (pip install agenttrace)
+    - TraceCraft installed (pip install tracecraft)
     - Completed previous getting-started examples
 
 Environment Variables:
-    - All AGENTTRACE_* variables demonstrated in this example
+    - All TRACECRAFT_* variables demonstrated in this example
 
 External Services:
     - None required
@@ -18,7 +18,7 @@ Usage:
     python examples/01-getting-started/04_configuration.py
 
     # Or with environment variables:
-    AGENTTRACE_SERVICE_NAME=my-app python examples/01-getting-started/04_configuration.py
+    TRACECRAFT_SERVICE_NAME=my-app python examples/01-getting-started/04_configuration.py
 
 Expected Output:
     - Demonstration of various configuration patterns
@@ -29,16 +29,16 @@ from __future__ import annotations
 
 import os
 
-import agenttrace
-from agenttrace.core.config import (
-    AgentTraceConfig,
+import tracecraft
+from tracecraft.core.config import (
     ExporterConfig,
     RedactionConfig,
     SamplingConfig,
+    TraceCraftConfig,
     load_config,
     load_config_from_env,
 )
-from agenttrace.instrumentation.decorators import trace_llm
+from tracecraft.instrumentation.decorators import trace_llm
 
 # ============================================================================
 # Pattern 1: Default Configuration
@@ -48,9 +48,9 @@ from agenttrace.instrumentation.decorators import trace_llm
 def demo_default_config() -> None:
     """Demonstrate default configuration.
 
-    By default, AgentTrace enables:
+    By default, TraceCraft enables:
     - Console output (rich tree view)
-    - JSONL file output (traces/agenttrace.jsonl)
+    - JSONL file output (traces/tracecraft.jsonl)
     - No sampling (all traces captured)
     - PII redaction ENABLED (privacy-first default)
     - No OTLP export
@@ -60,7 +60,7 @@ def demo_default_config() -> None:
     """
     print("\n--- Pattern 1: Default Configuration ---")
 
-    runtime = agenttrace.init()
+    runtime = tracecraft.init()
 
     @trace_llm(name="demo_llm", model="gpt-4o-mini")
     def demo_call(prompt: str) -> str:
@@ -80,11 +80,11 @@ def demo_default_config() -> None:
 def demo_init_params() -> None:
     """Demonstrate configuration via init() parameters.
 
-    The simplest way to configure AgentTrace is through init():
+    The simplest way to configure TraceCraft is through init():
     """
     print("\n--- Pattern 2: Init Parameters ---")
 
-    runtime = agenttrace.init(
+    runtime = tracecraft.init(
         # Exporter settings
         console=True,  # Enable console output
         jsonl=True,  # Enable JSONL output
@@ -110,32 +110,32 @@ def demo_init_params() -> None:
 def demo_env_variables() -> None:
     """Demonstrate configuration via environment variables.
 
-    AgentTrace reads these environment variables:
+    TraceCraft reads these environment variables:
 
     Core Settings:
-        AGENTTRACE_SERVICE_NAME     - Service name for traces (default: "agenttrace")
-        AGENTTRACE_CONSOLE_ENABLED  - Enable console output (default: true)
-        AGENTTRACE_JSONL_ENABLED    - Enable JSONL output (default: true)
-        AGENTTRACE_JSONL_PATH       - Path for JSONL file
+        TRACECRAFT_SERVICE_NAME     - Service name for traces (default: "tracecraft")
+        TRACECRAFT_CONSOLE_ENABLED  - Enable console output (default: true)
+        TRACECRAFT_JSONL_ENABLED    - Enable JSONL output (default: true)
+        TRACECRAFT_JSONL_PATH       - Path for JSONL file
 
     OTLP Export:
-        AGENTTRACE_OTLP_ENABLED     - Enable OTLP export (default: false)
-        AGENTTRACE_OTLP_ENDPOINT    - OTLP collector endpoint
+        TRACECRAFT_OTLP_ENABLED     - Enable OTLP export (default: false)
+        TRACECRAFT_OTLP_ENDPOINT    - OTLP collector endpoint
 
     Processing:
-        AGENTTRACE_SAMPLING_RATE       - Sampling rate 0.0-1.0 (default: 1.0)
-        AGENTTRACE_SAMPLING_KEEP_ERRORS - Always keep error traces (default: true)
-        AGENTTRACE_REDACTION_ENABLED   - Enable PII redaction (default: TRUE - privacy first!)
+        TRACECRAFT_SAMPLING_RATE       - Sampling rate 0.0-1.0 (default: 1.0)
+        TRACECRAFT_SAMPLING_KEEP_ERRORS - Always keep error traces (default: true)
+        TRACECRAFT_REDACTION_ENABLED   - Enable PII redaction (default: TRUE - privacy first!)
 
     Environment Detection:
-        AGENTTRACE_ENVIRONMENT         - Explicit environment name (development, staging, production, etc.)
+        TRACECRAFT_ENVIRONMENT         - Explicit environment name (development, staging, production, etc.)
     """
     print("\n--- Pattern 3: Environment Variables ---")
 
     # Show current environment
-    print("\nCurrent AGENTTRACE_* environment variables:")
+    print("\nCurrent TRACECRAFT_* environment variables:")
     for key, value in sorted(os.environ.items()):
-        if key.startswith("AGENTTRACE_"):
+        if key.startswith("TRACECRAFT_"):
             print(f"  {key}={value}")
 
     # Load config from environment
@@ -147,8 +147,8 @@ def demo_env_variables() -> None:
 
     # Example: Set environment variables programmatically
     print("\nExample: Setting env vars programmatically")
-    os.environ["AGENTTRACE_SERVICE_NAME"] = "demo-service"
-    os.environ["AGENTTRACE_SAMPLING_RATE"] = "0.5"
+    os.environ["TRACECRAFT_SERVICE_NAME"] = "demo-service"
+    os.environ["TRACECRAFT_SAMPLING_RATE"] = "0.5"
 
     # Reload config to pick up changes
     config = load_config_from_env()
@@ -157,8 +157,8 @@ def demo_env_variables() -> None:
     print(f"  sampling.rate={config.sampling.rate}")
 
     # Clean up
-    del os.environ["AGENTTRACE_SERVICE_NAME"]
-    del os.environ["AGENTTRACE_SAMPLING_RATE"]
+    del os.environ["TRACECRAFT_SERVICE_NAME"]
+    del os.environ["TRACECRAFT_SAMPLING_RATE"]
 
 
 # ============================================================================
@@ -167,14 +167,14 @@ def demo_env_variables() -> None:
 
 
 def demo_config_object() -> None:
-    """Demonstrate configuration via AgentTraceConfig object.
+    """Demonstrate configuration via TraceCraftConfig object.
 
     For full control, create a configuration object directly:
     """
     print("\n--- Pattern 4: Configuration Object ---")
 
     # Create config with nested configurations
-    config = AgentTraceConfig(
+    config = TraceCraftConfig(
         service_name="my-production-service",
         console_enabled=True,
         jsonl_enabled=True,
@@ -212,7 +212,7 @@ def demo_config_object() -> None:
     print(f"  redaction.enabled: {config.redaction.enabled}")
 
     # Use with init() via config parameter
-    runtime = agenttrace.init(
+    runtime = tracecraft.init(
         console=config.console_enabled,
         jsonl=config.jsonl_enabled,
         jsonl_path=config.jsonl_path,
@@ -265,7 +265,7 @@ def demo_conditional_config() -> None:
     env = os.environ.get("APP_ENV", "development")
 
     if env == "production":
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             service_name="my-app-prod",
             console_enabled=False,  # No console in prod
             jsonl_enabled=True,
@@ -278,7 +278,7 @@ def demo_conditional_config() -> None:
             ),
         )
     elif env == "staging":
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             service_name="my-app-staging",
             console_enabled=True,
             jsonl_enabled=True,
@@ -287,7 +287,7 @@ def demo_conditional_config() -> None:
             ),
         )
     else:  # development
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             service_name="my-app-dev",
             console_enabled=True,
             jsonl_enabled=True,
@@ -316,23 +316,23 @@ def demo_redaction_defaults() -> None:
     masked in traces.
 
     To disable redaction (e.g., for debugging):
-    - Set AGENTTRACE_REDACTION_ENABLED=false
+    - Set TRACECRAFT_REDACTION_ENABLED=false
     - Or use RedactionConfig(enabled=False)
     """
     print("\n--- Pattern 7: Privacy-First Redaction Defaults ---")
 
     # Default: redaction is ON
-    default_config = AgentTraceConfig()
+    default_config = TraceCraftConfig()
     print(f"\nDefault redaction enabled: {default_config.redaction.enabled}")
     print("  (Privacy-first default - PII is automatically masked)")
 
     # To disable for debugging
-    debug_config = AgentTraceConfig(redaction=RedactionConfig(enabled=False))
+    debug_config = TraceCraftConfig(redaction=RedactionConfig(enabled=False))
     print(f"\nDebug redaction enabled: {debug_config.redaction.enabled}")
     print("  (Explicitly disabled for debugging)")
 
     # Custom allowlist
-    custom_config = AgentTraceConfig(
+    custom_config = TraceCraftConfig(
         redaction=RedactionConfig(
             enabled=True,
             allowlist=["user_id", "session_id"],  # Safe to keep
@@ -358,7 +358,7 @@ def demo_input_exclusion() -> None:
     """
     print("\n--- Pattern 8: Input Exclusion ---")
 
-    from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+    from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
     # Example 1: Exclude specific parameters
     @trace_agent(name="auth_agent", exclude_inputs=["api_key", "password"])
@@ -400,28 +400,28 @@ def print_config_reference() -> None:
     print("\n--- Configuration Reference ---")
     print("""
 Environment Variables:
-  AGENTTRACE_SERVICE_NAME         Service name (default: "agenttrace")
-  AGENTTRACE_CONSOLE_ENABLED      Console output (default: true)
-  AGENTTRACE_JSONL_ENABLED        JSONL output (default: true)
-  AGENTTRACE_JSONL_PATH           JSONL file path
-  AGENTTRACE_OTLP_ENABLED         OTLP export (default: false)
-  AGENTTRACE_OTLP_ENDPOINT        OTLP endpoint
-  AGENTTRACE_SAMPLING_RATE        Sampling rate 0.0-1.0 (default: 1.0)
-  AGENTTRACE_SAMPLING_KEEP_ERRORS Keep error traces (default: true)
-  AGENTTRACE_REDACTION_ENABLED    PII redaction (default: TRUE!)
-  AGENTTRACE_ENVIRONMENT          Environment name (auto-detected if not set)
+  TRACECRAFT_SERVICE_NAME         Service name (default: "tracecraft")
+  TRACECRAFT_CONSOLE_ENABLED      Console output (default: true)
+  TRACECRAFT_JSONL_ENABLED        JSONL output (default: true)
+  TRACECRAFT_JSONL_PATH           JSONL file path
+  TRACECRAFT_OTLP_ENABLED         OTLP export (default: false)
+  TRACECRAFT_OTLP_ENDPOINT        OTLP endpoint
+  TRACECRAFT_SAMPLING_RATE        Sampling rate 0.0-1.0 (default: 1.0)
+  TRACECRAFT_SAMPLING_KEEP_ERRORS Keep error traces (default: true)
+  TRACECRAFT_REDACTION_ENABLED    PII redaction (default: TRUE!)
+  TRACECRAFT_ENVIRONMENT          Environment name (auto-detected if not set)
 
 Config Classes:
-  AgentTraceConfig  - Main configuration container
+  TraceCraftConfig  - Main configuration container
   ExporterConfig    - Exporter settings
   SamplingConfig    - Sampling settings
   RedactionConfig   - PII redaction settings (enabled by default!)
 
 Common Patterns:
-  1. Default           - agenttrace.init()
-  2. Init params       - agenttrace.init(console=True, jsonl=True, ...)
-  3. Environment vars  - Set AGENTTRACE_* vars
-  4. Config object     - AgentTraceConfig(...)
+  1. Default           - tracecraft.init()
+  2. Init params       - tracecraft.init(console=True, jsonl=True, ...)
+  3. Environment vars  - Set TRACECRAFT_* vars
+  4. Config object     - TraceCraftConfig(...)
   5. With overrides    - load_config(service_name="override")
   6. Conditional       - Different configs per environment
   7. Redaction         - Enabled by default, disable for debugging
@@ -441,7 +441,7 @@ Decorator Input Exclusion:
 def main() -> None:
     """Run the configuration example."""
     print("=" * 60)
-    print("AgentTrace Configuration Example")
+    print("TraceCraft Configuration Example")
     print("=" * 60)
 
     demo_default_config()

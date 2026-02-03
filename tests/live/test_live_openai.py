@@ -24,13 +24,13 @@ class TestLiveOpenAIBasic:
         """Test that OpenAI chat completion is traced correctly."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
         # Initialize with JSONL export
-        runtime = agenttrace.init(console=True, jsonl=True, jsonl_path=temp_jsonl_path)
+        runtime = tracecraft.init(console=True, jsonl=True, jsonl_path=temp_jsonl_path)
 
         @trace_llm(name="openai_chat", model=live_test_model, provider="openai")
         def call_openai(prompt: str) -> str:
@@ -72,12 +72,12 @@ class TestLiveOpenAIBasic:
         """Test that API errors are captured in traces."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
-        runtime = agenttrace.init(console=True, jsonl=True, jsonl_path=temp_jsonl_path)
+        runtime = tracecraft.init(console=True, jsonl=True, jsonl_path=temp_jsonl_path)
 
         @trace_llm(name="openai_chat_error", model="invalid-model-xyz", provider="openai")
         def call_with_invalid_model() -> str:
@@ -112,12 +112,12 @@ class TestLiveOpenAIStreaming:
         """Test streaming chat completion tracing."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
-        agenttrace.init(console=True, jsonl=False)
+        tracecraft.init(console=True, jsonl=False)
 
         @trace_llm(name="openai_stream", model=live_test_model, provider="openai")
         def stream_openai(prompt: str) -> str:
@@ -155,12 +155,12 @@ class TestLiveOpenAIAsync:
         """Test async chat completion tracing."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
-        agenttrace.init(console=True, jsonl=False)
+        tracecraft.init(console=True, jsonl=False)
 
         @trace_llm(name="openai_async", model=live_test_model, provider="openai")
         async def call_openai_async(prompt: str) -> str:
@@ -193,12 +193,12 @@ class TestLiveOpenAIMultipleCalls:
         """Test nested LLM call tracing."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent, trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent, trace_llm
 
-        runtime = agenttrace.init(console=True, jsonl=False)
+        runtime = tracecraft.init(console=True, jsonl=False)
 
         @trace_llm(name="inner_llm", model=live_test_model, provider="openai")
         def inner_call(prompt: str) -> str:

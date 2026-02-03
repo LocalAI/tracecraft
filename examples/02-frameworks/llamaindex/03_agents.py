@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""LlamaIndex Agents - Trace agent workflows with AgentTrace.
+"""LlamaIndex Agents - Trace agent workflows with TraceCraft.
 
 Demonstrates how to trace LlamaIndex agent patterns including
 tool-using agents, ReAct agents, and multi-step reasoning.
@@ -28,10 +28,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.adapters.llamaindex import AgentTraceLlamaIndexCallback
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.llamaindex import TraceCraftLlamaIndexCallback
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -51,8 +51,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -69,7 +69,7 @@ def function_tool_agent_example() -> None:
 
     print("\n--- Function Tool Agent Example ---")
 
-    handler = AgentTraceLlamaIndexCallback()
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
 
     # Define tools
@@ -123,7 +123,7 @@ def query_engine_tool_agent_example() -> None:
 
     print("\n--- Query Engine Tool Agent Example ---")
 
-    handler = AgentTraceLlamaIndexCallback()
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
 
     llm = OpenAI(model="gpt-4o-mini", temperature=0)
@@ -177,7 +177,7 @@ def multi_tool_agent_example() -> None:
 
     print("\n--- Multi-Tool Agent Example ---")
 
-    handler = AgentTraceLlamaIndexCallback()
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
 
     # Calculator tools
@@ -239,7 +239,7 @@ def conversational_agent_example() -> None:
 
     print("\n--- Conversational Agent Example ---")
 
-    handler = AgentTraceLlamaIndexCallback()
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
 
     def search_products(query: str) -> str:
@@ -281,7 +281,7 @@ def conversational_agent_example() -> None:
 def main() -> None:
     """Run the LlamaIndex agent examples."""
     print("=" * 60)
-    print("AgentTrace LlamaIndex Agents")
+    print("TraceCraft LlamaIndex Agents")
     print("=" * 60)
 
     function_tool_agent_example()

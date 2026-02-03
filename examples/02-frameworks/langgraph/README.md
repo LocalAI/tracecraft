@@ -1,6 +1,6 @@
 # LangGraph Examples
 
-Trace LangGraph state graphs and agents using AgentTrace. LangGraph uses the same callback system as LangChain, so no separate adapter is needed.
+Trace LangGraph state graphs and agents using TraceCraft. LangGraph uses the same callback system as LangChain, so no separate adapter is needed.
 
 ## Prerequisites
 
@@ -11,14 +11,14 @@ export OPENAI_API_KEY=sk-...
 
 ## Integration
 
-LangGraph integrates through the same `AgentTraceCallbackHandler` used for LangChain:
+LangGraph integrates through the same `TraceCraftCallbackHandler` used for LangChain:
 
 ```python
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
-handler = AgentTraceCallbackHandler()
+handler = TraceCraftCallbackHandler()
 run = AgentRun(name="langgraph_example", start_time=datetime.now(UTC))
 
 with run_context(run):

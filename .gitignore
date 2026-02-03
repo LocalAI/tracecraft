@@ -79,8 +79,8 @@ dmypy.json
 # uv
 .uv/
 
-# AgentTrace specific
-agenttrace_logs/
+# TraceCraft specific
+tracecraft_logs/
 *.jsonl
 traces/
 *.html

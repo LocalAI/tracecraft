@@ -5,7 +5,7 @@ Demonstrates how to trace a complex multi-agent system where multiple
 specialized agents collaborate under a coordinator to complete tasks.
 
 Prerequisites:
-    - AgentTrace installed
+    - TraceCraft installed
 
 Environment Variables:
     - None required
@@ -25,13 +25,13 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+import tracecraft
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -213,7 +213,7 @@ def coordinator_agent(task: str) -> dict[str, str]:
 def main() -> None:
     """Run the multi-agent example."""
     print("=" * 60)
-    print("AgentTrace Multi-Agent Collaboration")
+    print("TraceCraft Multi-Agent Collaboration")
     print("=" * 60)
 
     # Create a run

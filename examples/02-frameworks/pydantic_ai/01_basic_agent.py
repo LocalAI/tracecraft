@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""PydanticAI Basic Agent - Trace PydanticAI agents with AgentTrace.
+"""PydanticAI Basic Agent - Trace PydanticAI agents with TraceCraft.
 
-Demonstrates how to use the AgentTrace span processor to automatically trace
+Demonstrates how to use the TraceCraft span processor to automatically trace
 PydanticAI agents including structured output and tool use.
 
 Prerequisites:
@@ -29,10 +29,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -51,8 +51,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -66,7 +66,7 @@ def simple_agent_example() -> None:
     print("\n--- Simple Agent Example ---")
 
     # Create span processor (integrates with PydanticAI's OpenTelemetry)
-    processor = AgentTraceSpanProcessor()
+    processor = TraceCraftSpanProcessor()
 
     # Create agent
     agent = Agent(
@@ -100,7 +100,7 @@ def structured_output_example() -> None:
         country: str
         population_millions: float
 
-    processor = AgentTraceSpanProcessor()
+    processor = TraceCraftSpanProcessor()
 
     agent = Agent(
         "openai:gpt-4o-mini",
@@ -127,7 +127,7 @@ def agent_with_tools_example() -> None:
 
     print("\n--- Agent with Tools Example ---")
 
-    processor = AgentTraceSpanProcessor()
+    processor = TraceCraftSpanProcessor()
 
     agent = Agent(
         "openai:gpt-4o-mini",
@@ -159,7 +159,7 @@ async def async_agent_example() -> None:
 
     print("\n--- Async Agent Example ---")
 
-    processor = AgentTraceSpanProcessor()
+    processor = TraceCraftSpanProcessor()
 
     agent = Agent(
         "openai:gpt-4o-mini",
@@ -183,7 +183,7 @@ async def streaming_example() -> None:
 
     print("\n--- Streaming Example ---")
 
-    processor = AgentTraceSpanProcessor()
+    processor = TraceCraftSpanProcessor()
 
     agent = Agent(
         "openai:gpt-4o-mini",
@@ -207,7 +207,7 @@ async def streaming_example() -> None:
 def main() -> None:
     """Run the PydanticAI examples."""
     print("=" * 60)
-    print("AgentTrace PydanticAI Integration")
+    print("TraceCraft PydanticAI Integration")
     print("=" * 60)
 
     simple_agent_example()
@@ -222,7 +222,7 @@ def main() -> None:
     print("Example complete!")
     print("=" * 60)
     print("\nKey points:")
-    print("  - Use AgentTraceSpanProcessor for automatic tracing")
+    print("  - Use TraceCraftSpanProcessor for automatic tracing")
     print("  - Structured output and tools are captured")
     print("  - Both sync and async agents work")
     print("\nNext steps:")

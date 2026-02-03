@@ -1,6 +1,6 @@
 # OpenAI Direct Integration Examples
 
-Trace direct OpenAI API calls using AgentTrace decorators.
+Trace direct OpenAI API calls using TraceCraft decorators.
 
 ## Prerequisites
 
@@ -14,9 +14,9 @@ export OPENAI_API_KEY=sk-...
 For direct OpenAI API usage, use the `@trace_llm`, `@trace_tool`, and `@trace_agent` decorators.
 
 ```python
-from agenttrace.instrumentation.decorators import trace_llm, trace_tool, trace_agent
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+from tracecraft.instrumentation.decorators import trace_llm, trace_tool, trace_agent
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 import openai
 
 @trace_llm(name="chat", model="gpt-4o-mini", provider="openai")

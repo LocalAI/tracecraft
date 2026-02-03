@@ -1,6 +1,6 @@
-# Pain Points AgentTrace Solves
+# Pain Points TraceCraft Solves
 
-This document outlines the top four pain points in LLM observability that AgentTrace uniquely addresses, why existing solutions fail to solve them, and how AgentTrace's architecture provides a differentiated solution.
+This document outlines the top four pain points in LLM observability that TraceCraft uniquely addresses, why existing solutions fail to solve them, and how TraceCraft's architecture provides a differentiated solution.
 
 ---
 
@@ -25,9 +25,9 @@ When you instrument your LLM application for observability today, you make a bin
 
 The fundamental issue: **observability platforms treat instrumentation as their moat**, not as a portable asset.
 
-### Why AgentTrace Is Different
+### Why TraceCraft Is Different
 
-AgentTrace's "instrument once, observe anywhere" model means:
+TraceCraft's "instrument once, observe anywhere" model means:
 
 ```python
 # This code NEVER changes regardless of backend
@@ -36,7 +36,7 @@ def research(query: str):
     return analyze(search(query))
 
 # Only configuration changes
-agenttrace.init(exporters=[
+tracecraft.init(exporters=[
     ConsoleExporter(),      # Local dev
     OTLPExporter(endpoint="..."),  # Production: Grafana/Jaeger/Tempo
     # Or tomorrow: DatadogExporter(), LangfuseExporter(), etc.
@@ -74,11 +74,11 @@ The result: developers choose between **printf debugging** (fast but blind) and 
 - **OpenLLMetry**: Instrumentation only—still need to configure a backend
 - **Phoenix**: Closest to solving this, but designed for evaluation, not debugging
 
-### Why AgentTrace Is Different
+### Why TraceCraft Is Different
 
 ```python
-import agenttrace
-agenttrace.init()  # That's it. Zero config.
+import tracecraft
+tracecraft.init()  # That's it. Zero config.
 
 # Immediately get:
 # 1. Rich console tree showing execution flow
@@ -127,17 +127,17 @@ A healthcare AI assistant processing patient messages:
 
 The pattern: **governance happens after your data leaves your infrastructure**.
 
-### Why AgentTrace Is Different
+### Why TraceCraft Is Different
 
 ```python
-from agenttrace import AgentTraceConfig, RedactionMode
+from tracecraft import TraceCraftConfig, RedactionMode
 
-config = AgentTraceConfig()
+config = TraceCraftConfig()
 config.redaction.enabled = True
 config.redaction.mode = RedactionMode.HASH  # Preserve linkability for debugging
 config.sampling.rate = 0.1  # Only export 10% of traces
 
-agenttrace.init(config=config)
+tracecraft.init(config=config)
 ```
 
 Built-in, client-side governance:
@@ -187,13 +187,13 @@ Each framework has its own tracing semantics:
 - **OpenLLMetry**: Instruments each framework separately—no semantic unification
 - **Datadog/New Relic**: Generic spans without LLM-specific meaning
 
-### Why AgentTrace Is Different
+### Why TraceCraft Is Different
 
 ```python
 # All frameworks produce the SAME Step model:
-from agenttrace.adapters.langchain import track_langchain
-from agenttrace.adapters.llamaindex import track_llamaindex
-from agenttrace.adapters.pydantic_ai import track_pydantic_ai
+from tracecraft.adapters.langchain import track_langchain
+from tracecraft.adapters.llamaindex import track_llamaindex
+from tracecraft.adapters.pydantic_ai import track_pydantic_ai
 
 # Unified trace tree regardless of source:
 # AgentRun
@@ -216,7 +216,7 @@ One trace format. One dashboard. One debugging experience—even when your stack
 
 ## Summary
 
-| # | Pain Point | Core Issue | AgentTrace Solution |
+| # | Pain Point | Core Issue | TraceCraft Solution |
 |---|------------|------------|---------------------|
 | 1 | **Vendor Lock-in** | Instrumentation tied to platforms | Dual-dialect schema + pluggable exporters |
 | 2 | **Backend Required** | No zero-config local debugging | Local-first with console/JSONL/HTML defaults |

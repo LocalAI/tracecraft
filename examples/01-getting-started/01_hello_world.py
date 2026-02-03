@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Hello World - The simplest possible AgentTrace example.
+"""Hello World - The simplest possible TraceCraft example.
 
-This is the absolute minimum code needed to start tracing with AgentTrace.
+This is the absolute minimum code needed to start tracing with TraceCraft.
 No API keys or external services required - everything is mocked.
 
 Prerequisites:
-    - AgentTrace installed (pip install agenttrace)
+    - TraceCraft installed (pip install tracecraft)
 
 Environment Variables:
     - None required
@@ -18,24 +18,24 @@ Usage:
 
 Expected Output:
     - Console output showing the trace tree
-    - JSONL file at traces/agenttrace.jsonl
+    - JSONL file at traces/tracecraft.jsonl
 """
 
 from __future__ import annotations
 
-import agenttrace
-from agenttrace.instrumentation.decorators import trace_llm
+import tracecraft
+from tracecraft.instrumentation.decorators import trace_llm
 
 
 def main() -> None:
     """Run the Hello World example."""
     print("=" * 60)
-    print("AgentTrace Hello World")
+    print("TraceCraft Hello World")
     print("=" * 60)
 
-    # Step 1: Initialize AgentTrace
+    # Step 1: Initialize TraceCraft
     # This sets up console and JSONL exporters by default
-    runtime = agenttrace.init(
+    runtime = tracecraft.init(
         console=True,  # Show traces in terminal
         jsonl=True,  # Save traces to JSONL file
     )
@@ -58,7 +58,7 @@ def main() -> None:
     # Step 3: Use the runtime's run context to group traces
     with runtime.run("hello_world_run"):
         # Call the traced function
-        response = call_llm("Hello, AgentTrace!")
+        response = call_llm("Hello, TraceCraft!")
         print(f"\nLLM Response: {response}")
 
     # The trace is automatically exported when the context exits
@@ -67,10 +67,10 @@ def main() -> None:
     print("Example complete!")
     print("=" * 60)
     print("\nWhat just happened:")
-    print("1. AgentTrace initialized with console + JSONL exporters")
+    print("1. TraceCraft initialized with console + JSONL exporters")
     print("2. @trace_llm decorator captured the LLM call")
     print("3. runtime.run() grouped traces into a single run")
-    print("4. Traces were exported to console and traces/agenttrace.jsonl")
+    print("4. Traces were exported to console and traces/tracecraft.jsonl")
     print("\nNext steps:")
     print("- Try 02_decorators.py to learn about all decorator types")
     print("- Try 03_context_managers.py for async patterns")

@@ -10,8 +10,8 @@ Prerequisites:
 
 Environment Variables:
     - APPLICATIONINSIGHTS_CONNECTION_STRING: Required. Get from Azure Portal.
-    - AGENTTRACE_AZURE_CONTENT_RECORDING: Enable content recording (true/false)
-    - AGENTTRACE_AZURE_AGENT_NAME: Agent name for metadata
+    - TRACECRAFT_AZURE_CONTENT_RECORDING: Enable content recording (true/false)
+    - TRACECRAFT_AZURE_AGENT_NAME: Agent name for metadata
 
 Usage:
     # Set connection string
@@ -36,10 +36,10 @@ import sys
 import time
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+import tracecraft
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
 
 def check_prerequisites() -> bool:
@@ -62,14 +62,14 @@ def check_prerequisites() -> bool:
 def main() -> None:
     """Run the Azure AI Foundry export example."""
     print("=" * 60)
-    print("AgentTrace Azure AI Foundry Export")
+    print("TraceCraft Azure AI Foundry Export")
     print("=" * 60)
 
     # Create Azure Foundry exporter with content recording
-    from agenttrace.contrib.azure import create_foundry_exporter
+    from tracecraft.contrib.azure import create_foundry_exporter
 
     exporter = create_foundry_exporter(
-        service_name="agenttrace-azure-demo",
+        service_name="tracecraft-azure-demo",
         enable_content_recording=True,  # Record prompts/responses
         agent_name="demo-research-agent",
         agent_id="agent-001",
@@ -77,7 +77,7 @@ def main() -> None:
     )
 
     # Initialize with Azure exporter
-    runtime = agenttrace.init(
+    runtime = tracecraft.init(
         console=True,
         jsonl=False,  # Disable local JSONL for this demo
         exporters=[exporter],
@@ -142,7 +142,7 @@ def main() -> None:
     print("\nView traces in Azure Portal:")
     print("  1. Navigate to Application Insights resource")
     print("  2. Click 'Transaction Search'")
-    print("  3. Filter by service name: agenttrace-azure-demo")
+    print("  3. Filter by service name: tracecraft-azure-demo")
     print("\nAzure AI Foundry features:")
     print("  - gen_ai.agent.name attribute on agent spans")
     print("  - gen_ai.agent.id for agent identification")

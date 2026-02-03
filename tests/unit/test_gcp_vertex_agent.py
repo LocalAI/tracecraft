@@ -12,7 +12,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun
+from tracecraft.core.models import AgentRun
 
 
 class TestVertexAgentExporter:
@@ -20,8 +20,8 @@ class TestVertexAgentExporter:
 
     def test_create_vertex_agent_exporter(self) -> None:
         """create_vertex_agent_exporter should return configured exporter."""
-        with patch("agenttrace.contrib.gcp._get_access_token", return_value="mock-token"):
-            from agenttrace.contrib.gcp import create_vertex_agent_exporter
+        with patch("tracecraft.contrib.gcp._get_access_token", return_value="mock-token"):
+            from tracecraft.contrib.gcp import create_vertex_agent_exporter
 
             exporter = create_vertex_agent_exporter(
                 project_id="test-project",
@@ -34,8 +34,8 @@ class TestVertexAgentExporter:
 
     def test_create_vertex_agent_exporter_stores_config(self) -> None:
         """create_vertex_agent_exporter should store VertexAgentConfig on exporter."""
-        with patch("agenttrace.contrib.gcp._get_access_token", return_value="mock-token"):
-            from agenttrace.contrib.gcp import (
+        with patch("tracecraft.contrib.gcp._get_access_token", return_value="mock-token"):
+            from tracecraft.contrib.gcp import (
                 VertexAgentConfig,
                 create_vertex_agent_exporter,
             )
@@ -62,8 +62,8 @@ class TestVertexAgentExporter:
 
     def test_create_vertex_agent_exporter_content_recording_default(self) -> None:
         """create_vertex_agent_exporter should have content recording disabled by default."""
-        with patch("agenttrace.contrib.gcp._get_access_token", return_value="mock-token"):
-            from agenttrace.contrib.gcp import create_vertex_agent_exporter
+        with patch("tracecraft.contrib.gcp._get_access_token", return_value="mock-token"):
+            from tracecraft.contrib.gcp import create_vertex_agent_exporter
 
             exporter = create_vertex_agent_exporter(project_id="test-project")
 
@@ -77,15 +77,15 @@ class TestConfigureForVertexAgentBuilder:
 
     def test_configure_for_vertex_agent_builder(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """configure_for_vertex_agent_builder should use environment variables."""
-        with patch("agenttrace.contrib.gcp._get_access_token", return_value="mock-token"):
-            from agenttrace.contrib.gcp import configure_for_vertex_agent_builder
+        with patch("tracecraft.contrib.gcp._get_access_token", return_value="mock-token"):
+            from tracecraft.contrib.gcp import configure_for_vertex_agent_builder
 
             monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "test-project")
-            monkeypatch.setenv("AGENTTRACE_GCP_SESSION_ID", "env-session")
-            monkeypatch.setenv("AGENTTRACE_GCP_AGENT_NAME", "env-agent")
-            monkeypatch.setenv("AGENTTRACE_GCP_AGENT_ID", "env-agent-id")
-            monkeypatch.setenv("AGENTTRACE_GCP_CONTENT_RECORDING", "true")
-            monkeypatch.setenv("AGENTTRACE_GCP_REASONING_ENGINE_ID", "re-001")
+            monkeypatch.setenv("TRACECRAFT_GCP_SESSION_ID", "env-session")
+            monkeypatch.setenv("TRACECRAFT_GCP_AGENT_NAME", "env-agent")
+            monkeypatch.setenv("TRACECRAFT_GCP_AGENT_ID", "env-agent-id")
+            monkeypatch.setenv("TRACECRAFT_GCP_CONTENT_RECORDING", "true")
+            monkeypatch.setenv("TRACECRAFT_GCP_REASONING_ENGINE_ID", "re-001")
 
             exporter = configure_for_vertex_agent_builder(service_name="my-agent")
 
@@ -99,13 +99,13 @@ class TestConfigureForVertexAgentBuilder:
 
     def test_configure_overrides_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """configure_for_vertex_agent_builder should allow overriding env values."""
-        with patch("agenttrace.contrib.gcp._get_access_token", return_value="mock-token"):
-            from agenttrace.contrib.gcp import configure_for_vertex_agent_builder
+        with patch("tracecraft.contrib.gcp._get_access_token", return_value="mock-token"):
+            from tracecraft.contrib.gcp import configure_for_vertex_agent_builder
 
             monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "test-project")
-            monkeypatch.setenv("AGENTTRACE_GCP_SESSION_ID", "env-session")
-            monkeypatch.setenv("AGENTTRACE_GCP_AGENT_NAME", "env-agent")
-            monkeypatch.setenv("AGENTTRACE_GCP_CONTENT_RECORDING", "false")
+            monkeypatch.setenv("TRACECRAFT_GCP_SESSION_ID", "env-session")
+            monkeypatch.setenv("TRACECRAFT_GCP_AGENT_NAME", "env-agent")
+            monkeypatch.setenv("TRACECRAFT_GCP_CONTENT_RECORDING", "false")
 
             exporter = configure_for_vertex_agent_builder(
                 session_id="override-session",
@@ -125,7 +125,7 @@ class TestVertexAgentConfig:
 
     def test_vertex_agent_config_defaults(self) -> None:
         """VertexAgentConfig should have sensible defaults."""
-        from agenttrace.contrib.gcp import VertexAgentConfig
+        from tracecraft.contrib.gcp import VertexAgentConfig
 
         config = VertexAgentConfig()
 
@@ -139,7 +139,7 @@ class TestVertexAgentConfig:
 
     def test_vertex_agent_config_with_values(self) -> None:
         """VertexAgentConfig should accept custom values."""
-        from agenttrace.contrib.gcp import VertexAgentConfig
+        from tracecraft.contrib.gcp import VertexAgentConfig
 
         config = VertexAgentConfig(
             session_id="session-123",
@@ -165,7 +165,7 @@ class TestInjectCloudTraceContext:
 
     def test_inject_cloudtrace_context(self, sample_run: AgentRun) -> None:
         """inject_cloudtrace_context should add Cloud Trace headers to carrier."""
-        from agenttrace.contrib.gcp import inject_cloudtrace_context
+        from tracecraft.contrib.gcp import inject_cloudtrace_context
 
         carrier: dict[str, str] = {}
         inject_cloudtrace_context(carrier, sample_run)
@@ -177,7 +177,7 @@ class TestInjectCloudTraceContext:
 
     def test_inject_cloudtrace_context_with_session_id(self, sample_run: AgentRun) -> None:
         """inject_cloudtrace_context should add session header when provided."""
-        from agenttrace.contrib.gcp import inject_cloudtrace_context
+        from tracecraft.contrib.gcp import inject_cloudtrace_context
 
         carrier: dict[str, str] = {}
         inject_cloudtrace_context(carrier, sample_run, session_id="my-session")
@@ -189,7 +189,7 @@ class TestInjectCloudTraceContext:
         self, sample_run_with_session: AgentRun
     ) -> None:
         """inject_cloudtrace_context should use session_id from run if not provided."""
-        from agenttrace.contrib.gcp import inject_cloudtrace_context
+        from tracecraft.contrib.gcp import inject_cloudtrace_context
 
         carrier: dict[str, str] = {}
         inject_cloudtrace_context(carrier, sample_run_with_session)
@@ -199,7 +199,7 @@ class TestInjectCloudTraceContext:
 
     def test_inject_cloudtrace_context_sampled_flag(self, sample_run: AgentRun) -> None:
         """inject_cloudtrace_context should respect sampled parameter."""
-        from agenttrace.contrib.gcp import inject_cloudtrace_context
+        from tracecraft.contrib.gcp import inject_cloudtrace_context
 
         # Test sampled=True
         carrier: dict[str, str] = {}
@@ -213,7 +213,7 @@ class TestInjectCloudTraceContext:
 
     def test_inject_cloudtrace_context_legacy_format(self, sample_run: AgentRun) -> None:
         """inject_cloudtrace_context should support legacy format only."""
-        from agenttrace.contrib.gcp import inject_cloudtrace_context
+        from tracecraft.contrib.gcp import inject_cloudtrace_context
 
         carrier: dict[str, str] = {}
         inject_cloudtrace_context(carrier, sample_run, use_legacy_format=True)
@@ -228,7 +228,7 @@ class TestExtractCloudTraceContext:
 
     def test_extract_cloudtrace_context(self) -> None:
         """extract_cloudtrace_context should parse valid Cloud Trace header."""
-        from agenttrace.contrib.gcp import extract_cloudtrace_context
+        from tracecraft.contrib.gcp import extract_cloudtrace_context
 
         carrier = {"X-Cloud-Trace-Context": "105445aa7843bc8bf206b12000100000/123;o=1"}
 
@@ -243,7 +243,7 @@ class TestExtractCloudTraceContext:
 
     def test_extract_cloudtrace_context_with_session(self) -> None:
         """extract_cloudtrace_context should extract session ID when present."""
-        from agenttrace.contrib.gcp import extract_cloudtrace_context
+        from tracecraft.contrib.gcp import extract_cloudtrace_context
 
         carrier = {
             "X-Cloud-Trace-Context": "105445aa7843bc8bf206b12000100000/123;o=1",
@@ -258,7 +258,7 @@ class TestExtractCloudTraceContext:
 
     def test_extract_cloudtrace_context_missing_header(self) -> None:
         """extract_cloudtrace_context should return None when header missing."""
-        from agenttrace.contrib.gcp import extract_cloudtrace_context
+        from tracecraft.contrib.gcp import extract_cloudtrace_context
 
         carrier: dict[str, str] = {}
 
@@ -268,7 +268,7 @@ class TestExtractCloudTraceContext:
 
     def test_extract_cloudtrace_context_w3c_format(self) -> None:
         """extract_cloudtrace_context should also parse W3C format."""
-        from agenttrace.contrib.gcp import extract_cloudtrace_context
+        from tracecraft.contrib.gcp import extract_cloudtrace_context
 
         carrier = {"traceparent": "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"}
 
@@ -286,7 +286,7 @@ class TestVertexAITracerAdapter:
 
     def test_adapter_init(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """VertexAITracerAdapter should initialize correctly."""
-        from agenttrace.contrib.gcp import VertexAITracerAdapter
+        from tracecraft.contrib.gcp import VertexAITracerAdapter
 
         monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "test-project")
 
@@ -305,7 +305,7 @@ class TestVertexAITracerAdapter:
 
     def test_adapter_stores_config(self) -> None:
         """VertexAITracerAdapter should store VertexAgentConfig."""
-        from agenttrace.contrib.gcp import VertexAgentConfig, VertexAITracerAdapter
+        from tracecraft.contrib.gcp import VertexAgentConfig, VertexAITracerAdapter
 
         adapter = VertexAITracerAdapter(
             project_id="test-project",
@@ -319,7 +319,7 @@ class TestVertexAITracerAdapter:
 
     def test_adapter_lazy_handler_init(self) -> None:
         """VertexAITracerAdapter should lazily initialize handler."""
-        from agenttrace.contrib.gcp import VertexAITracerAdapter
+        from tracecraft.contrib.gcp import VertexAITracerAdapter
 
         adapter = VertexAITracerAdapter(project_id="test-project")
 
@@ -328,7 +328,7 @@ class TestVertexAITracerAdapter:
 
     def test_adapter_clear(self) -> None:
         """VertexAITracerAdapter clear should handle uninitialized handler."""
-        from agenttrace.contrib.gcp import VertexAITracerAdapter
+        from tracecraft.contrib.gcp import VertexAITracerAdapter
 
         adapter = VertexAITracerAdapter(project_id="test-project")
 
@@ -341,15 +341,15 @@ class TestGCPVertexAgentConfigEnv:
 
     def test_load_config_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """load_config_from_env should load GCP Vertex Agent config."""
-        from agenttrace.core.config import load_config_from_env
+        from tracecraft.core.config import load_config_from_env
 
-        monkeypatch.setenv("AGENTTRACE_GCP_VERTEX_ENABLED", "true")
+        monkeypatch.setenv("TRACECRAFT_GCP_VERTEX_ENABLED", "true")
         monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "test-project")
-        monkeypatch.setenv("AGENTTRACE_GCP_SESSION_ID", "env-session")
-        monkeypatch.setenv("AGENTTRACE_GCP_AGENT_NAME", "env-agent")
-        monkeypatch.setenv("AGENTTRACE_GCP_AGENT_ID", "env-agent-id")
-        monkeypatch.setenv("AGENTTRACE_GCP_CONTENT_RECORDING", "true")
-        monkeypatch.setenv("AGENTTRACE_GCP_REASONING_ENGINE_ID", "re-001")
+        monkeypatch.setenv("TRACECRAFT_GCP_SESSION_ID", "env-session")
+        monkeypatch.setenv("TRACECRAFT_GCP_AGENT_NAME", "env-agent")
+        monkeypatch.setenv("TRACECRAFT_GCP_AGENT_ID", "env-agent-id")
+        monkeypatch.setenv("TRACECRAFT_GCP_CONTENT_RECORDING", "true")
+        monkeypatch.setenv("TRACECRAFT_GCP_REASONING_ENGINE_ID", "re-001")
 
         config = load_config_from_env()
 
@@ -363,7 +363,7 @@ class TestGCPVertexAgentConfigEnv:
 
     def test_gcp_config_defaults(self) -> None:
         """GCP Vertex Agent config should have sensible defaults."""
-        from agenttrace.core.config import GCPVertexAgentConfig
+        from tracecraft.core.config import GCPVertexAgentConfig
 
         config = GCPVertexAgentConfig()
 

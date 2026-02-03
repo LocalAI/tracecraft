@@ -28,9 +28,9 @@ Learn how to export traces to various destinations including OTLP collectors, HT
 Enabled by default. No extra setup required.
 
 ```python
-import agenttrace
+import tracecraft
 
-runtime = agenttrace.init(
+runtime = tracecraft.init(
     console=True,       # Rich tree in terminal
     jsonl=True,         # JSONL file
     jsonl_path="traces/my_traces.jsonl",
@@ -40,8 +40,8 @@ runtime = agenttrace.init(
 ### Disable via environment
 
 ```bash
-export AGENTTRACE_CONSOLE_ENABLED=false
-export AGENTTRACE_JSONL_ENABLED=false
+export TRACECRAFT_CONSOLE_ENABLED=false
+export TRACECRAFT_JSONL_ENABLED=false
 ```
 
 ## OTLP Export
@@ -60,21 +60,21 @@ docker run -d --name jaeger \
 ### Use in code
 
 ```python
-from agenttrace.exporters.otlp import OTLPExporter
+from tracecraft.exporters.otlp import OTLPExporter
 
 otlp = OTLPExporter(
     endpoint="http://localhost:4317",
     service_name="my-service",
 )
 
-runtime = agenttrace.init(exporters=[otlp])
+runtime = tracecraft.init(exporters=[otlp])
 ```
 
 ### Via environment
 
 ```bash
-export AGENTTRACE_OTLP_ENABLED=true
-export AGENTTRACE_OTLP_ENDPOINT=http://localhost:4317
+export TRACECRAFT_OTLP_ENABLED=true
+export TRACECRAFT_OTLP_ENDPOINT=http://localhost:4317
 ```
 
 ## HTML Reports
@@ -82,7 +82,7 @@ export AGENTTRACE_OTLP_ENDPOINT=http://localhost:4317
 Generate self-contained HTML files for sharing.
 
 ```python
-from agenttrace.exporters.html import HTMLExporter
+from tracecraft.exporters.html import HTMLExporter
 
 html_exporter = HTMLExporter(filepath="report.html")
 html_exporter.export(run)
@@ -100,14 +100,14 @@ Features:
 Track traces alongside ML experiments.
 
 ```python
-from agenttrace.exporters.mlflow import MLflowExporter
+from tracecraft.exporters.mlflow import MLflowExporter
 
 mlflow_exporter = MLflowExporter(
     experiment_name="my-agent-experiment",
     tracking_uri="http://localhost:5000",
 )
 
-runtime = agenttrace.init(exporters=[mlflow_exporter])
+runtime = tracecraft.init(exporters=[mlflow_exporter])
 ```
 
 ### Start MLflow
@@ -121,8 +121,8 @@ mlflow server --host 0.0.0.0 --port 5000
 Create your own exporter by inheriting from `BaseExporter`:
 
 ```python
-from agenttrace.exporters.base import BaseExporter
-from agenttrace.core.models import AgentRun
+from tracecraft.exporters.base import BaseExporter
+from tracecraft.core.models import AgentRun
 
 class MyExporter(BaseExporter):
     def export(self, run: AgentRun) -> None:
@@ -140,10 +140,10 @@ class MyExporter(BaseExporter):
 Use multiple exporters simultaneously:
 
 ```python
-from agenttrace.exporters.otlp import OTLPExporter
-from agenttrace.exporters.html import HTMLExporter
+from tracecraft.exporters.otlp import OTLPExporter
+from tracecraft.exporters.html import HTMLExporter
 
-runtime = agenttrace.init(
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     exporters=[

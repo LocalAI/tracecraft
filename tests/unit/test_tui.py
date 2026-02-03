@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.models import AgentRun, Step, StepType
 
 
 class TestTraceStore:
@@ -48,7 +48,7 @@ class TestTraceStore:
     @pytest.mark.asyncio
     async def test_load_from_file(self, sample_jsonl_file: Path) -> None:
         """Test loading traces from a JSONL file."""
-        from agenttrace.tui.data.store import TraceStore
+        from tracecraft.tui.data.store import TraceStore
 
         store = TraceStore()
         await store.load_from_source(str(sample_jsonl_file))
@@ -59,7 +59,7 @@ class TestTraceStore:
     @pytest.mark.asyncio
     async def test_load_from_nonexistent_file(self, tmp_path: Path) -> None:
         """Test loading from a nonexistent file."""
-        from agenttrace.tui.data.store import TraceStore
+        from tracecraft.tui.data.store import TraceStore
 
         store = TraceStore()
         await store.load_from_source(str(tmp_path / "nonexistent.jsonl"))
@@ -69,7 +69,7 @@ class TestTraceStore:
     @pytest.mark.asyncio
     async def test_load_multiple_runs(self, tmp_path: Path) -> None:
         """Test loading multiple runs from a file."""
-        from agenttrace.tui.data.store import TraceStore
+        from tracecraft.tui.data.store import TraceStore
 
         file_path = tmp_path / "multi.jsonl"
         with file_path.open("w") as f:
@@ -88,7 +88,7 @@ class TestTraceStore:
     @pytest.mark.asyncio
     async def test_get_run_by_id(self, sample_run: AgentRun, tmp_path: Path) -> None:
         """Test getting a run by ID."""
-        from agenttrace.tui.data.store import TraceStore
+        from tracecraft.tui.data.store import TraceStore
 
         file_path = tmp_path / "traces.jsonl"
         with file_path.open("w") as f:
@@ -103,7 +103,7 @@ class TestTraceStore:
 
     def test_get_run_not_found(self) -> None:
         """Test getting a run that doesn't exist."""
-        from agenttrace.tui.data.store import TraceStore
+        from tracecraft.tui.data.store import TraceStore
 
         store = TraceStore()
         assert store.get_run("nonexistent-id") is None
@@ -111,7 +111,7 @@ class TestTraceStore:
     @pytest.mark.asyncio
     async def test_filter_runs_by_name(self, tmp_path: Path) -> None:
         """Test filtering runs by name."""
-        from agenttrace.tui.data.store import TraceStore
+        from tracecraft.tui.data.store import TraceStore
 
         file_path = tmp_path / "traces.jsonl"
         with file_path.open("w") as f:
@@ -128,7 +128,7 @@ class TestTraceStore:
     @pytest.mark.asyncio
     async def test_filter_runs_by_error(self, tmp_path: Path) -> None:
         """Test filtering runs by error status."""
-        from agenttrace.tui.data.store import TraceStore
+        from tracecraft.tui.data.store import TraceStore
 
         file_path = tmp_path / "traces.jsonl"
         with file_path.open("w") as f:
@@ -152,7 +152,7 @@ class TestTraceStore:
 
     def test_get_statistics_empty(self) -> None:
         """Test getting statistics with no runs."""
-        from agenttrace.tui.data.store import TraceStore
+        from tracecraft.tui.data.store import TraceStore
 
         store = TraceStore()
         stats = store.get_statistics()
@@ -163,7 +163,7 @@ class TestTraceStore:
     @pytest.mark.asyncio
     async def test_get_statistics(self, tmp_path: Path) -> None:
         """Test getting statistics with runs."""
-        from agenttrace.tui.data.store import TraceStore
+        from tracecraft.tui.data.store import TraceStore
 
         file_path = tmp_path / "traces.jsonl"
         with file_path.open("w") as f:
@@ -189,7 +189,7 @@ class TestTraceStore:
     @pytest.mark.asyncio
     async def test_check_for_updates(self, tmp_path: Path) -> None:
         """Test checking for updates to a file."""
-        from agenttrace.tui.data.store import TraceStore
+        from tracecraft.tui.data.store import TraceStore
 
         file_path = tmp_path / "traces.jsonl"
         with file_path.open("w") as f:
@@ -219,7 +219,7 @@ class TestTraceStore:
 
     def test_clear(self) -> None:
         """Test clearing the store."""
-        from agenttrace.tui.data.store import TraceStore
+        from tracecraft.tui.data.store import TraceStore
 
         store = TraceStore()
         store._runs = [AgentRun(name="test", start_time=datetime.now(UTC))]
@@ -237,7 +237,7 @@ class TestTUIWidgetsImport:
         # This test verifies the import error handling
         # The actual behavior depends on whether textual is installed
         try:
-            from agenttrace.tui.widgets.run_tree import TEXTUAL_AVAILABLE, RunTree
+            from tracecraft.tui.widgets.run_tree import TEXTUAL_AVAILABLE, RunTree
 
             if not TEXTUAL_AVAILABLE:
                 with pytest.raises(ImportError):
@@ -248,7 +248,7 @@ class TestTUIWidgetsImport:
     def test_metrics_panel_requires_textual(self) -> None:
         """Test MetricsPanel raises ImportError without textual."""
         try:
-            from agenttrace.tui.widgets.metrics_panel import TEXTUAL_AVAILABLE, MetricsPanel
+            from tracecraft.tui.widgets.metrics_panel import TEXTUAL_AVAILABLE, MetricsPanel
 
             if not TEXTUAL_AVAILABLE:
                 with pytest.raises(ImportError):
@@ -259,7 +259,7 @@ class TestTUIWidgetsImport:
     def test_io_viewer_requires_textual(self) -> None:
         """Test IOViewer raises ImportError without textual."""
         try:
-            from agenttrace.tui.widgets.io_viewer import TEXTUAL_AVAILABLE, IOViewer
+            from tracecraft.tui.widgets.io_viewer import TEXTUAL_AVAILABLE, IOViewer
 
             if not TEXTUAL_AVAILABLE:
                 with pytest.raises(ImportError):
@@ -270,7 +270,7 @@ class TestTUIWidgetsImport:
     def test_filter_bar_requires_textual(self) -> None:
         """Test FilterBar raises ImportError without textual."""
         try:
-            from agenttrace.tui.widgets.filter_bar import TEXTUAL_AVAILABLE, FilterBar
+            from tracecraft.tui.widgets.filter_bar import TEXTUAL_AVAILABLE, FilterBar
 
             if not TEXTUAL_AVAILABLE:
                 with pytest.raises(ImportError):
@@ -283,21 +283,129 @@ class TestTUIApp:
     """Tests for the main TUI application."""
 
     def test_app_requires_textual(self) -> None:
-        """Test AgentTraceApp raises ImportError without textual."""
+        """Test TraceCraftApp raises ImportError without textual."""
         try:
-            from agenttrace.tui.app import TEXTUAL_AVAILABLE, AgentTraceApp
+            from tracecraft.tui.app import TEXTUAL_AVAILABLE, TraceCraftApp
 
             if not TEXTUAL_AVAILABLE:
                 with pytest.raises(ImportError):
-                    AgentTraceApp()
+                    TraceCraftApp()
         except ImportError:
             pass
 
     def test_run_tui_function_exists(self) -> None:
         """Test run_tui function is importable."""
-        from agenttrace.tui import run_tui
+        from tracecraft.tui import run_tui
 
         assert callable(run_tui)
+
+
+class TestTUIScreensImport:
+    """Test that TUI screens handle missing textual gracefully."""
+
+    def test_project_manager_requires_textual(self) -> None:
+        """Test ProjectManagerScreen raises ImportError without textual."""
+        try:
+            from tracecraft.tui.screens.project_manager import (
+                TEXTUAL_AVAILABLE,
+                ProjectManagerScreen,
+            )
+
+            if not TEXTUAL_AVAILABLE:
+                with pytest.raises(ImportError):
+                    ProjectManagerScreen(store=None)
+        except ImportError:
+            pass  # Expected if textual not installed
+
+    def test_confirm_screen_requires_textual(self) -> None:
+        """Test ConfirmScreen raises ImportError without textual."""
+        try:
+            from tracecraft.tui.screens.project_manager import (
+                TEXTUAL_AVAILABLE,
+                ConfirmScreen,
+            )
+
+            if not TEXTUAL_AVAILABLE:
+                with pytest.raises(ImportError):
+                    ConfirmScreen(message="Test")
+        except ImportError:
+            pass
+
+    def test_project_create_requires_textual(self) -> None:
+        """Test ProjectCreateScreen raises ImportError without textual."""
+        try:
+            from tracecraft.tui.screens.project_create import (
+                TEXTUAL_AVAILABLE,
+                ProjectCreateScreen,
+            )
+
+            if not TEXTUAL_AVAILABLE:
+                with pytest.raises(ImportError):
+                    ProjectCreateScreen(store=None)
+        except ImportError:
+            pass
+
+    def test_trace_assign_requires_textual(self) -> None:
+        """Test TraceAssignScreen raises ImportError without textual."""
+        try:
+            from tracecraft.tui.screens.trace_assign import (
+                TEXTUAL_AVAILABLE,
+                TraceAssignScreen,
+            )
+
+            if not TEXTUAL_AVAILABLE:
+                with pytest.raises(ImportError):
+                    TraceAssignScreen(trace=None, store=None)
+        except ImportError:
+            pass
+
+    def test_screens_init_exports(self) -> None:
+        """Test screens __init__ exports all new screens."""
+
+        # These may be None if textual not installed, but should be importable
+        assert "LLMPickerScreen" in dir()
+        assert "PlaygroundScreen" in dir()
+        assert "ProjectManagerScreen" in dir()
+        assert "ProjectCreateScreen" in dir()
+        assert "TraceAssignScreen" in dir()
+        assert "ConfirmScreen" in dir()
+
+
+class TestFilterBarProject:
+    """Tests for FilterBar project functionality."""
+
+    def test_filter_changed_message_has_project_fields(self) -> None:
+        """Test FilterChanged message includes project fields."""
+        try:
+            from tracecraft.tui.widgets.filter_bar import TEXTUAL_AVAILABLE, FilterBar
+
+            if TEXTUAL_AVAILABLE:
+                msg = FilterBar.FilterChanged(
+                    filter_text="test",
+                    show_errors_only=False,
+                    project_id="proj-123",
+                    project_name="Test Project",
+                )
+                assert msg.filter_text == "test"
+                assert msg.show_errors_only is False
+                assert msg.project_id == "proj-123"
+                assert msg.project_name == "Test Project"
+        except ImportError:
+            pass
+
+    def test_filter_changed_message_defaults(self) -> None:
+        """Test FilterChanged message has correct defaults."""
+        try:
+            from tracecraft.tui.widgets.filter_bar import TEXTUAL_AVAILABLE, FilterBar
+
+            if TEXTUAL_AVAILABLE:
+                msg = FilterBar.FilterChanged(filter_text="test")
+                assert msg.filter_text == "test"
+                assert msg.show_errors_only is False
+                assert msg.project_id is None
+                assert msg.project_name is None
+        except ImportError:
+            pass
 
 
 class TestCLIUICommand:
@@ -305,14 +413,14 @@ class TestCLIUICommand:
 
     def test_ui_command_exists(self) -> None:
         """Test UI command is registered."""
-        from agenttrace.cli.main import ui
+        from tracecraft.cli.main import ui
 
         # Verify the ui function exists and is callable
         assert callable(ui)
 
     def test_ui_command_in_app(self) -> None:
         """Test UI command is in the app."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         # Get command info from the typer app
         # The commands are stored in registered_commands with callback attributes

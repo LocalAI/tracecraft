@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.models import AgentRun, Step, StepType
 
 
 @pytest.fixture
@@ -80,7 +80,7 @@ class TestMlflowHelperFunctions:
 
     def test_flatten_steps(self):
         """Test flattening nested step hierarchy."""
-        from agenttrace.integrations.mlflow_eval import _flatten_steps
+        from tracecraft.integrations.mlflow_eval import _flatten_steps
 
         trace_id = uuid4()
         child_step = Step(
@@ -108,7 +108,7 @@ class TestMlflowHelperFunctions:
 
     def test_load_traces_from_jsonl(self, traces_jsonl):
         """Test loading traces from JSONL file."""
-        from agenttrace.integrations.mlflow_eval import _load_traces_from_jsonl
+        from tracecraft.integrations.mlflow_eval import _load_traces_from_jsonl
 
         traces = _load_traces_from_jsonl(traces_jsonl)
 
@@ -117,7 +117,7 @@ class TestMlflowHelperFunctions:
 
     def test_load_traces_file_not_found(self, tmp_path):
         """Test FileNotFoundError for non-existent file."""
-        from agenttrace.integrations.mlflow_eval import _load_traces_from_jsonl
+        from tracecraft.integrations.mlflow_eval import _load_traces_from_jsonl
 
         with pytest.raises(FileNotFoundError):
             _load_traces_from_jsonl(tmp_path / "nonexistent.jsonl")
@@ -128,7 +128,7 @@ class TestDefaultExtractors:
 
     def test_extract_inputs_from_input_field(self, sample_traces):
         """Test extracting from 'input' field."""
-        from agenttrace.integrations.mlflow_eval import _default_extract_inputs
+        from tracecraft.integrations.mlflow_eval import _default_extract_inputs
 
         step = sample_traces[0].steps[0]
         result = _default_extract_inputs(step)
@@ -137,7 +137,7 @@ class TestDefaultExtractors:
 
     def test_extract_inputs_from_messages(self, sample_traces):
         """Test extracting from messages format."""
-        from agenttrace.integrations.mlflow_eval import _default_extract_inputs
+        from tracecraft.integrations.mlflow_eval import _default_extract_inputs
 
         step = sample_traces[1].steps[0]
         result = _default_extract_inputs(step)
@@ -146,7 +146,7 @@ class TestDefaultExtractors:
 
     def test_extract_outputs_from_output_field(self, sample_traces):
         """Test extracting from 'output' field."""
-        from agenttrace.integrations.mlflow_eval import _default_extract_outputs
+        from tracecraft.integrations.mlflow_eval import _default_extract_outputs
 
         step = sample_traces[0].steps[0]
         result = _default_extract_outputs(step)
@@ -155,7 +155,7 @@ class TestDefaultExtractors:
 
     def test_extract_outputs_from_response_field(self, sample_traces):
         """Test extracting from 'response' field."""
-        from agenttrace.integrations.mlflow_eval import _default_extract_outputs
+        from tracecraft.integrations.mlflow_eval import _default_extract_outputs
 
         step = sample_traces[1].steps[0]
         result = _default_extract_outputs(step)
@@ -164,7 +164,7 @@ class TestDefaultExtractors:
 
     def test_extract_context(self, sample_traces):
         """Test context extraction."""
-        from agenttrace.integrations.mlflow_eval import _default_extract_context
+        from tracecraft.integrations.mlflow_eval import _default_extract_context
 
         step = sample_traces[0].steps[0]
         result = _default_extract_context(step)
@@ -173,7 +173,7 @@ class TestDefaultExtractors:
 
     def test_extract_context_none_when_missing(self, sample_traces):
         """Test None returned when no context."""
-        from agenttrace.integrations.mlflow_eval import _default_extract_context
+        from tracecraft.integrations.mlflow_eval import _default_extract_context
 
         step = sample_traces[1].steps[0]
         result = _default_extract_context(step)
@@ -182,7 +182,7 @@ class TestDefaultExtractors:
 
     def test_extract_ground_truth(self, sample_traces):
         """Test ground truth extraction."""
-        from agenttrace.integrations.mlflow_eval import _default_extract_ground_truth
+        from tracecraft.integrations.mlflow_eval import _default_extract_ground_truth
 
         step = sample_traces[1].steps[0]
         result = _default_extract_ground_truth(step)
@@ -191,7 +191,7 @@ class TestDefaultExtractors:
 
     def test_extract_ground_truth_none_when_missing(self, sample_traces):
         """Test None returned when no ground truth."""
-        from agenttrace.integrations.mlflow_eval import _default_extract_ground_truth
+        from tracecraft.integrations.mlflow_eval import _default_extract_ground_truth
 
         step = sample_traces[0].steps[0]
         result = _default_extract_ground_truth(step)

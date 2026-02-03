@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Decorators - All AgentTrace decorator types explained.
+"""Decorators - All TraceCraft decorator types explained.
 
 Learn how to use @trace_agent, @trace_llm, @trace_tool, and @trace_retrieval
 decorators to instrument your code. This example demonstrates nested decorators,
 metadata injection, and error capture.
 
 Prerequisites:
-    - AgentTrace installed (pip install agenttrace)
+    - TraceCraft installed (pip install tracecraft)
     - Completed 01_hello_world.py
 
 Environment Variables:
@@ -25,16 +25,16 @@ Expected Output:
 
 from __future__ import annotations
 
-import agenttrace
-from agenttrace.instrumentation.decorators import (
+import tracecraft
+from tracecraft.instrumentation.decorators import (
     trace_agent,
     trace_llm,
     trace_retrieval,
     trace_tool,
 )
 
-# Initialize AgentTrace
-runtime = agenttrace.init(console=True, jsonl=True)
+# Initialize TraceCraft
+runtime = tracecraft.init(console=True, jsonl=True)
 
 
 # ============================================================================
@@ -120,7 +120,7 @@ def reasoning_llm(prompt: str) -> str:
     response = f"Analyzed: {prompt[:30]}..."
 
     # Optional: Add metadata to the current step
-    # from agenttrace.core.context import get_current_step
+    # from tracecraft.core.context import get_current_step
     # step = get_current_step()
     # if step:
     #     step.input_tokens = 100
@@ -226,7 +226,7 @@ def error_handling_agent() -> str:
 def main() -> None:
     """Run the decorators example."""
     print("=" * 60)
-    print("AgentTrace Decorators Example")
+    print("TraceCraft Decorators Example")
     print("=" * 60)
 
     # Example 1: Simple agent workflow

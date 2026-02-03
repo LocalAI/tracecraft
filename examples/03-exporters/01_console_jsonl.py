@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Console and JSONL - Default exporters in AgentTrace.
+"""Console and JSONL - Default exporters in TraceCraft.
 
 Demonstrates the built-in Console and JSONL exporters that come
-with AgentTrace by default.
+with TraceCraft by default.
 
 Prerequisites:
-    - AgentTrace installed
+    - TraceCraft installed
 
 Environment Variables:
-    - AGENTTRACE_CONSOLE_ENABLED: Enable/disable console (default: true)
-    - AGENTTRACE_JSONL_ENABLED: Enable/disable JSONL (default: true)
-    - AGENTTRACE_JSONL_PATH: Custom path for JSONL file
+    - TRACECRAFT_CONSOLE_ENABLED: Enable/disable console (default: true)
+    - TRACECRAFT_JSONL_ENABLED: Enable/disable JSONL (default: true)
+    - TRACECRAFT_JSONL_PATH: Custom path for JSONL file
 
 External Services:
     - None
@@ -20,7 +20,7 @@ Usage:
 
 Expected Output:
     - Rich tree output in console
-    - JSONL file at traces/agenttrace.jsonl
+    - JSONL file at traces/tracecraft.jsonl
 """
 
 from __future__ import annotations
@@ -28,18 +28,18 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import agenttrace
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+import tracecraft
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
 
 def main() -> None:
     """Demonstrate console and JSONL exporters."""
     print("=" * 60)
-    print("AgentTrace Console and JSONL Exporters")
+    print("TraceCraft Console and JSONL Exporters")
     print("=" * 60)
 
     # By default, both console and JSONL are enabled
-    runtime = agenttrace.init(
+    runtime = tracecraft.init(
         console=True,  # Rich tree output in terminal
         jsonl=True,  # JSONL file output
         jsonl_path="traces/example_traces.jsonl",  # Custom path
@@ -91,12 +91,12 @@ def main() -> None:
     print("\nConsole Exporter:")
     print("  - Rich tree visualization of traces")
     print("  - Shows hierarchy, timing, and errors")
-    print("  - Disable with AGENTTRACE_CONSOLE=false")
+    print("  - Disable with TRACECRAFT_CONSOLE=false")
     print("\nJSONL Exporter:")
     print("  - One JSON object per line (newline-delimited)")
     print("  - Easy to parse with standard tools")
     print("  - Great for log aggregation")
-    print("  - Disable with AGENTTRACE_JSONL=false")
+    print("  - Disable with TRACECRAFT_JSONL=false")
     print("\nNext steps:")
     print("- Try 02_otlp_jaeger.py for distributed tracing")
     print("- Try 04_html_reports.py for shareable reports")

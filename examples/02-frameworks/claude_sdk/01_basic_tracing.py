@@ -2,10 +2,10 @@
 """
 Claude Agent SDK - Basic Tracing Example
 
-Demonstrates basic integration of AgentTrace with Claude Agent SDK.
+Demonstrates basic integration of TraceCraft with Claude Agent SDK.
 
 Prerequisites:
-    - pip install agenttrace claude-code-sdk
+    - pip install tracecraft claude-code-sdk
     - ANTHROPIC_API_KEY environment variable
 
 Usage:
@@ -21,8 +21,8 @@ from __future__ import annotations
 import asyncio
 import os
 
-from agenttrace import AgentTraceRuntime
-from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+from tracecraft import TraceCraftRuntime
+from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
 
 async def main() -> None:
@@ -30,7 +30,7 @@ async def main() -> None:
     # Check for API key
     if not os.environ.get("ANTHROPIC_API_KEY"):
         print("Set ANTHROPIC_API_KEY to run this example")
-        print("\nThis example demonstrates the ClaudeAgentTracer API:")
+        print("\nThis example demonstrates the ClaudeTraceCraftr API:")
         print_api_demo()
         return
 
@@ -39,13 +39,13 @@ async def main() -> None:
         from claude_code_sdk import query
     except ImportError:
         print("Install claude-code-sdk: pip install claude-code-sdk")
-        print("\nThis example demonstrates the ClaudeAgentTracer API:")
+        print("\nThis example demonstrates the ClaudeTraceCraftr API:")
         print_api_demo()
         return
 
     # Initialize tracing
-    runtime = AgentTraceRuntime(console=True, jsonl=True)
-    tracer = ClaudeAgentTracer(runtime=runtime)
+    runtime = TraceCraftRuntime(console=True, jsonl=True)
+    tracer = ClaudeTraceCraftr(runtime=runtime)
 
     # Trace an agent task
     print("Running Claude agent with tracing...")
@@ -78,16 +78,16 @@ def print_api_demo() -> None:
     """Print API demonstration without requiring Claude SDK."""
     print(
         """
-ClaudeAgentTracer API Demo
+ClaudeTraceCraftr API Demo
 ==========================
 
 1. Basic Usage:
    ```python
-   from agenttrace import AgentTraceRuntime
-   from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+   from tracecraft import TraceCraftRuntime
+   from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-   runtime = AgentTraceRuntime(console=True, jsonl=True)
-   tracer = ClaudeAgentTracer(runtime=runtime)
+   runtime = TraceCraftRuntime(console=True, jsonl=True)
+   tracer = ClaudeTraceCraftr(runtime=runtime)
 
    with runtime.run("my_task") as run:
        async for message in query(
@@ -101,7 +101,7 @@ ClaudeAgentTracer API Demo
 
 2. Using the trace() context manager:
    ```python
-   tracer = ClaudeAgentTracer()  # Creates runtime automatically
+   tracer = ClaudeTraceCraftr()  # Creates runtime automatically
 
    with tracer.trace("my_task") as run:
        async for message in query(
@@ -116,9 +116,9 @@ ClaudeAgentTracer API Demo
     )
 
     # Demonstrate tool type inference
-    from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+    from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-    tracer = ClaudeAgentTracer()
+    tracer = ClaudeTraceCraftr()
 
     tool_names = [
         "Read",

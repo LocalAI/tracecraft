@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PydanticAI Tool Use - Trace advanced tool patterns with AgentTrace.
+"""PydanticAI Tool Use - Trace advanced tool patterns with TraceCraft.
 
 Demonstrates how to trace PydanticAI agents with tools, including
 context-aware tools, async tools, and multi-tool agents.
@@ -29,10 +29,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -51,8 +51,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -65,7 +65,7 @@ def basic_tool_example() -> None:
 
     print("\n--- Basic Tool Example ---")
 
-    processor = AgentTraceSpanProcessor()
+    processor = TraceCraftSpanProcessor()
 
     agent = Agent(
         "openai:gpt-4o-mini",
@@ -109,7 +109,7 @@ def multiple_tools_example() -> None:
 
     print("\n--- Multiple Tools Example ---")
 
-    processor = AgentTraceSpanProcessor()
+    processor = TraceCraftSpanProcessor()
 
     agent = Agent(
         "openai:gpt-4o-mini",
@@ -153,7 +153,7 @@ async def async_tools_example() -> None:
 
     print("\n--- Async Tools Example ---")
 
-    processor = AgentTraceSpanProcessor()
+    processor = TraceCraftSpanProcessor()
 
     agent = Agent(
         "openai:gpt-4o-mini",
@@ -190,7 +190,7 @@ def multi_tool_chain_example() -> None:
 
     print("\n--- Multi-Tool Chain Example ---")
 
-    processor = AgentTraceSpanProcessor()
+    processor = TraceCraftSpanProcessor()
 
     agent = Agent(
         "openai:gpt-4o-mini",
@@ -244,7 +244,7 @@ def structured_tool_output_example() -> None:
         in_stock: bool
         description: str
 
-    processor = AgentTraceSpanProcessor()
+    processor = TraceCraftSpanProcessor()
 
     agent = Agent(
         "openai:gpt-4o-mini",
@@ -282,7 +282,7 @@ def structured_tool_output_example() -> None:
 def main() -> None:
     """Run the PydanticAI tool examples."""
     print("=" * 60)
-    print("AgentTrace PydanticAI Tool Use")
+    print("TraceCraft PydanticAI Tool Use")
     print("=" * 60)
 
     basic_tool_example()

@@ -13,35 +13,35 @@ from typing import Any
 
 import pytest
 
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun, StepType
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun, StepType
 
 
-class TestClaudeAgentTracerCreation:
+class TestClaudeTraceCraftrCreation:
     """Tests for tracer instantiation."""
 
     def test_tracer_creation_without_runtime(self) -> None:
         """Should create tracer without runtime."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer is not None
         assert tracer.runtime is None
 
     def test_tracer_creation_with_runtime(self) -> None:
         """Should create tracer with provided runtime."""
-        from agenttrace import AgentTraceRuntime
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft import TraceCraftRuntime
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        runtime = AgentTraceRuntime(console=False, jsonl=False)
-        tracer = ClaudeAgentTracer(runtime=runtime)
+        runtime = TraceCraftRuntime(console=False, jsonl=False)
+        tracer = ClaudeTraceCraftr(runtime=runtime)
         assert tracer.runtime is runtime
 
     def test_tracer_internal_state_initialized(self) -> None:
         """Should initialize internal tracking state."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer._steps == {}
         assert tracer._subagent_runs == {}
         assert tracer._lock is not None
@@ -52,9 +52,9 @@ class TestToolTypeMapping:
 
     def test_file_operations_are_tools(self) -> None:
         """Read, Write, Edit should be TOOL type."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer._infer_step_type("Read") == StepType.TOOL
         assert tracer._infer_step_type("Write") == StepType.TOOL
         assert tracer._infer_step_type("Edit") == StepType.TOOL
@@ -63,53 +63,53 @@ class TestToolTypeMapping:
 
     def test_search_operations_are_tools(self) -> None:
         """Glob, Grep should be TOOL type."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer._infer_step_type("Glob") == StepType.TOOL
         assert tracer._infer_step_type("Grep") == StepType.TOOL
 
     def test_bash_is_tool(self) -> None:
         """Bash should be TOOL type."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer._infer_step_type("Bash") == StepType.TOOL
         assert tracer._infer_step_type("KillShell") == StepType.TOOL
 
     def test_websearch_is_retrieval(self) -> None:
         """WebSearch should be RETRIEVAL type."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer._infer_step_type("WebSearch") == StepType.RETRIEVAL
 
     def test_webfetch_is_tool(self) -> None:
         """WebFetch should be TOOL type."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer._infer_step_type("WebFetch") == StepType.TOOL
 
     def test_task_is_agent(self) -> None:
         """Task (subagent) should be AGENT type."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer._infer_step_type("Task") == StepType.AGENT
 
     def test_task_output_is_tool(self) -> None:
         """TaskOutput should be TOOL type."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer._infer_step_type("TaskOutput") == StepType.TOOL
 
     def test_workflow_tools(self) -> None:
         """Planning and workflow tools should be WORKFLOW type."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer._infer_step_type("EnterPlanMode") == StepType.WORKFLOW
         assert tracer._infer_step_type("ExitPlanMode") == StepType.WORKFLOW
         assert tracer._infer_step_type("Skill") == StepType.WORKFLOW
@@ -117,18 +117,18 @@ class TestToolTypeMapping:
 
     def test_mcp_tools_are_tools(self) -> None:
         """MCP server tools should be TOOL type."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer._infer_step_type("mcp__github__list_issues") == StepType.TOOL
         assert tracer._infer_step_type("mcp__postgres__query") == StepType.TOOL
         assert tracer._infer_step_type("mcp__filesystem__read_file") == StepType.TOOL
 
     def test_unknown_tools_default_to_tool(self) -> None:
         """Unknown tools should default to TOOL type."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer._infer_step_type("UnknownTool") == StepType.TOOL
         assert tracer._infer_step_type("CustomTool") == StepType.TOOL
 
@@ -138,18 +138,18 @@ class TestMetadataExtraction:
 
     def test_extracts_file_path_for_read(self) -> None:
         """Should extract file_path for Read tool."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         metadata = tracer._extract_tool_metadata("Read", {"file_path": "/src/main.py", "offset": 0})
         assert metadata["file_path"] == "/src/main.py"
         assert metadata["tool_name"] == "Read"
 
     def test_extracts_file_path_for_write(self) -> None:
         """Should extract file_path for Write tool."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         metadata = tracer._extract_tool_metadata(
             "Write", {"file_path": "/output.txt", "content": "data"}
         )
@@ -157,9 +157,9 @@ class TestMetadataExtraction:
 
     def test_extracts_file_path_for_edit(self) -> None:
         """Should extract file_path for Edit tool."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         metadata = tracer._extract_tool_metadata(
             "Edit",
             {"file_path": "/src/app.py", "old_string": "foo", "new_string": "bar"},
@@ -168,9 +168,9 @@ class TestMetadataExtraction:
 
     def test_extracts_command_for_bash(self) -> None:
         """Should extract command and description for Bash tool."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         metadata = tracer._extract_tool_metadata(
             "Bash", {"command": "pytest tests/", "description": "Run unit tests"}
         )
@@ -179,27 +179,27 @@ class TestMetadataExtraction:
 
     def test_extracts_pattern_for_glob(self) -> None:
         """Should extract pattern for Glob tool."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         metadata = tracer._extract_tool_metadata("Glob", {"pattern": "**/*.py", "path": "/src"})
         assert metadata["pattern"] == "**/*.py"
         assert metadata["path"] == "/src"
 
     def test_extracts_pattern_for_grep(self) -> None:
         """Should extract pattern for Grep tool."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         metadata = tracer._extract_tool_metadata("Grep", {"pattern": "def test_", "path": "/tests"})
         assert metadata["pattern"] == "def test_"
         assert metadata["path"] == "/tests"
 
     def test_extracts_url_for_webfetch(self) -> None:
         """Should extract url for WebFetch tool."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         metadata = tracer._extract_tool_metadata(
             "WebFetch", {"url": "https://example.com", "prompt": "Extract info"}
         )
@@ -207,17 +207,17 @@ class TestMetadataExtraction:
 
     def test_extracts_query_for_websearch(self) -> None:
         """Should extract query for WebSearch tool."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         metadata = tracer._extract_tool_metadata("WebSearch", {"query": "Python async patterns"})
         assert metadata["query"] == "Python async patterns"
 
     def test_extracts_task_metadata(self) -> None:
         """Should extract subagent_type and description for Task tool."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         metadata = tracer._extract_tool_metadata(
             "Task",
             {
@@ -231,9 +231,9 @@ class TestMetadataExtraction:
 
     def test_extracts_mcp_server_and_tool(self) -> None:
         """Should extract MCP server name and tool name."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         metadata = tracer._extract_tool_metadata(
             "mcp__github__list_issues", {"owner": "anthropics", "repo": "claude-code"}
         )
@@ -242,9 +242,9 @@ class TestMetadataExtraction:
 
     def test_extracts_mcp_tool_with_underscores(self) -> None:
         """Should handle MCP tool names with underscores."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         metadata = tracer._extract_tool_metadata(
             "mcp__filesystem__read_text_file", {"path": "/tmp/test.txt"}
         )
@@ -258,9 +258,9 @@ class TestPreToolUseHook:
     @pytest.mark.asyncio
     async def test_creates_step_on_pre_tool_use(self) -> None:
         """Should create a step when PreToolUse hook is called."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -271,7 +271,7 @@ class TestPreToolUseHook:
                     "tool_input": {"file_path": "/path/to/file.py"},
                 },
                 tool_use_id="tool-123",
-                context=None,
+                _context=None,
             )
 
         assert len(run.steps) == 1
@@ -284,16 +284,16 @@ class TestPreToolUseHook:
     @pytest.mark.asyncio
     async def test_tracks_step_by_tool_use_id(self) -> None:
         """Should track step by tool_use_id for later completion."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
             await tracer._pre_tool_use(
                 input_data={"tool_name": "Bash", "tool_input": {"command": "ls"}},
                 tool_use_id="tool-456",
-                context=None,
+                _context=None,
             )
 
         assert "tool-456" in tracer._steps
@@ -302,9 +302,9 @@ class TestPreToolUseHook:
     @pytest.mark.asyncio
     async def test_extracts_metadata_for_file_tools(self) -> None:
         """Should extract file_path metadata for file operations."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -318,7 +318,7 @@ class TestPreToolUseHook:
                     },
                 },
                 tool_use_id="tool-789",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -328,9 +328,9 @@ class TestPreToolUseHook:
     @pytest.mark.asyncio
     async def test_extracts_metadata_for_bash(self) -> None:
         """Should extract command and description for Bash tool."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -343,7 +343,7 @@ class TestPreToolUseHook:
                     },
                 },
                 tool_use_id="tool-bash",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -353,15 +353,15 @@ class TestPreToolUseHook:
     @pytest.mark.asyncio
     async def test_skips_without_run_context(self) -> None:
         """Should skip step creation without active run context."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
 
         # No run context
         result = await tracer._pre_tool_use(
             input_data={"tool_name": "Read", "tool_input": {}},
             tool_use_id="tool-no-run",
-            context=None,
+            _context=None,
         )
 
         assert result == {}
@@ -370,16 +370,16 @@ class TestPreToolUseHook:
     @pytest.mark.asyncio
     async def test_skips_with_none_tool_use_id(self) -> None:
         """Should skip step creation with None tool_use_id."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
             result = await tracer._pre_tool_use(
                 input_data={"tool_name": "Read", "tool_input": {}},
                 tool_use_id=None,
-                context=None,
+                _context=None,
             )
 
         assert result == {}
@@ -388,16 +388,16 @@ class TestPreToolUseHook:
     @pytest.mark.asyncio
     async def test_handles_missing_tool_name(self) -> None:
         """Should handle missing tool_name in input_data."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
             await tracer._pre_tool_use(
                 input_data={"tool_input": {}},  # No tool_name
                 tool_use_id="tool-missing",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -410,9 +410,9 @@ class TestPostToolUseHook:
     @pytest.mark.asyncio
     async def test_completes_step_on_post_tool_use(self) -> None:
         """Should complete step with end_time and outputs."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -420,7 +420,7 @@ class TestPostToolUseHook:
             await tracer._pre_tool_use(
                 input_data={"tool_name": "Glob", "tool_input": {"pattern": "*.py"}},
                 tool_use_id="tool-glob",
-                context=None,
+                _context=None,
             )
 
             # Complete step
@@ -431,7 +431,7 @@ class TestPostToolUseHook:
                     "tool_response": {"matches": ["a.py", "b.py"], "count": 2},
                 },
                 tool_use_id="tool-glob",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -443,16 +443,16 @@ class TestPostToolUseHook:
     @pytest.mark.asyncio
     async def test_truncates_large_string_responses(self) -> None:
         """Should truncate responses larger than 10000 chars."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
             await tracer._pre_tool_use(
                 input_data={"tool_name": "Read", "tool_input": {}},
                 tool_use_id="tool-read",
-                context=None,
+                _context=None,
             )
 
             # Large response
@@ -460,7 +460,7 @@ class TestPostToolUseHook:
             await tracer._post_tool_use(
                 input_data={"tool_response": large_content},
                 tool_use_id="tool-read",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -470,16 +470,16 @@ class TestPostToolUseHook:
     @pytest.mark.asyncio
     async def test_handles_dict_responses(self) -> None:
         """Should store dict responses directly."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
             await tracer._pre_tool_use(
                 input_data={"tool_name": "WebSearch", "tool_input": {}},
                 tool_use_id="tool-search",
-                context=None,
+                _context=None,
             )
 
             await tracer._post_tool_use(
@@ -490,7 +490,7 @@ class TestPostToolUseHook:
                     }
                 },
                 tool_use_id="tool-search",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -500,22 +500,22 @@ class TestPostToolUseHook:
     @pytest.mark.asyncio
     async def test_handles_non_string_non_dict_responses(self) -> None:
         """Should convert non-string, non-dict responses to string."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
             await tracer._pre_tool_use(
                 input_data={"tool_name": "Tool", "tool_input": {}},
                 tool_use_id="tool-other",
-                context=None,
+                _context=None,
             )
 
             await tracer._post_tool_use(
                 input_data={"tool_response": ["item1", "item2", "item3"]},
                 tool_use_id="tool-other",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -525,45 +525,45 @@ class TestPostToolUseHook:
     @pytest.mark.asyncio
     async def test_removes_step_from_tracking(self) -> None:
         """Should remove step from tracking after completion."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
             await tracer._pre_tool_use(
                 input_data={"tool_name": "Read", "tool_input": {}},
                 tool_use_id="tool-tracked",
-                context=None,
+                _context=None,
             )
             assert "tool-tracked" in tracer._steps
 
             await tracer._post_tool_use(
                 input_data={"tool_response": "content"},
                 tool_use_id="tool-tracked",
-                context=None,
+                _context=None,
             )
             assert "tool-tracked" not in tracer._steps
 
     @pytest.mark.asyncio
     async def test_handles_none_tool_response(self) -> None:
         """Should handle None tool_response gracefully."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
             await tracer._pre_tool_use(
                 input_data={"tool_name": "Read", "tool_input": {}},
                 tool_use_id="tool-none",
-                context=None,
+                _context=None,
             )
 
             await tracer._post_tool_use(
                 input_data={},  # No tool_response
                 tool_use_id="tool-none",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -573,15 +573,15 @@ class TestPostToolUseHook:
     @pytest.mark.asyncio
     async def test_post_without_pre(self) -> None:
         """PostToolUse without PreToolUse should be handled gracefully."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
 
         # Should not raise
         result = await tracer._post_tool_use(
             input_data={"tool_response": "orphan"},
             tool_use_id="tool-orphan",
-            context=None,
+            _context=None,
         )
 
         assert result == {}
@@ -589,14 +589,14 @@ class TestPostToolUseHook:
     @pytest.mark.asyncio
     async def test_post_with_none_tool_use_id(self) -> None:
         """Should handle None tool_use_id in PostToolUse."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
 
         result = await tracer._post_tool_use(
             input_data={"tool_response": "data"},
             tool_use_id=None,
-            context=None,
+            _context=None,
         )
 
         assert result == {}
@@ -608,9 +608,9 @@ class TestSubagentTracking:
     @pytest.mark.asyncio
     async def test_task_creates_agent_step(self) -> None:
         """Task tool should create AGENT type step."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -624,7 +624,7 @@ class TestSubagentTracking:
                     },
                 },
                 tool_use_id="tool-task",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -636,9 +636,9 @@ class TestSubagentTracking:
     @pytest.mark.asyncio
     async def test_subagent_stop_completes_step(self) -> None:
         """SubagentStop hook should complete agent step."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -648,13 +648,13 @@ class TestSubagentTracking:
                     "tool_input": {"subagent_type": "explorer"},
                 },
                 tool_use_id="tool-subagent",
-                context=None,
+                _context=None,
             )
 
             await tracer._on_subagent_stop(
                 input_data={"result": "Found 5 API endpoints"},
                 tool_use_id="tool-subagent",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -665,9 +665,9 @@ class TestSubagentTracking:
     @pytest.mark.asyncio
     async def test_subagent_stop_removes_from_tracking(self) -> None:
         """SubagentStop should remove step from tracking."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -677,28 +677,28 @@ class TestSubagentTracking:
                     "tool_input": {"subagent_type": "test"},
                 },
                 tool_use_id="tool-sub",
-                context=None,
+                _context=None,
             )
             assert "tool-sub" in tracer._steps
 
             await tracer._on_subagent_stop(
                 input_data={"result": "done"},
                 tool_use_id="tool-sub",
-                context=None,
+                _context=None,
             )
             assert "tool-sub" not in tracer._steps
 
     @pytest.mark.asyncio
     async def test_subagent_stop_with_none_id(self) -> None:
         """SubagentStop with None tool_use_id should be handled."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
 
         result = await tracer._on_subagent_stop(
             input_data={"result": "orphan"},
             tool_use_id=None,
-            context=None,
+            _context=None,
         )
 
         assert result == {}
@@ -706,15 +706,15 @@ class TestSubagentTracking:
     @pytest.mark.asyncio
     async def test_subagent_stop_without_pre(self) -> None:
         """SubagentStop without PreToolUse should be handled gracefully."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
 
         # Should not raise
         result = await tracer._on_subagent_stop(
             input_data={"result": "orphan"},
             tool_use_id="tool-orphan",
-            context=None,
+            _context=None,
         )
 
         assert result == {}
@@ -726,9 +726,9 @@ class TestStopHook:
     @pytest.mark.asyncio
     async def test_stop_clears_incomplete_steps(self) -> None:
         """Stop hook should mark incomplete steps with error."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -736,13 +736,13 @@ class TestStopHook:
             await tracer._pre_tool_use(
                 input_data={"tool_name": "Bash", "tool_input": {"command": "sleep 100"}},
                 tool_use_id="tool-incomplete",
-                context=None,
+                _context=None,
             )
 
             assert len(tracer._steps) == 1
 
             # Stop called before completion
-            await tracer._on_stop(input_data={}, tool_use_id=None, context=None)
+            await tracer._on_stop(_input_data={}, _tool_use_id=None, _context=None)
 
         step = run.steps[0]
         assert step.end_time is not None
@@ -753,9 +753,9 @@ class TestStopHook:
     @pytest.mark.asyncio
     async def test_stop_clears_multiple_incomplete_steps(self) -> None:
         """Stop hook should handle multiple incomplete steps."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -764,12 +764,12 @@ class TestStopHook:
                 await tracer._pre_tool_use(
                     input_data={"tool_name": f"Tool_{i}", "tool_input": {}},
                     tool_use_id=f"tool-{i}",
-                    context=None,
+                    _context=None,
                 )
 
             assert len(tracer._steps) == 3
 
-            await tracer._on_stop(input_data={}, tool_use_id=None, context=None)
+            await tracer._on_stop(_input_data={}, _tool_use_id=None, _context=None)
 
         # All steps should have error
         for step in run.steps:
@@ -781,12 +781,12 @@ class TestStopHook:
     @pytest.mark.asyncio
     async def test_stop_with_no_pending_steps(self) -> None:
         """Stop hook should handle case with no pending steps."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
 
         # Should not raise
-        result = await tracer._on_stop(input_data={}, tool_use_id=None, context=None)
+        result = await tracer._on_stop(_input_data={}, _tool_use_id=None, _context=None)
 
         assert result == {}
 
@@ -794,7 +794,7 @@ class TestStopHook:
 def _claude_sdk_available() -> bool:
     """Check if claude-agent-sdk is available."""
     try:
-        import claude_agent_sdk  # noqa: F401
+        import claude_code_sdk  # noqa: F401
 
         return True
     except ImportError:
@@ -806,14 +806,14 @@ class TestGetHooksAndOptions:
 
     def test_get_hooks_raises_without_sdk(self) -> None:
         """get_hooks should raise ImportError without Claude SDK."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
 
         # This test assumes claude-agent-sdk is not installed
         # If it is installed, skip this test
         try:
-            import claude_agent_sdk  # noqa: F401
+            import claude_code_sdk  # noqa: F401
 
             pytest.skip("claude-agent-sdk is installed")
         except ImportError:
@@ -822,12 +822,12 @@ class TestGetHooksAndOptions:
 
     def test_get_options_raises_without_sdk(self) -> None:
         """get_options should raise ImportError without Claude SDK."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
 
         try:
-            import claude_agent_sdk  # noqa: F401
+            import claude_code_sdk  # noqa: F401
 
             pytest.skip("claude-agent-sdk is installed")
         except ImportError:
@@ -840,9 +840,9 @@ class TestGetHooksAndOptions:
     )
     def test_get_hooks_returns_all_hook_types(self) -> None:
         """get_hooks should return matchers for all hook types."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         hooks = tracer.get_hooks()
 
         assert "PreToolUse" in hooks
@@ -855,15 +855,15 @@ class TestGetHooksAndOptions:
         reason="claude-agent-sdk not installed",
     )
     def test_get_options_creates_valid_options(self) -> None:
-        """get_options should create ClaudeAgentOptions with hooks."""
-        from claude_agent_sdk import ClaudeAgentOptions
+        """get_options should create ClaudeCodeOptions with hooks."""
+        from claude_code_sdk import ClaudeCodeOptions
 
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         options = tracer.get_options(allowed_tools=["Read", "Glob"])
 
-        assert isinstance(options, ClaudeAgentOptions)
+        assert isinstance(options, ClaudeCodeOptions)
         assert options.allowed_tools == ["Read", "Glob"]
         assert options.hooks is not None
 
@@ -873,16 +873,16 @@ class TestGetHooksAndOptions:
     )
     def test_get_options_merges_user_hooks(self) -> None:
         """get_options should merge user hooks with tracer hooks."""
-        from claude_agent_sdk import HookMatcher
+        from claude_code_sdk import HookMatcher
 
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
         async def custom_hook(
             input_data: dict[str, Any], tool_use_id: str | None, context: Any
         ) -> dict[str, Any]:
             return {}
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         options = tracer.get_options(hooks={"PreToolUse": [HookMatcher(hooks=[custom_hook])]})
 
         # Should have both tracer hook and custom hook
@@ -895,9 +895,9 @@ class TestThreadSafety:
     @pytest.mark.asyncio
     async def test_concurrent_pre_tool_use(self) -> None:
         """Should handle concurrent PreToolUse calls safely."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         errors: list[Exception] = []
         num_calls = 20
@@ -911,7 +911,7 @@ class TestThreadSafety:
                             "tool_input": {"index": i},
                         },
                         tool_use_id=f"tool-{i}",
-                        context=None,
+                        _context=None,
                     )
             except Exception as e:
                 errors.append(e)
@@ -924,9 +924,9 @@ class TestThreadSafety:
     @pytest.mark.asyncio
     async def test_concurrent_post_tool_use(self) -> None:
         """Should handle concurrent PostToolUse calls safely."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         num_calls = 20
 
@@ -936,7 +936,7 @@ class TestThreadSafety:
                 await tracer._pre_tool_use(
                     input_data={"tool_name": f"Tool_{i}", "tool_input": {}},
                     tool_use_id=f"tool-{i}",
-                    context=None,
+                    _context=None,
                 )
 
         # Then complete them concurrently
@@ -944,7 +944,7 @@ class TestThreadSafety:
             await tracer._post_tool_use(
                 input_data={"tool_response": f"result_{i}"},
                 tool_use_id=f"tool-{i}",
-                context=None,
+                _context=None,
             )
 
         await asyncio.gather(*[complete_call(i) for i in range(num_calls)])
@@ -956,9 +956,9 @@ class TestThreadSafety:
     @pytest.mark.asyncio
     async def test_concurrent_pre_and_post(self) -> None:
         """Should handle interleaved pre and post calls."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         num_pairs = 10
 
@@ -967,13 +967,13 @@ class TestThreadSafety:
                 await tracer._pre_tool_use(
                     input_data={"tool_name": f"Tool_{i}", "tool_input": {}},
                     tool_use_id=f"tool-{i}",
-                    context=None,
+                    _context=None,
                 )
                 await asyncio.sleep(0.001)  # Small delay
                 await tracer._post_tool_use(
                     input_data={"tool_response": f"result_{i}"},
                     tool_use_id=f"tool-{i}",
-                    context=None,
+                    _context=None,
                 )
 
         await asyncio.gather(*[tool_call_pair(i) for i in range(num_pairs)])
@@ -988,9 +988,9 @@ class TestTraceContextManager:
 
     def test_trace_creates_runtime_if_needed(self) -> None:
         """trace() should create a runtime if none provided."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         assert tracer.runtime is None
 
         with tracer.trace("test_session") as run:
@@ -999,11 +999,11 @@ class TestTraceContextManager:
 
     def test_trace_uses_provided_runtime(self) -> None:
         """trace() should use provided runtime."""
-        from agenttrace import AgentTraceRuntime
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft import TraceCraftRuntime
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        runtime = AgentTraceRuntime(console=False, jsonl=False)
-        tracer = ClaudeAgentTracer(runtime=runtime)
+        runtime = TraceCraftRuntime(console=False, jsonl=False)
+        tracer = ClaudeTraceCraftr(runtime=runtime)
 
         with tracer.trace("test_session") as run:
             assert tracer.runtime is runtime
@@ -1016,10 +1016,10 @@ class TestClear:
         """clear() should reset all tracking state."""
         from uuid import uuid4
 
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
+        from tracecraft.core.models import Step, StepType
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
 
         # Add some state
         tracer._steps["test"] = Step(
@@ -1038,16 +1038,16 @@ class TestClear:
     @pytest.mark.asyncio
     async def test_clear_after_operations(self) -> None:
         """clear() should work after hook operations."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
             await tracer._pre_tool_use(
                 input_data={"tool_name": "Read", "tool_input": {}},
                 tool_use_id="tool-1",
-                context=None,
+                _context=None,
             )
 
         assert len(tracer._steps) == 1
@@ -1063,16 +1063,16 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_empty_input_data(self) -> None:
         """Should handle empty input_data dict."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
             await tracer._pre_tool_use(
                 input_data={},  # Empty
                 tool_use_id="tool-empty",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -1082,9 +1082,9 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_special_characters_in_tool_name(self) -> None:
         """Should handle special characters in tool names."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -1094,7 +1094,7 @@ class TestEdgeCases:
                     "tool_input": {},
                 },
                 tool_use_id="tool-special",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -1104,9 +1104,9 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_very_large_tool_input(self) -> None:
         """Should handle very large tool input dicts."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         large_input = {"data": "x" * 100000, "nested": {"key": "value" * 1000}}
@@ -1115,7 +1115,7 @@ class TestEdgeCases:
             await tracer._pre_tool_use(
                 input_data={"tool_name": "Read", "tool_input": large_input},
                 tool_use_id="tool-large",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]
@@ -1124,22 +1124,22 @@ class TestEdgeCases:
     @pytest.mark.asyncio
     async def test_unicode_in_responses(self) -> None:
         """Should handle unicode in tool responses."""
-        from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+        from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
-        tracer = ClaudeAgentTracer()
+        tracer = ClaudeTraceCraftr()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         with run_context(run):
             await tracer._pre_tool_use(
                 input_data={"tool_name": "Read", "tool_input": {}},
                 tool_use_id="tool-unicode",
-                context=None,
+                _context=None,
             )
 
             await tracer._post_tool_use(
                 input_data={"tool_response": "Hello 世界 🌍 émojis and spëcial çharacters"},
                 tool_use_id="tool-unicode",
-                context=None,
+                _context=None,
             )
 
         step = run.steps[0]

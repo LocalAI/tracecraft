@@ -1,6 +1,6 @@
 # High Throughput Deployment Guide
 
-Configure AgentTrace for high-volume production environments.
+Configure TraceCraft for high-volume production environments.
 
 ## Overview
 
@@ -13,9 +13,9 @@ This guide covers optimizations for applications processing thousands of LLM req
 Buffer traces before sending to reduce network overhead:
 
 ```python
-from agenttrace.exporters.otlp import OTLPExporter
-from agenttrace.exporters.retry import BufferingExporter, RetryingExporter
-from agenttrace.exporters.rate_limited import RateLimitedExporter
+from tracecraft.exporters.otlp import OTLPExporter
+from tracecraft.exporters.retry import BufferingExporter, RetryingExporter
+from tracecraft.exporters.rate_limited import RateLimitedExporter
 
 # Base OTLP exporter
 otlp = OTLPExporter(
@@ -43,7 +43,7 @@ rate_limited = RateLimitedExporter(
     blocking=False  # Drop instead of block
 )
 
-agenttrace.init(exporters=[rate_limited])
+tracecraft.init(exporters=[rate_limited])
 ```
 
 ### 2. Configure Sampling
@@ -51,16 +51,16 @@ agenttrace.init(exporters=[rate_limited])
 For very high traffic, sample traces:
 
 ```python
-from agenttrace.core.config import AgentTraceConfig, SamplingConfig
+from tracecraft.core.config import TraceCraftConfig, SamplingConfig
 
-config = AgentTraceConfig(
+config = TraceCraftConfig(
     sampling=SamplingConfig(
         rate=0.1,  # Sample 10% of traces
         always_sample_errors=True  # But always sample errors
     )
 )
 
-agenttrace.init(config=config)
+tracecraft.init(config=config)
 ```
 
 ### 3. Async Context Propagation
@@ -68,7 +68,7 @@ agenttrace.init(config=config)
 Use async helpers for concurrent operations:
 
 ```python
-from agenttrace.contrib import gather_with_context, create_task_with_context
+from tracecraft.contrib import gather_with_context, create_task_with_context
 
 async def process_batch(queries: list[str]) -> list[str]:
     # All tasks maintain trace context
@@ -84,7 +84,7 @@ async def process_batch(queries: list[str]) -> list[str]:
 Console output adds latency:
 
 ```python
-agenttrace.init(
+tracecraft.init(
     console=False,  # Disable console
     jsonl=False,    # Disable local file
     exporters=[otlp_exporter]  # Only OTLP
@@ -96,9 +96,9 @@ agenttrace.init(
 Reduce payload size:
 
 ```python
-from agenttrace.core.config import AgentTraceConfig
+from tracecraft.core.config import TraceCraftConfig
 
-config = AgentTraceConfig(
+config = TraceCraftConfig(
     # Truncate large inputs/outputs
     max_input_length=1000,
     max_output_length=1000,
@@ -194,10 +194,10 @@ Tested on 8-core, 32GB RAM, Kubernetes cluster:
 | Configuration | Throughput | Latency (p99) | Drop Rate |
 |---------------|------------|---------------|-----------|
 | Baseline (no tracing) | 10,000 req/s | 50ms | 0% |
-| AgentTrace (console) | 8,500 req/s | 65ms | 0% |
-| AgentTrace (OTLP) | 9,200 req/s | 55ms | 0% |
-| AgentTrace (buffered) | 9,800 req/s | 52ms | 0% |
-| AgentTrace (sampled 10%) | 9,900 req/s | 51ms | 0% |
+| TraceCraft (console) | 8,500 req/s | 65ms | 0% |
+| TraceCraft (OTLP) | 9,200 req/s | 55ms | 0% |
+| TraceCraft (buffered) | 9,800 req/s | 52ms | 0% |
+| TraceCraft (sampled 10%) | 9,900 req/s | 51ms | 0% |
 
 ## Monitoring the Tracing System
 
@@ -205,7 +205,7 @@ Tested on 8-core, 32GB RAM, Kubernetes cluster:
 
 ```python
 # Access exporter stats
-from agenttrace.exporters.rate_limited import RateLimitedExporter
+from tracecraft.exporters.rate_limited import RateLimitedExporter
 
 rate_limited = RateLimitedExporter(...)
 

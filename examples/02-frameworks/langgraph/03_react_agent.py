@@ -30,10 +30,10 @@ import sys
 from datetime import UTC, datetime
 from typing import Annotated, TypedDict
 
-import agenttrace
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -53,8 +53,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -103,7 +103,7 @@ def prebuilt_react_example() -> None:
     # Create the ReAct agent using the prebuilt function
     agent = create_react_agent(llm, [calculator, get_weather, search_web])
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
 
     # Test queries that require tools
     queries = [
@@ -211,7 +211,7 @@ def custom_react_example() -> None:
 
     app = graph.compile()
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
 
     query = "What is 7 times 8, then add 6 to the result?"
 
@@ -240,7 +240,7 @@ def custom_react_example() -> None:
 def main() -> None:
     """Run the ReAct agent examples."""
     print("=" * 60)
-    print("AgentTrace LangGraph ReAct Agents")
+    print("TraceCraft LangGraph ReAct Agents")
     print("=" * 60)
 
     prebuilt_react_example()

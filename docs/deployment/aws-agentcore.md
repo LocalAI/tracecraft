@@ -1,6 +1,6 @@
 # AWS Bedrock AgentCore Deployment Guide
 
-Deploy AgentTrace-instrumented applications to AWS with X-Ray and Bedrock AgentCore observability.
+Deploy TraceCraft-instrumented applications to AWS with X-Ray and Bedrock AgentCore observability.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Deploy AgentTrace-instrumented applications to AWS with X-Ray and Bedrock AgentC
 │                                                              │
 │  ┌─────────────────┐      ┌──────────────────────────────┐  │
 │  │   Your Agent    │─────▶│    ADOT Collector            │  │
-│  │  (AgentTrace    │      │   (Sidecar/DaemonSet)        │  │
+│  │  (TraceCraft    │      │   (Sidecar/DaemonSet)        │  │
 │  │   enabled)      │      └──────────────────────────────┘  │
 │  └─────────────────┘                     │                  │
 │                                          ▼                  │
@@ -29,17 +29,17 @@ Deploy AgentTrace-instrumented applications to AWS with X-Ray and Bedrock AgentC
 
 ## Quick Start
 
-### 1. Install AgentTrace
+### 1. Install TraceCraft
 
 ```bash
-pip install agenttrace[aws-agentcore]
+pip install tracecraft[aws-agentcore]
 ```
 
 ### 2. Configure Exporter
 
 ```python
-import agenttrace
-from agenttrace.contrib.aws import create_agentcore_exporter
+import tracecraft
+from tracecraft.contrib.aws import create_agentcore_exporter
 
 # Create exporter with AgentCore features
 exporter = create_agentcore_exporter(
@@ -56,8 +56,8 @@ exporter = create_agentcore_exporter(
     use_xray_propagation=True,
 )
 
-# Initialize AgentTrace
-agenttrace.init(
+# Initialize TraceCraft
+tracecraft.init(
     exporters=[exporter],
     console=False,  # Disable console in production
     jsonl=False,    # Disable local JSONL
@@ -70,9 +70,9 @@ agenttrace.init(
 |----------|-------------|---------|
 | `AWS_REGION` | AWS region | us-east-1 |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | ADOT endpoint | <http://localhost:4317> |
-| `AGENTTRACE_AWS_AGENTCORE_ENABLED` | Enable AgentCore export | false |
-| `AGENTTRACE_AWS_XRAY_PROPAGATION` | Use X-Ray headers | true |
-| `AGENTTRACE_AWS_SESSION_ID` | Session ID | None |
+| `TRACECRAFT_AWS_AGENTCORE_ENABLED` | Enable AgentCore export | false |
+| `TRACECRAFT_AWS_XRAY_PROPAGATION` | Use X-Ray headers | true |
+| `TRACECRAFT_AWS_SESSION_ID` | Session ID | None |
 
 ## AWS Lambda Deployment
 
@@ -97,12 +97,12 @@ Resources:
 
 ```python
 # app.py
-import agenttrace
-from agenttrace.contrib.aws import configure_for_lambda
+import tracecraft
+from tracecraft.contrib.aws import configure_for_lambda
 
 # Configure at cold start
 exporter = configure_for_lambda(service_name="my-lambda-agent")
-runtime = agenttrace.init(exporters=[exporter], console=False, jsonl=False)
+runtime = tracecraft.init(exporters=[exporter], console=False, jsonl=False)
 
 def handler(event, context):
     # Your traced agent code
@@ -141,10 +141,10 @@ def handler(event, context):
 ### 2. Application Code
 
 ```python
-from agenttrace.contrib.aws import configure_for_ecs
+from tracecraft.contrib.aws import configure_for_ecs
 
 exporter = configure_for_ecs(service_name="my-ecs-agent")
-agenttrace.init(exporters=[exporter])
+tracecraft.init(exporters=[exporter])
 ```
 
 ## Amazon EKS Deployment
@@ -198,7 +198,7 @@ spec:
         env:
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
           value: "http://adot-collector:4317"
-        - name: AGENTTRACE_AWS_SESSION_ID
+        - name: TRACECRAFT_AWS_SESSION_ID
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
@@ -207,13 +207,13 @@ spec:
 ### 4. Application Code
 
 ```python
-from agenttrace.contrib.aws import configure_for_eks
+from tracecraft.contrib.aws import configure_for_eks
 
 exporter = configure_for_eks(
     service_name="my-eks-agent",
     collector_endpoint="http://adot-collector:4317"
 )
-agenttrace.init(exporters=[exporter])
+tracecraft.init(exporters=[exporter])
 ```
 
 ## X-Ray Trace Context Propagation
@@ -221,8 +221,8 @@ agenttrace.init(exporters=[exporter])
 Propagate trace context to downstream services:
 
 ```python
-from agenttrace.contrib.aws import inject_xray_context, extract_xray_context
-from agenttrace import get_current_run
+from tracecraft.contrib.aws import inject_xray_context, extract_xray_context
+from tracecraft import get_current_run
 import requests
 
 # Inject context into outgoing request
@@ -256,7 +256,7 @@ X-Amzn-Trace-Id: Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad
 Use session IDs to correlate multi-turn conversations:
 
 ```python
-from agenttrace.core.models import AgentRun
+from tracecraft.core.models import AgentRun
 
 # Create run with session ID
 run = AgentRun(

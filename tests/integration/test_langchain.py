@@ -11,25 +11,25 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun, StepType
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun, StepType
 
 
 class TestLangChainCallbackHandler:
-    """Tests for AgentTraceCallbackHandler."""
+    """Tests for TraceCraftCallbackHandler."""
 
     def test_handler_creation(self) -> None:
         """Should create a callback handler."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         assert handler is not None
 
     def test_handler_requires_active_run(self) -> None:
         """Should require an active run to capture steps."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         # No active run, steps should not be created
         handler.on_chain_start(
             serialized={"name": "test_chain"},
@@ -40,10 +40,10 @@ class TestLangChainCallbackHandler:
 
     def test_handler_with_active_run(self) -> None:
         """Should create steps when run is active."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
 
         with run_context(run):
             handler.on_chain_start(
@@ -63,10 +63,10 @@ class TestChainCallbacks:
 
     def test_on_chain_start_creates_step(self) -> None:
         """on_chain_start should create a workflow step."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -84,10 +84,10 @@ class TestChainCallbacks:
 
     def test_on_chain_start_uses_class_name_fallback(self) -> None:
         """Should use class name from id if name not in serialized."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
 
         with run_context(run):
             handler.on_chain_start(
@@ -100,10 +100,10 @@ class TestChainCallbacks:
 
     def test_on_chain_end_completes_step(self) -> None:
         """on_chain_end should complete the step with outputs."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -124,10 +124,10 @@ class TestChainCallbacks:
 
     def test_nested_chains(self) -> None:
         """Should handle nested chain calls with proper hierarchy."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         parent_id = uuid4()
         child_id = uuid4()
 
@@ -163,10 +163,10 @@ class TestLLMCallbacks:
 
     def test_on_llm_start_creates_step(self) -> None:
         """on_llm_start should create an LLM step."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -184,10 +184,10 @@ class TestLLMCallbacks:
 
     def test_on_llm_start_with_invocation_params(self) -> None:
         """Should capture model name from invocation params."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
 
         with run_context(run):
             handler.on_llm_start(
@@ -202,10 +202,10 @@ class TestLLMCallbacks:
 
     def test_on_llm_end_captures_response(self) -> None:
         """on_llm_end should capture the response text."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -229,10 +229,10 @@ class TestLLMCallbacks:
 
     def test_on_llm_end_captures_tokens(self) -> None:
         """Should capture token counts from LLM response."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -261,10 +261,10 @@ class TestLLMCallbacks:
 
     def test_on_llm_end_updates_run_totals(self) -> None:
         """Should update run total_tokens."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
 
         with run_context(run):
             # First LLM call
@@ -305,10 +305,10 @@ class TestLLMCallbacks:
 
     def test_llm_nested_in_chain(self) -> None:
         """LLM step should be nested under chain step."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         chain_id = uuid4()
         llm_id = uuid4()
 
@@ -346,10 +346,10 @@ class TestToolCallbacks:
 
     def test_on_tool_start_creates_step(self) -> None:
         """on_tool_start should create a tool step."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -367,10 +367,10 @@ class TestToolCallbacks:
 
     def test_on_tool_end_completes_step(self) -> None:
         """on_tool_end should complete the tool step."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -391,10 +391,10 @@ class TestToolCallbacks:
 
     def test_tool_nested_in_chain(self) -> None:
         """Tool step should be nested under parent chain."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         chain_id = uuid4()
         tool_id = uuid4()
 
@@ -425,10 +425,10 @@ class TestRetrieverCallbacks:
 
     def test_on_retriever_start_creates_step(self) -> None:
         """on_retriever_start should create a retrieval step."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -446,10 +446,10 @@ class TestRetrieverCallbacks:
 
     def test_on_retriever_end_captures_documents(self) -> None:
         """on_retriever_end should capture retrieved documents."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         docs = [
@@ -478,10 +478,10 @@ class TestRetrieverCallbacks:
 
     def test_retriever_nested_in_chain(self) -> None:
         """Retriever step should be nested under parent chain."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         chain_id = uuid4()
         retriever_id = uuid4()
 
@@ -511,10 +511,10 @@ class TestErrorCallbacks:
 
     def test_on_chain_error_captures_error(self) -> None:
         """on_chain_error should capture the error."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -535,10 +535,10 @@ class TestErrorCallbacks:
 
     def test_on_llm_error_captures_error(self) -> None:
         """on_llm_error should capture the error."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -558,10 +558,10 @@ class TestErrorCallbacks:
 
     def test_on_tool_error_captures_error(self) -> None:
         """on_tool_error should capture the error."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -581,10 +581,10 @@ class TestErrorCallbacks:
 
     def test_on_retriever_error_captures_error(self) -> None:
         """on_retriever_error should capture the error."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -604,10 +604,10 @@ class TestErrorCallbacks:
 
     def test_error_increments_run_error_count(self) -> None:
         """Errors should increment run.error_count."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
 
         with run_context(run):
             run_id1 = uuid4()
@@ -634,10 +634,10 @@ class TestChatModelCallbacks:
 
     def test_on_chat_model_start_creates_step(self) -> None:
         """on_chat_model_start should create an LLM step with messages."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         messages = [
@@ -664,10 +664,10 @@ class TestAgentCallbacks:
 
     def test_on_agent_action_creates_step(self) -> None:
         """on_agent_action should create a step for agent actions."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         action = MockAgentAction(tool="search", tool_input="Python tutorials", log="Searching...")
@@ -687,10 +687,10 @@ class TestAgentCallbacks:
 
     def test_on_agent_finish_completes_step(self) -> None:
         """on_agent_finish should complete agent step."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -713,10 +713,10 @@ class TestEdgeCases:
 
     def test_end_without_start_is_handled(self) -> None:
         """Should handle end callbacks without corresponding start."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
 
         with run_context(run):
             # End without start - should not raise
@@ -732,10 +732,10 @@ class TestEdgeCases:
 
     def test_missing_serialized_name(self) -> None:
         """Should handle missing name in serialized dict."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
 
         with run_context(run):
             handler.on_chain_start(
@@ -749,10 +749,10 @@ class TestEdgeCases:
 
     def test_none_inputs_handled(self) -> None:
         """Should handle None inputs gracefully."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run_id = uuid4()
 
         with run_context(run):
@@ -830,10 +830,10 @@ class TestThreadSafety:
         """Should handle concurrent step creation from multiple threads."""
         import threading
 
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         errors: list[Exception] = []
         num_threads = 10
 
@@ -872,10 +872,10 @@ class TestThreadSafety:
         """Should handle concurrent nested step creation."""
         import threading
 
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         errors: list[Exception] = []
         num_threads = 5
 

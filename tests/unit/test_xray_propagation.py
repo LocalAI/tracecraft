@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun
+from tracecraft.core.models import AgentRun
 
 
 class TestXRayTraceContextPropagator:
@@ -19,7 +19,7 @@ class TestXRayTraceContextPropagator:
 
     def test_inject_creates_xray_header(self, sample_run: AgentRun) -> None:
         """inject should create X-Amzn-Trace-Id header."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -35,7 +35,7 @@ class TestXRayTraceContextPropagator:
 
     def test_inject_root_format(self, sample_run: AgentRun) -> None:
         """inject should create Root in format 1-{8hex}-{24hex}."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -57,7 +57,7 @@ class TestXRayTraceContextPropagator:
 
     def test_inject_parent_format(self, sample_run: AgentRun) -> None:
         """inject should create Parent as 16-char hex."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -78,7 +78,7 @@ class TestXRayTraceContextPropagator:
 
     def test_inject_sampled_flag(self, sample_run: AgentRun) -> None:
         """inject should set Sampled flag."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
 
@@ -94,7 +94,7 @@ class TestXRayTraceContextPropagator:
 
     def test_inject_session_id_header(self, sample_run_with_session: AgentRun) -> None:
         """inject should add session ID header when available."""
-        from agenttrace.propagation.xray import (
+        from tracecraft.propagation.xray import (
             AGENTCORE_SESSION_HEADER,
             XRayTraceContextPropagator,
         )
@@ -109,7 +109,7 @@ class TestXRayTraceContextPropagator:
 
     def test_inject_no_session_id_when_none(self, sample_run: AgentRun) -> None:
         """inject should not add session ID header when not set."""
-        from agenttrace.propagation.xray import (
+        from tracecraft.propagation.xray import (
             AGENTCORE_SESSION_HEADER,
             XRayTraceContextPropagator,
         )
@@ -123,7 +123,7 @@ class TestXRayTraceContextPropagator:
 
     def test_extract_parses_xray_header(self) -> None:
         """extract should parse valid X-Ray headers."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         carrier = {
@@ -141,7 +141,7 @@ class TestXRayTraceContextPropagator:
 
     def test_extract_handles_unsampled(self) -> None:
         """extract should handle unsampled flag."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         carrier = {
@@ -156,7 +156,7 @@ class TestXRayTraceContextPropagator:
 
     def test_extract_with_session_id(self) -> None:
         """extract should return session ID when present."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         carrier = {
@@ -172,7 +172,7 @@ class TestXRayTraceContextPropagator:
 
     def test_extract_returns_none_for_missing_header(self) -> None:
         """extract should return None when X-Ray header missing."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -183,7 +183,7 @@ class TestXRayTraceContextPropagator:
 
     def test_extract_returns_none_for_invalid_format(self) -> None:
         """extract should return None for invalid X-Ray header."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
 
@@ -199,7 +199,7 @@ class TestXRayTraceContextPropagator:
 
     def test_extract_case_insensitive_header_names(self) -> None:
         """extract should handle case-insensitive header names."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         carrier = {
@@ -216,7 +216,7 @@ class TestXRayW3CConversion:
 
     def test_to_w3c_format(self) -> None:
         """to_w3c_format should convert X-Ray to traceparent."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         xray_header = "Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1"
@@ -234,7 +234,7 @@ class TestXRayW3CConversion:
 
     def test_to_w3c_format_unsampled(self) -> None:
         """to_w3c_format should handle unsampled traces."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         xray_header = "Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=0"
@@ -246,7 +246,7 @@ class TestXRayW3CConversion:
 
     def test_to_w3c_format_invalid_returns_none(self) -> None:
         """to_w3c_format should return None for invalid input."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
 
@@ -256,7 +256,7 @@ class TestXRayW3CConversion:
 
     def test_from_w3c_format(self) -> None:
         """from_w3c_format should convert traceparent to X-Ray."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         traceparent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"
@@ -270,7 +270,7 @@ class TestXRayW3CConversion:
 
     def test_from_w3c_format_unsampled(self) -> None:
         """from_w3c_format should handle unsampled traces."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         traceparent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00"
@@ -282,7 +282,7 @@ class TestXRayW3CConversion:
 
     def test_from_w3c_format_with_epoch(self) -> None:
         """from_w3c_format should use provided epoch time."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         traceparent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"
@@ -296,7 +296,7 @@ class TestXRayW3CConversion:
 
     def test_from_w3c_format_invalid_returns_none(self) -> None:
         """from_w3c_format should return None for invalid input."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
 
@@ -310,7 +310,7 @@ class TestXRayHelpers:
 
     def test_generate_xray_root(self) -> None:
         """generate_xray_root should create valid Root format."""
-        from agenttrace.propagation.xray import generate_xray_root
+        from tracecraft.propagation.xray import generate_xray_root
 
         root = generate_xray_root("5759e988", "bd862e3fe1be46a994272793")
 
@@ -318,7 +318,7 @@ class TestXRayHelpers:
 
     def test_epoch_to_hex(self) -> None:
         """epoch_to_hex should convert timestamp to 8-char hex."""
-        from agenttrace.propagation.xray import epoch_to_hex
+        from tracecraft.propagation.xray import epoch_to_hex
 
         # Known epoch: 2021-01-01 00:00:00 UTC = 1609459200
         result = epoch_to_hex(1609459200.0)
@@ -332,7 +332,7 @@ class TestXRayContextIntegration:
 
     def test_inject_extract_roundtrip(self, sample_run: AgentRun) -> None:
         """inject and extract should round-trip correctly."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -352,7 +352,7 @@ class TestXRayContextIntegration:
 
     def test_inject_extract_with_session(self, sample_run_with_session: AgentRun) -> None:
         """inject and extract should preserve session ID."""
-        from agenttrace.propagation.xray import XRayTraceContextPropagator
+        from tracecraft.propagation.xray import XRayTraceContextPropagator
 
         propagator = XRayTraceContextPropagator()
         carrier: dict[str, str] = {}

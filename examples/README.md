@@ -1,18 +1,18 @@
-# AgentTrace Examples
+# TraceCraft Examples
 
-Comprehensive examples demonstrating all AgentTrace features, from basic usage to production-ready patterns.
+Comprehensive examples demonstrating all TraceCraft features, from basic usage to production-ready patterns.
 
 ## Quick Start (5 minutes)
 
 ```bash
-# Install AgentTrace
-pip install agenttrace
+# Install TraceCraft
+pip install tracecraft
 
 # Run the simplest example (no API key needed)
 python examples/01-getting-started/01_hello_world.py
 
 # View your trace
-cat traces/agenttrace.jsonl
+cat traces/tracecraft.jsonl
 ```
 
 ## Examples by Category
@@ -29,7 +29,7 @@ cat traces/agenttrace.jsonl
 | [08-real-world](08-real-world/) | Complete applications | 0 | Planned |
 | [09-advanced](09-advanced/) | Multi-agent, streaming, memory | 1 | In progress |
 
-**Current: 13 examples | Planned: 55+ examples covering 100% of AgentTrace features**
+**Current: 13 examples | Planned: 55+ examples covering 100% of TraceCraft features**
 
 ## Running Examples
 
@@ -87,7 +87,7 @@ The following categories are planned:
 
 ### Core (No Extra Install)
 
-These examples work with just `pip install agenttrace`:
+These examples work with just `pip install tracecraft`:
 
 - All of `01-getting-started/`
 - `03-exporters/01_console_jsonl.py`
@@ -134,24 +134,24 @@ Some examples require external services:
 
 ## Environment Variables
 
-AgentTrace can be configured entirely via environment variables:
+TraceCraft can be configured entirely via environment variables:
 
 ```bash
 # Core Settings
-export AGENTTRACE_ENABLED=true              # Enable/disable tracing
-export AGENTTRACE_SERVICE_NAME=my-service   # Service name for traces
-export AGENTTRACE_CONSOLE=true              # Console output (rich tree)
-export AGENTTRACE_JSONL=true                # JSONL file output
-export AGENTTRACE_JSONL_PATH=traces/        # JSONL output directory
+export TRACECRAFT_ENABLED=true              # Enable/disable tracing
+export TRACECRAFT_SERVICE_NAME=my-service   # Service name for traces
+export TRACECRAFT_CONSOLE=true              # Console output (rich tree)
+export TRACECRAFT_JSONL=true                # JSONL file output
+export TRACECRAFT_JSONL_PATH=traces/        # JSONL output directory
 
 # OTLP Export
-export AGENTTRACE_OTLP_ENABLED=true
-export AGENTTRACE_OTLP_ENDPOINT=http://localhost:4317
-export AGENTTRACE_OTLP_PROTOCOL=grpc        # grpc or http
+export TRACECRAFT_OTLP_ENABLED=true
+export TRACECRAFT_OTLP_ENDPOINT=http://localhost:4317
+export TRACECRAFT_OTLP_PROTOCOL=grpc        # grpc or http
 
 # Processors
-export AGENTTRACE_REDACTION_ENABLED=true    # PII redaction
-export AGENTTRACE_SAMPLING_RATE=1.0         # Sampling rate (0.0-1.0)
+export TRACECRAFT_REDACTION_ENABLED=true    # PII redaction
+export TRACECRAFT_SAMPLING_RATE=1.0         # Sampling rate (0.0-1.0)
 
 # API Keys (for framework examples)
 export OPENAI_API_KEY=sk-...
@@ -193,19 +193,19 @@ AgentRun: research_assistant
 ### "No traces appearing"
 
 - Ensure `runtime.export()` is called (automatic with context managers)
-- Check `AGENTTRACE_ENABLED` is not set to `false`
+- Check `TRACECRAFT_ENABLED` is not set to `false`
 - Verify you're within a `run_context()` or using `@trace_*` decorators
 
 ### "ModuleNotFoundError"
 
 - Install framework dependencies (see Dependencies section)
-- For evaluation: `pip install agenttrace[evaluation]`
-- For all extras: `pip install agenttrace[all]`
+- For evaluation: `pip install tracecraft[evaluation]`
+- For all extras: `pip install tracecraft[all]`
 
 ### "Connection refused" (OTLP)
 
 - Ensure collector is running: `docker ps`
-- Verify endpoint matches: `AGENTTRACE_OTLP_ENDPOINT`
+- Verify endpoint matches: `TRACECRAFT_OTLP_ENDPOINT`
 - Check ports: 4317 (gRPC) or 4318 (HTTP)
 
 ### "Empty traces.jsonl"
@@ -290,6 +290,6 @@ The original flat examples have been reorganized:
 
 ## Links
 
-- [AgentTrace Documentation](https://github.com/your-org/agent-trace)
+- [TraceCraft Documentation](https://github.com/your-org/agent-trace)
 - [API Reference](https://github.com/your-org/agent-trace/docs/api)
 - [GitHub Issues](https://github.com/your-org/agent-trace/issues)

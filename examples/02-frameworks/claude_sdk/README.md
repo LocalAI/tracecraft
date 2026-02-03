@@ -1,25 +1,25 @@
 # Claude Agent SDK Integration
 
-AgentTrace integration with the Claude Agent SDK (Claude Code SDK) for observability
+TraceCraft integration with the Claude Agent SDK (Claude Code SDK) for observability
 of Claude-powered agents.
 
 ## Prerequisites
 
 ```bash
-pip install agenttrace claude-code-sdk
+pip install tracecraft claude-code-sdk
 export ANTHROPIC_API_KEY="your-api-key"
 ```
 
 ## Quick Start
 
 ```python
-from agenttrace import AgentTraceRuntime
-from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+from tracecraft import TraceCraftRuntime
+from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 from claude_code_sdk import query
 
 # Initialize tracing
-runtime = AgentTraceRuntime(console=True, jsonl=True)
-tracer = ClaudeAgentTracer(runtime=runtime)
+runtime = TraceCraftRuntime(console=True, jsonl=True)
+tracer = ClaudeTraceCraftr(runtime=runtime)
 
 # Trace an agent task
 with runtime.run("code_analysis") as run:
@@ -42,7 +42,7 @@ with runtime.run("code_analysis") as run:
 
 ## How It Works
 
-ClaudeAgentTracer uses the Claude SDK's hook system to capture agent execution:
+ClaudeTraceCraftr uses the Claude SDK's hook system to capture agent execution:
 
 - **PreToolUse**: Creates a Step when a tool is about to be executed
 - **PostToolUse**: Completes the Step with outputs and timing
@@ -51,7 +51,7 @@ ClaudeAgentTracer uses the Claude SDK's hook system to capture agent execution:
 
 ## Tool Type Mapping
 
-| Claude Tool | AgentTrace StepType |
+| Claude Tool | TraceCraft StepType |
 |-------------|---------------------|
 | Read, Write, Edit | TOOL |
 | Bash, KillShell | TOOL |
@@ -64,7 +64,7 @@ ClaudeAgentTracer uses the Claude SDK's hook system to capture agent execution:
 
 ## Custom Hooks
 
-ClaudeAgentTracer's `get_options()` method automatically merges your custom hooks
+ClaudeTraceCraftr's `get_options()` method automatically merges your custom hooks
 with the tracing hooks:
 
 ```python
@@ -87,14 +87,14 @@ options = tracer.get_options(
 ## Production Configuration
 
 ```python
-from agenttrace.core.config import (
-    AgentTraceConfig,
+from tracecraft.core.config import (
+    TraceCraftConfig,
     ProcessorOrder,
     RedactionConfig,
     SamplingConfig,
 )
 
-config = AgentTraceConfig(
+config = TraceCraftConfig(
     service_name="my-claude-agent",
     processor_order=ProcessorOrder.SAFETY,  # Redact before sampling
     redaction=RedactionConfig(enabled=True),
@@ -106,16 +106,16 @@ config = AgentTraceConfig(
     jsonl_enabled=True,
 )
 
-runtime = AgentTraceRuntime(config=config)
-tracer = ClaudeAgentTracer(runtime=runtime)
+runtime = TraceCraftRuntime(config=config)
+tracer = ClaudeTraceCraftr(runtime=runtime)
 ```
 
 ## API Reference
 
-### ClaudeAgentTracer
+### ClaudeTraceCraftr
 
 ```python
-class ClaudeAgentTracer:
+class ClaudeTraceCraftr:
     def __init__(self, runtime: TALRuntime | None = None):
         """Create tracer, optionally with a runtime."""
 

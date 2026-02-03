@@ -18,7 +18,7 @@ class TestAsyncContextManager:
     @pytest.mark.asyncio
     async def test_async_run_context_manager_basic(self) -> None:
         """Async context manager should create and manage a run."""
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.runtime import TALRuntime
 
         runtime = TALRuntime(console=False, jsonl=False)
 
@@ -30,7 +30,7 @@ class TestAsyncContextManager:
     @pytest.mark.asyncio
     async def test_async_run_sets_end_time(self) -> None:
         """Async context manager should set end_time on exit."""
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.runtime import TALRuntime
 
         runtime = TALRuntime(console=False, jsonl=False)
 
@@ -44,7 +44,7 @@ class TestAsyncContextManager:
     @pytest.mark.asyncio
     async def test_async_run_exports_on_exit(self) -> None:
         """Async context manager should export run on exit."""
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.runtime import TALRuntime
 
         mock_exporter = MagicMock()
         runtime = TALRuntime(console=False, jsonl=False, exporters=[mock_exporter])
@@ -57,7 +57,7 @@ class TestAsyncContextManager:
     @pytest.mark.asyncio
     async def test_async_run_captures_exception(self) -> None:
         """Async context manager should capture exception info."""
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.runtime import TALRuntime
 
         runtime = TALRuntime(console=False, jsonl=False)
 
@@ -71,7 +71,7 @@ class TestAsyncContextManager:
     @pytest.mark.asyncio
     async def test_async_run_exports_even_on_exception(self) -> None:
         """Async context manager should export even when exception occurs."""
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.runtime import TALRuntime
 
         mock_exporter = MagicMock()
         runtime = TALRuntime(console=False, jsonl=False, exporters=[mock_exporter])
@@ -85,8 +85,8 @@ class TestAsyncContextManager:
     @pytest.mark.asyncio
     async def test_async_run_sets_context(self) -> None:
         """Async context manager should set current run context."""
-        from agenttrace.core.context import get_current_run
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.context import get_current_run
+        from tracecraft.core.runtime import TALRuntime
 
         runtime = TALRuntime(console=False, jsonl=False)
 
@@ -97,8 +97,8 @@ class TestAsyncContextManager:
     @pytest.mark.asyncio
     async def test_async_run_clears_context_on_exit(self) -> None:
         """Async context manager should clear context on exit."""
-        from agenttrace.core.context import get_current_run
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.context import get_current_run
+        from tracecraft.core.runtime import TALRuntime
 
         runtime = TALRuntime(console=False, jsonl=False)
 
@@ -112,7 +112,7 @@ class TestAsyncContextManager:
     @pytest.mark.asyncio
     async def test_async_run_with_metadata(self) -> None:
         """Async context manager should accept run metadata."""
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.runtime import TALRuntime
 
         runtime = TALRuntime(console=False, jsonl=False)
 
@@ -137,8 +137,8 @@ class TestAsyncContextPropagation:
     @pytest.mark.asyncio
     async def test_context_propagates_through_await(self) -> None:
         """Context should propagate through await calls."""
-        from agenttrace.core.context import get_current_run
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.context import get_current_run
+        from tracecraft.core.runtime import TALRuntime
 
         runtime = TALRuntime(console=False, jsonl=False)
 
@@ -152,8 +152,8 @@ class TestAsyncContextPropagation:
     @pytest.mark.asyncio
     async def test_concurrent_runs_isolated(self) -> None:
         """Concurrent async runs should have isolated contexts."""
-        from agenttrace.core.context import get_current_run
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.context import get_current_run
+        from tracecraft.core.runtime import TALRuntime
 
         runtime = TALRuntime(console=False, jsonl=False)
         results = []
@@ -181,8 +181,8 @@ class TestAsyncRunWithDecorators:
     @pytest.mark.asyncio
     async def test_async_run_with_async_decorator(self) -> None:
         """Async decorated functions should work within async run."""
-        from agenttrace.core.runtime import TALRuntime
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.runtime import TALRuntime
+        from tracecraft.instrumentation.decorators import trace_agent
 
         runtime = TALRuntime(console=False, jsonl=False)
 

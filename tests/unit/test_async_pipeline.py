@@ -10,13 +10,13 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
-from agenttrace.exporters.async_pipeline import (
+from tracecraft.core.models import AgentRun, Step, StepType
+from tracecraft.exporters.async_pipeline import (
     AsyncBatchExporter,
     AsyncExporter,
     AsyncioExporter,
 )
-from agenttrace.exporters.base import BaseExporter
+from tracecraft.exporters.base import BaseExporter
 
 
 class MockExporter(BaseExporter):
@@ -413,7 +413,7 @@ class TestExporterIntegration:
 
     def test_chain_with_retrying(self, sample_run):
         """Test async exporter with retrying exporter."""
-        from agenttrace.exporters.retry import RetryingExporter
+        from tracecraft.exporters.retry import RetryingExporter
 
         mock = MockExporter()
         retrying = RetryingExporter(mock, max_retries=2)

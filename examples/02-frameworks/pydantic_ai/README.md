@@ -1,6 +1,6 @@
 # PydanticAI Integration Examples
 
-Trace PydanticAI agents using the `AgentTraceSpanProcessor`.
+Trace PydanticAI agents using the `TraceCraftSpanProcessor`.
 
 ## Prerequisites
 
@@ -11,15 +11,15 @@ export OPENAI_API_KEY=sk-...
 
 ## Integration Pattern
 
-PydanticAI uses OpenTelemetry internally. The `AgentTraceSpanProcessor` intercepts spans and converts them to AgentTrace format.
+PydanticAI uses OpenTelemetry internally. The `TraceCraftSpanProcessor` intercepts spans and converts them to TraceCraft format.
 
 ```python
-from agenttrace.adapters.pydantic_ai import AgentTraceSpanProcessor
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 from pydantic_ai import Agent
 
-processor = AgentTraceSpanProcessor()
+processor = TraceCraftSpanProcessor()
 
 agent = Agent(
     "openai:gpt-4o-mini",

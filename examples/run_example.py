@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Unified example runner for AgentTrace examples.
+"""Unified example runner for TraceCraft examples.
 
-This utility helps discover, validate, and run AgentTrace examples.
+This utility helps discover, validate, and run TraceCraft examples.
 
 Features:
     - List all available examples
@@ -286,7 +286,7 @@ def list_examples(category: str | None = None) -> None:
         categories[cat].append((example, metadata))
 
     # Print grouped examples
-    print(colorize("\nAgentTrace Examples", "bold"))
+    print(colorize("\nTraceCraft Examples", "bold"))
     print(colorize("=" * 70, "cyan"))
 
     for cat in sorted(categories.keys()):
@@ -323,7 +323,7 @@ def list_examples(category: str | None = None) -> None:
 def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Run AgentTrace examples",
+        description="Run TraceCraft examples",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

@@ -6,8 +6,8 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
-from agenttrace.playground.providers.base import BaseReplayProvider, ReplayResult
+from tracecraft.core.models import AgentRun, Step, StepType
+from tracecraft.playground.providers.base import BaseReplayProvider, ReplayResult
 
 
 class TestReplayResult:
@@ -191,14 +191,14 @@ class TestOpenAIReplayProvider:
 
     def test_provider_name(self) -> None:
         """Test provider name."""
-        from agenttrace.playground.providers.openai import OpenAIReplayProvider
+        from tracecraft.playground.providers.openai import OpenAIReplayProvider
 
         provider = OpenAIReplayProvider()
         assert provider.name == "openai"
 
     def test_supported_models(self) -> None:
         """Test supported models."""
-        from agenttrace.playground.providers.openai import OpenAIReplayProvider
+        from tracecraft.playground.providers.openai import OpenAIReplayProvider
 
         provider = OpenAIReplayProvider()
         assert "gpt-4" in provider.supported_models
@@ -207,7 +207,7 @@ class TestOpenAIReplayProvider:
 
     def test_can_replay_gpt4(self) -> None:
         """Test can_replay for GPT-4."""
-        from agenttrace.playground.providers.openai import OpenAIReplayProvider
+        from tracecraft.playground.providers.openai import OpenAIReplayProvider
 
         provider = OpenAIReplayProvider()
         step = Step(
@@ -221,7 +221,7 @@ class TestOpenAIReplayProvider:
 
     def test_cannot_replay_claude(self) -> None:
         """Test can_replay returns False for Claude."""
-        from agenttrace.playground.providers.openai import OpenAIReplayProvider
+        from tracecraft.playground.providers.openai import OpenAIReplayProvider
 
         provider = OpenAIReplayProvider()
         step = Step(
@@ -239,14 +239,14 @@ class TestAnthropicReplayProvider:
 
     def test_provider_name(self) -> None:
         """Test provider name."""
-        from agenttrace.playground.providers.anthropic import AnthropicReplayProvider
+        from tracecraft.playground.providers.anthropic import AnthropicReplayProvider
 
         provider = AnthropicReplayProvider()
         assert provider.name == "anthropic"
 
     def test_supported_models(self) -> None:
         """Test supported models."""
-        from agenttrace.playground.providers.anthropic import AnthropicReplayProvider
+        from tracecraft.playground.providers.anthropic import AnthropicReplayProvider
 
         provider = AnthropicReplayProvider()
         assert "claude-3" in provider.supported_models
@@ -255,7 +255,7 @@ class TestAnthropicReplayProvider:
 
     def test_can_replay_claude(self) -> None:
         """Test can_replay for Claude."""
-        from agenttrace.playground.providers.anthropic import AnthropicReplayProvider
+        from tracecraft.playground.providers.anthropic import AnthropicReplayProvider
 
         provider = AnthropicReplayProvider()
         step = Step(
@@ -269,7 +269,7 @@ class TestAnthropicReplayProvider:
 
     def test_cannot_replay_gpt(self) -> None:
         """Test can_replay returns False for GPT."""
-        from agenttrace.playground.providers.anthropic import AnthropicReplayProvider
+        from tracecraft.playground.providers.anthropic import AnthropicReplayProvider
 
         provider = AnthropicReplayProvider()
         step = Step(
@@ -320,7 +320,7 @@ class TestRunnerFunctions:
 
     def test_get_provider_for_step_openai(self) -> None:
         """Test get_provider_for_step returns OpenAI provider."""
-        from agenttrace.playground.runner import get_provider_for_step
+        from tracecraft.playground.runner import get_provider_for_step
 
         step = Step(
             trace_id=uuid4(),
@@ -336,7 +336,7 @@ class TestRunnerFunctions:
 
     def test_get_provider_for_step_anthropic(self) -> None:
         """Test get_provider_for_step returns Anthropic provider."""
-        from agenttrace.playground.runner import get_provider_for_step
+        from tracecraft.playground.runner import get_provider_for_step
 
         step = Step(
             trace_id=uuid4(),
@@ -352,7 +352,7 @@ class TestRunnerFunctions:
 
     def test_get_provider_for_step_unknown(self) -> None:
         """Test get_provider_for_step returns None for unknown models."""
-        from agenttrace.playground.runner import get_provider_for_step
+        from tracecraft.playground.runner import get_provider_for_step
 
         step = Step(
             trace_id=uuid4(),
@@ -368,7 +368,7 @@ class TestRunnerFunctions:
     @pytest.mark.asyncio
     async def test_replay_step_not_found(self, tmp_path: Path) -> None:
         """Test replay_step raises ValueError for non-existent step."""
-        from agenttrace.playground.runner import replay_step
+        from tracecraft.playground.runner import replay_step
 
         file_path = tmp_path / "empty.jsonl"
         file_path.touch()
@@ -386,7 +386,7 @@ class TestComparison:
 
     def test_iteration_creation(self) -> None:
         """Test creating an Iteration."""
-        from agenttrace.playground.comparison import Iteration
+        from tracecraft.playground.comparison import Iteration
 
         iteration = Iteration(
             prompt="You are a helpful assistant.",
@@ -403,7 +403,7 @@ class TestComparison:
 
     def test_iteration_from_replay_result(self) -> None:
         """Test creating Iteration from ReplayResult."""
-        from agenttrace.playground.comparison import Iteration
+        from tracecraft.playground.comparison import Iteration
 
         result = ReplayResult(
             output="Test output",
@@ -426,7 +426,7 @@ class TestComparison:
 
     def test_iteration_to_dict(self) -> None:
         """Test Iteration to_dict."""
-        from agenttrace.playground.comparison import Iteration
+        from tracecraft.playground.comparison import Iteration
 
         iteration = Iteration(
             prompt="test",
@@ -441,7 +441,7 @@ class TestComparison:
 
     def test_iteration_from_dict(self) -> None:
         """Test Iteration from_dict."""
-        from agenttrace.playground.comparison import Iteration
+        from tracecraft.playground.comparison import Iteration
 
         data = {
             "prompt": "test",
@@ -459,7 +459,7 @@ class TestComparison:
 
     def test_iteration_history_creation(self) -> None:
         """Test creating IterationHistory."""
-        from agenttrace.playground.comparison import IterationHistory
+        from tracecraft.playground.comparison import IterationHistory
 
         history = IterationHistory(
             step_id="abc123",
@@ -476,7 +476,7 @@ class TestComparison:
 
     def test_iteration_history_add_iteration(self) -> None:
         """Test adding iteration to history."""
-        from agenttrace.playground.comparison import IterationHistory
+        from tracecraft.playground.comparison import IterationHistory
 
         history = IterationHistory(
             step_id="abc123",
@@ -503,7 +503,7 @@ class TestComparison:
 
     def test_iteration_history_save_load(self, tmp_path: Path) -> None:
         """Test saving and loading iteration history."""
-        from agenttrace.playground.comparison import IterationHistory
+        from tracecraft.playground.comparison import IterationHistory
 
         history = IterationHistory(
             step_id="abc123",
@@ -529,14 +529,14 @@ class TestComparison:
 
     def test_generate_diff(self) -> None:
         """Test generate_diff function."""
-        from agenttrace.playground.comparison import generate_diff
+        from tracecraft.playground.comparison import generate_diff
 
         diff = generate_diff("Hello world", "Hello there")
         assert "world" in diff or "there" in diff
 
     def test_calculate_similarity(self) -> None:
         """Test calculate_similarity function."""
-        from agenttrace.playground.comparison import calculate_similarity
+        from tracecraft.playground.comparison import calculate_similarity
 
         # Identical strings
         assert calculate_similarity("hello", "hello") == 1.0
@@ -554,13 +554,13 @@ class TestCLIPlaygroundCommand:
 
     def test_playground_command_exists(self) -> None:
         """Test playground command is registered."""
-        from agenttrace.cli.main import playground
+        from tracecraft.cli.main import playground
 
         assert callable(playground)
 
     def test_playground_command_in_app(self) -> None:
         """Test playground command is in the app."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         command_callbacks = [
             cmd.callback.__name__ for cmd in app.registered_commands if cmd.callback
@@ -573,7 +573,7 @@ class TestIterationHistoryFromStep:
 
     def test_iteration_history_from_step(self) -> None:
         """Test creating IterationHistory from a Step."""
-        from agenttrace.playground.comparison import IterationHistory
+        from tracecraft.playground.comparison import IterationHistory
 
         step = Step(
             trace_id=uuid4(),
@@ -599,7 +599,7 @@ class TestIterationHistoryFromStep:
 
     def test_iteration_history_best_iteration(self) -> None:
         """Test finding the best iteration."""
-        from agenttrace.playground.comparison import IterationHistory
+        from tracecraft.playground.comparison import IterationHistory
 
         history = IterationHistory(
             step_id="abc",
@@ -631,7 +631,7 @@ class TestPlaygroundScreenInit:
     def test_playground_screen_creates_history(self) -> None:
         """Test that PlaygroundScreen creates an IterationHistory."""
         try:
-            from agenttrace.tui.screens.playground import TEXTUAL_AVAILABLE, PlaygroundScreen
+            from tracecraft.tui.screens.playground import TEXTUAL_AVAILABLE, PlaygroundScreen
 
             if not TEXTUAL_AVAILABLE:
                 pytest.skip("Textual not installed")

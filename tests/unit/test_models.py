@@ -14,55 +14,55 @@ class TestStepType:
 
     def test_step_type_enum_has_agent(self):
         """StepType should have an AGENT value."""
-        from agenttrace.core.models import StepType
+        from tracecraft.core.models import StepType
 
         assert StepType.AGENT == "agent"
 
     def test_step_type_enum_has_llm(self):
         """StepType should have an LLM value."""
-        from agenttrace.core.models import StepType
+        from tracecraft.core.models import StepType
 
         assert StepType.LLM == "llm"
 
     def test_step_type_enum_has_tool(self):
         """StepType should have a TOOL value."""
-        from agenttrace.core.models import StepType
+        from tracecraft.core.models import StepType
 
         assert StepType.TOOL == "tool"
 
     def test_step_type_enum_has_retrieval(self):
         """StepType should have a RETRIEVAL value."""
-        from agenttrace.core.models import StepType
+        from tracecraft.core.models import StepType
 
         assert StepType.RETRIEVAL == "retrieval"
 
     def test_step_type_enum_has_memory(self):
         """StepType should have a MEMORY value."""
-        from agenttrace.core.models import StepType
+        from tracecraft.core.models import StepType
 
         assert StepType.MEMORY == "memory"
 
     def test_step_type_enum_has_guardrail(self):
         """StepType should have a GUARDRAIL value."""
-        from agenttrace.core.models import StepType
+        from tracecraft.core.models import StepType
 
         assert StepType.GUARDRAIL == "guardrail"
 
     def test_step_type_enum_has_workflow(self):
         """StepType should have a WORKFLOW value."""
-        from agenttrace.core.models import StepType
+        from tracecraft.core.models import StepType
 
         assert StepType.WORKFLOW == "workflow"
 
     def test_step_type_enum_has_error(self):
         """StepType should have an ERROR value."""
-        from agenttrace.core.models import StepType
+        from tracecraft.core.models import StepType
 
         assert StepType.ERROR == "error"
 
     def test_step_type_is_string_enum(self):
         """StepType values should be strings."""
-        from agenttrace.core.models import StepType
+        from tracecraft.core.models import StepType
 
         assert isinstance(StepType.AGENT.value, str)
         assert StepType.AGENT == "agent"
@@ -73,7 +73,7 @@ class TestStep:
 
     def test_step_creation_with_required_fields(self, trace_id, sample_timestamp):
         """Step should be created with required fields."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         step = Step(
             trace_id=trace_id,
@@ -89,7 +89,7 @@ class TestStep:
 
     def test_step_has_auto_generated_id(self, trace_id, sample_timestamp):
         """Step should have an auto-generated UUID id."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         step = Step(
             trace_id=trace_id,
@@ -102,7 +102,7 @@ class TestStep:
 
     def test_step_parent_id_defaults_to_none(self, trace_id, sample_timestamp):
         """Step parent_id should default to None."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         step = Step(
             trace_id=trace_id,
@@ -115,7 +115,7 @@ class TestStep:
 
     def test_step_with_parent_id(self, trace_id, sample_timestamp):
         """Step should accept a parent_id."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         parent_id = uuid4()
         step = Step(
@@ -130,7 +130,7 @@ class TestStep:
 
     def test_step_optional_fields_default_to_none_or_empty(self, trace_id, sample_timestamp):
         """Step optional fields should have sensible defaults."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         step = Step(
             trace_id=trace_id,
@@ -157,7 +157,7 @@ class TestStep:
         self, trace_id, sample_timestamp, mock_inputs, mock_outputs
     ):
         """Step should accept inputs and outputs."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         step = Step(
             trace_id=trace_id,
@@ -173,7 +173,7 @@ class TestStep:
 
     def test_step_with_llm_specific_fields(self, trace_id, sample_timestamp):
         """Step should accept LLM-specific fields."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         step = Step(
             trace_id=trace_id,
@@ -195,7 +195,7 @@ class TestStep:
 
     def test_step_with_error_fields(self, trace_id, sample_timestamp):
         """Step should accept error fields."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         step = Step(
             trace_id=trace_id,
@@ -211,7 +211,7 @@ class TestStep:
 
     def test_step_with_end_time_and_duration(self, trace_id, sample_timestamp):
         """Step should accept end_time and duration_ms."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         end_time = datetime.now(UTC)
         step = Step(
@@ -228,7 +228,7 @@ class TestStep:
 
     def test_step_children_is_list_of_steps(self, trace_id, sample_timestamp):
         """Step children should be a list of Step objects."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         child_step = Step(
             trace_id=trace_id,
@@ -254,7 +254,7 @@ class TestAgentRun:
 
     def test_agent_run_creation_with_required_fields(self, sample_timestamp):
         """AgentRun should be created with required fields."""
-        from agenttrace.core.models import AgentRun
+        from tracecraft.core.models import AgentRun
 
         run = AgentRun(
             name="research_agent",
@@ -266,7 +266,7 @@ class TestAgentRun:
 
     def test_agent_run_has_auto_generated_id(self, sample_timestamp):
         """AgentRun should have an auto-generated UUID id."""
-        from agenttrace.core.models import AgentRun
+        from tracecraft.core.models import AgentRun
 
         run = AgentRun(
             name="test_agent",
@@ -277,7 +277,7 @@ class TestAgentRun:
 
     def test_agent_run_optional_fields_default(self, sample_timestamp):
         """AgentRun optional fields should have sensible defaults."""
-        from agenttrace.core.models import AgentRun
+        from tracecraft.core.models import AgentRun
 
         run = AgentRun(
             name="test_agent",
@@ -302,7 +302,7 @@ class TestAgentRun:
 
     def test_agent_run_with_all_fields(self, sample_timestamp):
         """AgentRun should accept all fields."""
-        from agenttrace.core.models import AgentRun, Step, StepType
+        from tracecraft.core.models import AgentRun, Step, StepType
 
         step = Step(
             trace_id=uuid4(),
@@ -350,7 +350,7 @@ class TestModelSerialization:
 
     def test_step_serializes_to_json(self, trace_id, sample_timestamp):
         """Step should serialize to valid JSON."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         step = Step(
             trace_id=trace_id,
@@ -371,7 +371,7 @@ class TestModelSerialization:
 
     def test_agent_run_serializes_to_json(self, sample_timestamp):
         """AgentRun should serialize to valid JSON."""
-        from agenttrace.core.models import AgentRun
+        from tracecraft.core.models import AgentRun
 
         run = AgentRun(
             name="test_run",
@@ -389,7 +389,7 @@ class TestModelSerialization:
 
     def test_nested_steps_serialize_correctly(self, trace_id, sample_timestamp):
         """Nested steps should serialize correctly."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         child = Step(
             trace_id=trace_id,
@@ -415,7 +415,7 @@ class TestModelSerialization:
 
     def test_step_deserializes_from_json(self, trace_id, sample_timestamp):
         """Step should deserialize from JSON."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         original = Step(
             trace_id=trace_id,
@@ -434,7 +434,7 @@ class TestModelSerialization:
 
     def test_agent_run_with_steps_serializes(self, sample_timestamp):
         """AgentRun with steps should serialize properly."""
-        from agenttrace.core.models import AgentRun, Step, StepType
+        from tracecraft.core.models import AgentRun, Step, StepType
 
         run_id = uuid4()
         step = Step(
@@ -464,7 +464,7 @@ class TestStepNesting:
 
     def test_deeply_nested_steps(self, trace_id, sample_timestamp):
         """Steps should support deep nesting."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         # Create a 3-level deep hierarchy
         level3 = Step(
@@ -495,7 +495,7 @@ class TestStepNesting:
 
     def test_multiple_children_at_same_level(self, trace_id, sample_timestamp):
         """Steps should support multiple children at the same level."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         child1 = Step(
             trace_id=trace_id,
@@ -532,7 +532,7 @@ class TestStepNesting:
 
     def test_parent_id_links_to_parent(self, trace_id, sample_timestamp):
         """Children should have parent_id linking to parent."""
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         parent = Step(
             trace_id=trace_id,

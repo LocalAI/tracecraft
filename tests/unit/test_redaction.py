@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 
-from agenttrace.processors.redaction import (
+from tracecraft.processors.redaction import (
     RedactionMode,
     RedactionProcessor,
     RedactionRule,

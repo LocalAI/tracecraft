@@ -8,7 +8,7 @@ class TestAutoInstrumentor:
 
     def test_instrumentor_initialization(self):
         """Test AutoInstrumentor initializes correctly."""
-        from agenttrace.instrumentation.auto import AutoInstrumentor
+        from tracecraft.instrumentation.auto import AutoInstrumentor
 
         instrumentor = AutoInstrumentor()
 
@@ -20,7 +20,7 @@ class TestAutoInstrumentor:
 
     def test_is_enabled_property(self):
         """Test is_enabled property."""
-        from agenttrace.instrumentation.auto import AutoInstrumentor
+        from tracecraft.instrumentation.auto import AutoInstrumentor
 
         instrumentor = AutoInstrumentor()
         assert instrumentor.is_enabled is False
@@ -30,7 +30,7 @@ class TestAutoInstrumentor:
 
     def test_instrument_openai_returns_false_when_not_installed(self):
         """Test OpenAI instrumentation returns False when OpenAI not installed."""
-        from agenttrace.instrumentation.auto import AutoInstrumentor
+        from tracecraft.instrumentation.auto import AutoInstrumentor
 
         instrumentor = AutoInstrumentor()
 
@@ -42,7 +42,7 @@ class TestAutoInstrumentor:
 
     def test_instrument_anthropic_returns_false_when_not_installed(self):
         """Test Anthropic instrumentation returns False when Anthropic not installed."""
-        from agenttrace.instrumentation.auto import AutoInstrumentor
+        from tracecraft.instrumentation.auto import AutoInstrumentor
 
         instrumentor = AutoInstrumentor()
 
@@ -51,7 +51,7 @@ class TestAutoInstrumentor:
 
     def test_instrument_all_returns_dict(self):
         """Test instrument_all returns a dictionary of results."""
-        from agenttrace.instrumentation.auto import AutoInstrumentor
+        from tracecraft.instrumentation.auto import AutoInstrumentor
 
         instrumentor = AutoInstrumentor()
         result = instrumentor.instrument_all()
@@ -62,7 +62,7 @@ class TestAutoInstrumentor:
 
     def test_uninstrument_all_clears_state(self):
         """Test uninstrument_all clears all state."""
-        from agenttrace.instrumentation.auto import AutoInstrumentor
+        from tracecraft.instrumentation.auto import AutoInstrumentor
 
         instrumentor = AutoInstrumentor()
         instrumentor._enabled = True
@@ -77,7 +77,7 @@ class TestAutoInstrumentor:
 
     def test_idempotent_instrumentation(self):
         """Test that instrumenting twice is idempotent."""
-        from agenttrace.instrumentation.auto import AutoInstrumentor
+        from tracecraft.instrumentation.auto import AutoInstrumentor
 
         instrumentor = AutoInstrumentor()
         instrumentor._openai_instrumented = True
@@ -92,7 +92,7 @@ class TestModuleFunctions:
 
     def test_get_instrumentor_returns_same_instance(self):
         """Test get_instrumentor returns singleton."""
-        from agenttrace.instrumentation import auto
+        from tracecraft.instrumentation import auto
 
         # Reset global state
         auto._auto_instrumentor = None
@@ -104,7 +104,7 @@ class TestModuleFunctions:
 
     def test_enable_auto_instrumentation_returns_dict(self):
         """Test enable_auto_instrumentation returns results dict."""
-        from agenttrace.instrumentation import auto
+        from tracecraft.instrumentation import auto
 
         # Reset global state
         auto._auto_instrumentor = None
@@ -117,7 +117,7 @@ class TestModuleFunctions:
 
     def test_enable_specific_providers(self):
         """Test enabling specific providers only."""
-        from agenttrace.instrumentation import auto
+        from tracecraft.instrumentation import auto
 
         # Reset global state
         auto._auto_instrumentor = None
@@ -130,7 +130,7 @@ class TestModuleFunctions:
 
     def test_enable_unknown_provider(self):
         """Test enabling unknown provider logs warning."""
-        from agenttrace.instrumentation import auto
+        from tracecraft.instrumentation import auto
 
         auto._auto_instrumentor = None
 
@@ -140,7 +140,7 @@ class TestModuleFunctions:
 
     def test_disable_auto_instrumentation(self):
         """Test disabling auto-instrumentation."""
-        from agenttrace.instrumentation import auto
+        from tracecraft.instrumentation import auto
 
         auto._auto_instrumentor = None
 
@@ -154,7 +154,7 @@ class TestModuleFunctions:
 
     def test_disable_specific_providers(self):
         """Test disabling specific providers."""
-        from agenttrace.instrumentation import auto
+        from tracecraft.instrumentation import auto
 
         auto._auto_instrumentor = None
 
@@ -163,7 +163,7 @@ class TestModuleFunctions:
 
     def test_is_instrumentation_enabled_false_when_not_initialized(self):
         """Test is_instrumentation_enabled returns False when not initialized."""
-        from agenttrace.instrumentation import auto
+        from tracecraft.instrumentation import auto
 
         auto._auto_instrumentor = None
 
@@ -175,7 +175,7 @@ class TestOTelIntegration:
 
     def test_otel_openai_instrumentor_used_when_available(self):
         """Test that OTel instrumentation is preferred when available."""
-        from agenttrace.instrumentation.auto import AutoInstrumentor
+        from tracecraft.instrumentation.auto import AutoInstrumentor
 
         # Mock the OTel instrumentor
         mock_instrumentor = MagicMock()
@@ -196,7 +196,7 @@ class TestOTelIntegration:
 
     def test_fallback_to_patching_when_otel_unavailable(self):
         """Test fallback to monkey patching when OTel not available."""
-        from agenttrace.instrumentation.auto import AutoInstrumentor
+        from tracecraft.instrumentation.auto import AutoInstrumentor
 
         instrumentor = AutoInstrumentor()
 

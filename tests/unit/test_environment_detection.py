@@ -2,7 +2,7 @@
 Tests for environment detection and environment-aware defaults.
 """
 
-from agenttrace.core.env_config import (
+from tracecraft.core.env_config import (
     detect_environment,
     get_environment_defaults,
 )
@@ -11,41 +11,41 @@ from agenttrace.core.env_config import (
 class TestEnvironmentDetection:
     """Tests for detect_environment function."""
 
-    def test_explicit_agenttrace_env(self, monkeypatch):
-        """Should use AGENTTRACE_ENV when set."""
-        monkeypatch.setenv("AGENTTRACE_ENV", "staging")
+    def test_explicit_tracecraft_env(self, monkeypatch):
+        """Should use TRACECRAFT_ENV when set."""
+        monkeypatch.setenv("TRACECRAFT_ENV", "staging")
         assert detect_environment() == "staging"
 
-    def test_explicit_agenttrace_environment(self, monkeypatch):
-        """Should use AGENTTRACE_ENVIRONMENT when set."""
-        monkeypatch.setenv("AGENTTRACE_ENVIRONMENT", "production")
+    def test_explicit_tracecraft_environment(self, monkeypatch):
+        """Should use TRACECRAFT_ENVIRONMENT when set."""
+        monkeypatch.setenv("TRACECRAFT_ENVIRONMENT", "production")
         assert detect_environment() == "production"
 
     def test_aws_lambda_detection(self, monkeypatch):
         """Should detect AWS Lambda as production."""
-        monkeypatch.delenv("AGENTTRACE_ENV", raising=False)
-        monkeypatch.delenv("AGENTTRACE_ENVIRONMENT", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENV", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENVIRONMENT", raising=False)
         monkeypatch.setenv("AWS_LAMBDA_FUNCTION_NAME", "my-function")
         assert detect_environment() == "production"
 
     def test_kubernetes_detection(self, monkeypatch):
         """Should detect Kubernetes as production."""
-        monkeypatch.delenv("AGENTTRACE_ENV", raising=False)
-        monkeypatch.delenv("AGENTTRACE_ENVIRONMENT", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENV", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENVIRONMENT", raising=False)
         monkeypatch.setenv("KUBERNETES_SERVICE_HOST", "10.0.0.1")
         assert detect_environment() == "production"
 
     def test_cloud_run_detection(self, monkeypatch):
         """Should detect Cloud Run as production."""
-        monkeypatch.delenv("AGENTTRACE_ENV", raising=False)
-        monkeypatch.delenv("AGENTTRACE_ENVIRONMENT", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENV", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENVIRONMENT", raising=False)
         monkeypatch.setenv("K_SERVICE", "my-service")
         assert detect_environment() == "production"
 
     def test_github_actions_detection(self, monkeypatch):
         """Should detect GitHub Actions as CI."""
-        monkeypatch.delenv("AGENTTRACE_ENV", raising=False)
-        monkeypatch.delenv("AGENTTRACE_ENVIRONMENT", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENV", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENVIRONMENT", raising=False)
         # Clear production indicators
         monkeypatch.delenv("AWS_LAMBDA_FUNCTION_NAME", raising=False)
         monkeypatch.delenv("KUBERNETES_SERVICE_HOST", raising=False)
@@ -54,31 +54,31 @@ class TestEnvironmentDetection:
 
     def test_generic_ci_detection(self, monkeypatch):
         """Should detect generic CI variable."""
-        monkeypatch.delenv("AGENTTRACE_ENV", raising=False)
-        monkeypatch.delenv("AGENTTRACE_ENVIRONMENT", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENV", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENVIRONMENT", raising=False)
         monkeypatch.delenv("AWS_LAMBDA_FUNCTION_NAME", raising=False)
         monkeypatch.setenv("CI", "true")
         assert detect_environment() == "ci"
 
     def test_vercel_production(self, monkeypatch):
         """Should detect Vercel production environment."""
-        monkeypatch.delenv("AGENTTRACE_ENV", raising=False)
-        monkeypatch.delenv("AGENTTRACE_ENVIRONMENT", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENV", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENVIRONMENT", raising=False)
         monkeypatch.setenv("VERCEL_ENV", "production")
         assert detect_environment() == "production"
 
     def test_vercel_preview(self, monkeypatch):
         """Should detect Vercel preview as production."""
-        monkeypatch.delenv("AGENTTRACE_ENV", raising=False)
-        monkeypatch.delenv("AGENTTRACE_ENVIRONMENT", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENV", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENVIRONMENT", raising=False)
         monkeypatch.setenv("VERCEL_ENV", "preview")
         assert detect_environment() == "production"
 
     def test_default_to_development(self, monkeypatch):
         """Should default to development when no indicators."""
         # Clear all possible env vars
-        monkeypatch.delenv("AGENTTRACE_ENV", raising=False)
-        monkeypatch.delenv("AGENTTRACE_ENVIRONMENT", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENV", raising=False)
+        monkeypatch.delenv("TRACECRAFT_ENVIRONMENT", raising=False)
         monkeypatch.delenv("AWS_LAMBDA_FUNCTION_NAME", raising=False)
         monkeypatch.delenv("KUBERNETES_SERVICE_HOST", raising=False)
         monkeypatch.delenv("K_SERVICE", raising=False)
@@ -151,21 +151,21 @@ class TestProcessorOrder:
 
     def test_processor_order_enum_values(self):
         """ProcessorOrder should have expected values."""
-        from agenttrace.core.config import ProcessorOrder
+        from tracecraft.core.config import ProcessorOrder
 
         assert ProcessorOrder.SAFETY.value == "safety"
         assert ProcessorOrder.EFFICIENCY.value == "efficiency"
 
     def test_processor_order_default_in_config(self):
-        """AgentTraceConfig should default to SAFETY order."""
-        from agenttrace.core.config import AgentTraceConfig, ProcessorOrder
+        """TraceCraftConfig should default to SAFETY order."""
+        from tracecraft.core.config import ProcessorOrder, TraceCraftConfig
 
-        config = AgentTraceConfig()
+        config = TraceCraftConfig()
         assert config.processor_order == ProcessorOrder.SAFETY
 
     def test_processor_order_can_be_set(self):
         """ProcessorOrder can be explicitly set."""
-        from agenttrace.core.config import AgentTraceConfig, ProcessorOrder
+        from tracecraft.core.config import ProcessorOrder, TraceCraftConfig
 
-        config = AgentTraceConfig(processor_order=ProcessorOrder.EFFICIENCY)
+        config = TraceCraftConfig(processor_order=ProcessorOrder.EFFICIENCY)
         assert config.processor_order == ProcessorOrder.EFFICIENCY

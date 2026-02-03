@@ -132,7 +132,7 @@ def reset_runtime() -> Any:
     """Reset the global runtime between tests."""
     yield
     # Clean up runtime after each test
-    from agenttrace.core.runtime import get_runtime
+    from tracecraft.core.runtime import get_runtime
 
     runtime = get_runtime()
     if runtime:

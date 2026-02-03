@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun
+from tracecraft.core.models import AgentRun
 
 
 class TestW3CTraceContextPropagator:
@@ -19,7 +19,7 @@ class TestW3CTraceContextPropagator:
 
     def test_inject_creates_traceparent_header(self, sample_run) -> None:
         """inject should create traceparent header."""
-        from agenttrace.propagation.w3c import W3CTraceContextPropagator
+        from tracecraft.propagation.w3c import W3CTraceContextPropagator
 
         propagator = W3CTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -34,7 +34,7 @@ class TestW3CTraceContextPropagator:
 
     def test_inject_uses_run_id_as_trace_id(self, sample_run) -> None:
         """inject should use run.id as trace_id."""
-        from agenttrace.propagation.w3c import W3CTraceContextPropagator
+        from tracecraft.propagation.w3c import W3CTraceContextPropagator
 
         propagator = W3CTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -50,7 +50,7 @@ class TestW3CTraceContextPropagator:
 
     def test_inject_creates_span_id(self, sample_run) -> None:
         """inject should create a valid span_id."""
-        from agenttrace.propagation.w3c import W3CTraceContextPropagator
+        from tracecraft.propagation.w3c import W3CTraceContextPropagator
 
         propagator = W3CTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -64,7 +64,7 @@ class TestW3CTraceContextPropagator:
 
     def test_inject_sets_sampled_flag(self, sample_run) -> None:
         """inject should set sampled flag."""
-        from agenttrace.propagation.w3c import W3CTraceContextPropagator
+        from tracecraft.propagation.w3c import W3CTraceContextPropagator
 
         propagator = W3CTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -77,19 +77,19 @@ class TestW3CTraceContextPropagator:
 
     def test_inject_with_tracestate(self, sample_run) -> None:
         """inject should optionally include tracestate."""
-        from agenttrace.propagation.w3c import W3CTraceContextPropagator
+        from tracecraft.propagation.w3c import W3CTraceContextPropagator
 
-        propagator = W3CTraceContextPropagator(vendor="agenttrace")
+        propagator = W3CTraceContextPropagator(vendor="tracecraft")
         carrier: dict[str, str] = {}
 
         propagator.inject(carrier, sample_run)
 
         assert "tracestate" in carrier
-        assert "agenttrace=" in carrier["tracestate"]
+        assert "tracecraft=" in carrier["tracestate"]
 
     def test_extract_parses_traceparent(self) -> None:
         """extract should parse traceparent header."""
-        from agenttrace.propagation.w3c import W3CTraceContextPropagator
+        from tracecraft.propagation.w3c import W3CTraceContextPropagator
 
         propagator = W3CTraceContextPropagator()
         carrier = {"traceparent": "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"}
@@ -104,7 +104,7 @@ class TestW3CTraceContextPropagator:
 
     def test_extract_handles_unsampled(self) -> None:
         """extract should handle unsampled flag."""
-        from agenttrace.propagation.w3c import W3CTraceContextPropagator
+        from tracecraft.propagation.w3c import W3CTraceContextPropagator
 
         propagator = W3CTraceContextPropagator()
         carrier = {"traceparent": "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00"}
@@ -117,7 +117,7 @@ class TestW3CTraceContextPropagator:
 
     def test_extract_returns_none_for_missing_header(self) -> None:
         """extract should return None when traceparent missing."""
-        from agenttrace.propagation.w3c import W3CTraceContextPropagator
+        from tracecraft.propagation.w3c import W3CTraceContextPropagator
 
         propagator = W3CTraceContextPropagator()
         carrier: dict[str, str] = {}
@@ -128,7 +128,7 @@ class TestW3CTraceContextPropagator:
 
     def test_extract_returns_none_for_invalid_format(self) -> None:
         """extract should return None for invalid traceparent."""
-        from agenttrace.propagation.w3c import W3CTraceContextPropagator
+        from tracecraft.propagation.w3c import W3CTraceContextPropagator
 
         propagator = W3CTraceContextPropagator()
 
@@ -146,7 +146,7 @@ class TestW3CTraceContextPropagator:
 
     def test_extract_case_insensitive_header_names(self) -> None:
         """extract should handle case-insensitive header names."""
-        from agenttrace.propagation.w3c import W3CTraceContextPropagator
+        from tracecraft.propagation.w3c import W3CTraceContextPropagator
 
         propagator = W3CTraceContextPropagator()
         carrier = {"Traceparent": "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"}
@@ -161,7 +161,7 @@ class TestTraceContextHelpers:
 
     def test_generate_span_id(self) -> None:
         """generate_span_id should create valid span IDs."""
-        from agenttrace.propagation.w3c import generate_span_id
+        from tracecraft.propagation.w3c import generate_span_id
 
         span_id = generate_span_id()
 
@@ -171,7 +171,7 @@ class TestTraceContextHelpers:
 
     def test_generate_span_id_unique(self) -> None:
         """generate_span_id should create unique IDs."""
-        from agenttrace.propagation.w3c import generate_span_id
+        from tracecraft.propagation.w3c import generate_span_id
 
         ids = {generate_span_id() for _ in range(100)}
 
@@ -179,7 +179,7 @@ class TestTraceContextHelpers:
 
     def test_format_trace_id_from_uuid(self) -> None:
         """format_trace_id should format UUID to 32-char hex."""
-        from agenttrace.propagation.w3c import format_trace_id
+        from tracecraft.propagation.w3c import format_trace_id
 
         test_uuid = uuid4()
         result = format_trace_id(test_uuid)
@@ -193,7 +193,7 @@ class TestContextPropagationIntegration:
 
     def test_inject_extract_roundtrip(self, sample_run) -> None:
         """inject and extract should round-trip correctly."""
-        from agenttrace.propagation.w3c import W3CTraceContextPropagator
+        from tracecraft.propagation.w3c import W3CTraceContextPropagator
 
         propagator = W3CTraceContextPropagator()
         carrier: dict[str, str] = {}

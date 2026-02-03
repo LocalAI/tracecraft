@@ -1,5 +1,5 @@
 """
-End-to-end tests for the full AgentTrace pipeline.
+End-to-end tests for the full TraceCraft pipeline.
 
 Tests the complete flow from run creation through processing to export.
 """
@@ -13,9 +13,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from agenttrace.core.config import AgentTraceConfig, RedactionConfig, SamplingConfig
-from agenttrace.core.models import Step, StepType
-from agenttrace.core.runtime import TALRuntime
+from tracecraft.core.config import RedactionConfig, SamplingConfig, TraceCraftConfig
+from tracecraft.core.models import Step, StepType
+from tracecraft.core.runtime import TALRuntime
 
 
 class TestFullPipelineE2E:
@@ -94,7 +94,7 @@ class TestFullPipelineE2E:
         """Pipeline should apply redaction before export."""
         jsonl_path = tmp_path / "traces.jsonl"
 
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=True,
             jsonl_path=str(jsonl_path),
@@ -134,7 +134,7 @@ class TestFullPipelineE2E:
         """Pipeline should respect sampling rate."""
         jsonl_path = tmp_path / "traces.jsonl"
 
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=True,
             jsonl_path=str(jsonl_path),
@@ -251,7 +251,7 @@ class TestRetryBufferE2E:
 
     def test_buffering_exporter(self, tmp_path: Path) -> None:  # noqa: ARG002
         """Buffering exporter should batch exports."""
-        from agenttrace.exporters.retry import BufferingExporter
+        from tracecraft.exporters.retry import BufferingExporter
 
         mock_exporter = MagicMock()
         buffering = BufferingExporter(exporter=mock_exporter, buffer_size=3)
@@ -277,7 +277,7 @@ class TestRetryBufferE2E:
 
     def test_rate_limited_exporter(self) -> None:
         """Rate limited exporter should respect limits."""
-        from agenttrace.exporters.rate_limited import RateLimitedExporter
+        from tracecraft.exporters.rate_limited import RateLimitedExporter
 
         mock_exporter = MagicMock()
         rate_limited = RateLimitedExporter(

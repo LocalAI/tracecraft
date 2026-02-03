@@ -26,7 +26,7 @@ This section covers:
 Inject and extract trace context using the W3C standard:
 
 ```python
-from agenttrace.propagation import W3CTraceContextPropagator
+from tracecraft.propagation import W3CTraceContextPropagator
 
 propagator = W3CTraceContextPropagator()
 
@@ -92,7 +92,7 @@ Open Jaeger at <http://localhost:16686> to see the full distributed trace.
 Handle context across async boundaries:
 
 ```python
-from agenttrace.contrib.async_helpers import gather_with_context
+from tracecraft.contrib.async_helpers import gather_with_context
 
 # Preserve trace context across concurrent tasks
 results = await gather_with_context(
@@ -106,7 +106,7 @@ results = await gather_with_context(
 ### Thread Pool Executor
 
 ```python
-from agenttrace.contrib.async_helpers import run_in_executor_with_context
+from tracecraft.contrib.async_helpers import run_in_executor_with_context
 
 # Run in thread pool while preserving context
 result = await run_in_executor_with_context(
@@ -122,7 +122,7 @@ Automatically inject trace context:
 
 ```python
 import httpx
-from agenttrace.propagation import inject_trace_headers
+from tracecraft.propagation import inject_trace_headers
 
 async def call_service(url: str, data: dict) -> dict:
     headers = {}
@@ -139,7 +139,7 @@ Extract trace context in FastAPI:
 
 ```python
 from fastapi import FastAPI, Request
-from agenttrace.propagation import extract_trace_context
+from tracecraft.propagation import extract_trace_context
 
 app = FastAPI()
 
@@ -159,7 +159,7 @@ async def trace_middleware(request: Request, call_next):
 
 ## Best Practices
 
-1. **Always propagate context** - Even if a service doesn't use AgentTrace
+1. **Always propagate context** - Even if a service doesn't use TraceCraft
 2. **Use standard headers** - `traceparent` and `tracestate`
 3. **Include trace ID in responses** - Helps debugging
 4. **Set service name** - Each service should have a unique name

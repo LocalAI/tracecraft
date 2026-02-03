@@ -1,1 +1,1 @@
-"""AgentTrace test suite."""
+"""TraceCraft test suite."""

@@ -10,8 +10,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
-from agenttrace.processors.sampling import (
+from tracecraft.core.models import AgentRun, Step, StepType
+from tracecraft.processors.sampling import (
     SamplingDecision,
     SamplingProcessor,
     SamplingRule,

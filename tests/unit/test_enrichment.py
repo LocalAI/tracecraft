@@ -11,8 +11,8 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import Step, StepType
-from agenttrace.processors.enrichment import (
+from tracecraft.core.models import Step, StepType
+from tracecraft.processors.enrichment import (
     ModelPricing,
     TokenEnrichmentProcessor,
     count_tokens,

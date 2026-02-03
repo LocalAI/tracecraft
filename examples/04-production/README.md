@@ -3,7 +3,7 @@
 > **Status: Coming Soon** - This section is planned but examples are not yet implemented.
 > See [01-getting-started/04_configuration.py](../01-getting-started/04_configuration.py) for basic configuration.
 
-Learn production-ready patterns for deploying AgentTrace in high-throughput environments.
+Learn production-ready patterns for deploying TraceCraft in high-throughput environments.
 
 ## Overview
 
@@ -27,18 +27,18 @@ This section covers four key areas:
 
 | Example | Description |
 |---------|-------------|
-| `01_env_variables.py` | All AGENTTRACE_* environment variables |
+| `01_env_variables.py` | All TRACECRAFT_* environment variables |
 | `02_config_object.py` | Programmatic configuration |
 | `03_dynamic_config.py` | Runtime configuration changes |
 
 ### Key Environment Variables
 
 ```bash
-AGENTTRACE_SERVICE_NAME=my-service
-AGENTTRACE_SAMPLING_RATE=0.5
-AGENTTRACE_REDACTION_ENABLED=true
-AGENTTRACE_OTLP_ENABLED=true
-AGENTTRACE_OTLP_ENDPOINT=http://collector:4317
+TRACECRAFT_SERVICE_NAME=my-service
+TRACECRAFT_SAMPLING_RATE=0.5
+TRACECRAFT_REDACTION_ENABLED=true
+TRACECRAFT_OTLP_ENABLED=true
+TRACECRAFT_OTLP_ENDPOINT=http://collector:4317
 ```
 
 ## Processors (`processors/`)
@@ -55,20 +55,20 @@ Processors transform traces before export.
 ### PII Redaction Example
 
 ```python
-from agenttrace.processors.redaction import RedactionProcessor
+from tracecraft.processors.redaction import RedactionProcessor
 
 processor = RedactionProcessor(
     patterns=["sk-[a-zA-Z0-9]+", r"\b[\w.-]+@[\w.-]+\.\w+\b"],
     mode="mask",  # or "hash", "remove"
 )
 
-runtime = agenttrace.init(processors=[processor])
+runtime = tracecraft.init(processors=[processor])
 ```
 
 ### Sampling Example
 
 ```python
-from agenttrace.processors.sampling import SamplingProcessor
+from tracecraft.processors.sampling import SamplingProcessor
 
 processor = SamplingProcessor(
     rate=0.1,  # Sample 10%
@@ -91,7 +91,7 @@ Handle failures gracefully in production.
 ### Retry Example
 
 ```python
-from agenttrace.exporters.retry import RetryingExporter
+from tracecraft.exporters.retry import RetryingExporter
 
 resilient = RetryingExporter(
     exporter=otlp_exporter,
@@ -113,7 +113,7 @@ Non-blocking exports for high-throughput scenarios.
 ### Async Export Example
 
 ```python
-from agenttrace.exporters.async_pipeline import AsyncExporter
+from tracecraft.exporters.async_pipeline import AsyncExporter
 
 async_exporter = AsyncExporter(
     exporter=otlp_exporter,
@@ -125,7 +125,7 @@ async_exporter = AsyncExporter(
 ### Batch Export Example
 
 ```python
-from agenttrace.exporters.async_pipeline import AsyncBatchExporter
+from tracecraft.exporters.async_pipeline import AsyncBatchExporter
 
 batch_exporter = AsyncBatchExporter(
     exporter=otlp_exporter,
@@ -136,8 +136,8 @@ batch_exporter = AsyncBatchExporter(
 
 ## Production Checklist
 
-- [ ] Enable PII redaction (`AGENTTRACE_REDACTION_ENABLED=true`)
-- [ ] Configure sampling rate (`AGENTTRACE_SAMPLING_RATE=0.1`)
+- [ ] Enable PII redaction (`TRACECRAFT_REDACTION_ENABLED=true`)
+- [ ] Configure sampling rate (`TRACECRAFT_SAMPLING_RATE=0.1`)
 - [ ] Use async/batch exporters for high throughput
 - [ ] Set up retry for OTLP export
 - [ ] Configure appropriate queue sizes

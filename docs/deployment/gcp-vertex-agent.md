@@ -1,6 +1,6 @@
 # GCP Vertex AI Agent Builder Deployment Guide
 
-Deploy AgentTrace-instrumented applications to GCP with Cloud Trace and Vertex AI Agent Builder observability.
+Deploy TraceCraft-instrumented applications to GCP with Cloud Trace and Vertex AI Agent Builder observability.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Deploy AgentTrace-instrumented applications to GCP with Cloud Trace and Vertex A
 |                                                              |
 |  +------------------+      +------------------------------+  |
 |  |   Your Agent     |----->|    Cloud Trace               |  |
-|  |  (AgentTrace     |      |   (OTel/Cloud Trace API)     |  |
+|  |  (TraceCraft     |      |   (OTel/Cloud Trace API)     |  |
 |  |   enabled)       |      +------------------------------+  |
 |  +------------------+                     |                  |
 |                                           v                  |
@@ -36,17 +36,17 @@ Deploy AgentTrace-instrumented applications to GCP with Cloud Trace and Vertex A
 gcloud services enable cloudtrace.googleapis.com --project=YOUR_PROJECT_ID
 ```
 
-### 2. Install AgentTrace
+### 2. Install TraceCraft
 
 ```bash
-pip install agenttrace[gcp-vertex-agent]
+pip install tracecraft[gcp-vertex-agent]
 ```
 
 ### 3. Configure Exporter
 
 ```python
-import agenttrace
-from agenttrace.contrib.gcp import create_vertex_agent_exporter
+import tracecraft
+from tracecraft.contrib.gcp import create_vertex_agent_exporter
 
 # Create exporter with Vertex AI Agent Builder features
 exporter = create_vertex_agent_exporter(
@@ -72,8 +72,8 @@ exporter = create_vertex_agent_exporter(
     reasoning_engine_id="re-001",
 )
 
-# Initialize AgentTrace
-agenttrace.init(
+# Initialize TraceCraft
+tracecraft.init(
     exporters=[exporter],
     console=False,  # Disable console in production
     jsonl=False,    # Disable local JSONL
@@ -85,24 +85,24 @@ agenttrace.init(
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `GOOGLE_CLOUD_PROJECT` | GCP project ID | Yes |
-| `AGENTTRACE_GCP_VERTEX_ENABLED` | Enable Vertex export | No |
-| `AGENTTRACE_GCP_SESSION_ID` | Session ID for multi-turn | No |
-| `AGENTTRACE_GCP_AGENT_NAME` | Agent name for traces | No |
-| `AGENTTRACE_GCP_AGENT_ID` | Agent ID for traces | No |
-| `AGENTTRACE_GCP_CONTENT_RECORDING` | Record prompts/responses | No |
-| `AGENTTRACE_GCP_REASONING_ENGINE_ID` | Reasoning Engine ID | No |
+| `TRACECRAFT_GCP_VERTEX_ENABLED` | Enable Vertex export | No |
+| `TRACECRAFT_GCP_SESSION_ID` | Session ID for multi-turn | No |
+| `TRACECRAFT_GCP_AGENT_NAME` | Agent name for traces | No |
+| `TRACECRAFT_GCP_AGENT_ID` | Agent ID for traces | No |
+| `TRACECRAFT_GCP_CONTENT_RECORDING` | Record prompts/responses | No |
+| `TRACECRAFT_GCP_REASONING_ENGINE_ID` | Reasoning Engine ID | No |
 
 ## Cloud Functions Deployment
 
 ```python
 # main.py
 import functions_framework
-import agenttrace
-from agenttrace.contrib.gcp import configure_for_vertex_agent_builder
+import tracecraft
+from tracecraft.contrib.gcp import configure_for_vertex_agent_builder
 
 # Configure at function startup
 exporter = configure_for_vertex_agent_builder(service_name="my-function")
-agenttrace.init(exporters=[exporter], console=False, jsonl=False)
+tracecraft.init(exporters=[exporter], console=False, jsonl=False)
 
 @functions_framework.http
 def process_agent(request):
@@ -141,16 +141,16 @@ gcloud run deploy my-agent \
     --source . \
     --service-account=agent-tracer@YOUR_PROJECT_ID.iam.gserviceaccount.com \
     --set-env-vars=GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID \
-    --set-env-vars=AGENTTRACE_GCP_AGENT_NAME=my-agent
+    --set-env-vars=TRACECRAFT_GCP_AGENT_NAME=my-agent
 ```
 
 ### 3. Application Code
 
 ```python
-from agenttrace.contrib.gcp import configure_for_vertex_agent_builder
+from tracecraft.contrib.gcp import configure_for_vertex_agent_builder
 
 exporter = configure_for_vertex_agent_builder(service_name="my-cloudrun-agent")
-agenttrace.init(exporters=[exporter])
+tracecraft.init(exporters=[exporter])
 ```
 
 ## Google Kubernetes Engine (GKE)
@@ -189,7 +189,7 @@ spec:
           value: "your-project-id"
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/var/secrets/google/key.json"
-        - name: AGENTTRACE_GCP_AGENT_NAME
+        - name: TRACECRAFT_GCP_AGENT_NAME
           value: "gke-research-agent"
         volumeMounts:
         - name: gcp-credentials
@@ -234,8 +234,8 @@ spec:
 Propagate trace context to downstream services:
 
 ```python
-from agenttrace.contrib.gcp import inject_cloudtrace_context, extract_cloudtrace_context
-from agenttrace import get_current_run
+from tracecraft.contrib.gcp import inject_cloudtrace_context, extract_cloudtrace_context
+from tracecraft import get_current_run
 import requests
 
 # Inject context into outgoing request
@@ -268,14 +268,14 @@ Example:
 X-Cloud-Trace-Context: 105445aa7843bc8bf206b12000100000/12345678901234567;o=1
 ```
 
-AgentTrace also supports W3C Trace Context (`traceparent` header) which GCP natively understands.
+TraceCraft also supports W3C Trace Context (`traceparent` header) which GCP natively understands.
 
 ## Session Tracking for Multi-Turn
 
 Use session IDs to correlate multi-turn conversations:
 
 ```python
-from agenttrace.core.models import AgentRun
+from tracecraft.core.models import AgentRun
 
 # Create run with session ID
 run = AgentRun(
@@ -290,7 +290,7 @@ run = AgentRun(
 
 ## OTel GenAI Semantic Conventions
 
-AgentTrace exports traces following OTel GenAI semantic conventions:
+TraceCraft exports traces following OTel GenAI semantic conventions:
 
 ### Agent Spans
 
@@ -336,7 +336,7 @@ exporter = create_vertex_agent_exporter(
 Use `VertexAITracerAdapter` for LangChain compatibility:
 
 ```python
-from agenttrace.contrib.gcp import VertexAITracerAdapter
+from tracecraft.contrib.gcp import VertexAITracerAdapter
 
 adapter = VertexAITracerAdapter(
     project_id="your-project-id",

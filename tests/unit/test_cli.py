@@ -1,5 +1,5 @@
 """
-Tests for the AgentTrace CLI.
+Tests for the TraceCraft CLI.
 
 Tests CLI commands using typer's testing utilities.
 """
@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.models import AgentRun, Step, StepType
 
 
 @pytest.fixture
@@ -54,25 +54,25 @@ class TestCliApp:
 
     def test_app_exists(self) -> None:
         """Should have a typer app."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         assert app is not None
 
     def test_app_has_version(self, runner: CliRunner) -> None:
         """Should show version with --version."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["--version"])
         assert result.exit_code == 0
-        assert "agenttrace" in result.stdout.lower() or "0.1.0" in result.stdout
+        assert "tracecraft" in result.stdout.lower() or "0.1.0" in result.stdout
 
     def test_app_help(self, runner: CliRunner) -> None:
         """Should show help with --help."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["--help"])
         assert result.exit_code == 0
-        assert "agenttrace" in result.stdout.lower() or "usage" in result.stdout.lower()
+        assert "tracecraft" in result.stdout.lower() or "usage" in result.stdout.lower()
 
 
 class TestViewCommand:
@@ -80,14 +80,14 @@ class TestViewCommand:
 
     def test_view_command_exists(self, runner: CliRunner) -> None:
         """Should have a view command."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["view", "--help"])
         assert result.exit_code == 0
 
     def test_view_requires_file_path(self, runner: CliRunner) -> None:
         """Should require a file path argument."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["view"])
         # Should fail without file path
@@ -95,7 +95,7 @@ class TestViewCommand:
 
     def test_view_nonexistent_file(self, runner: CliRunner) -> None:
         """Should error on nonexistent file."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["view", "/nonexistent/path.jsonl"])
         assert result.exit_code != 0
@@ -103,7 +103,7 @@ class TestViewCommand:
 
     def test_view_displays_trace(self, runner: CliRunner, sample_jsonl: Path) -> None:
         """Should display trace from JSONL file."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["view", str(sample_jsonl)])
         assert result.exit_code == 0
@@ -112,7 +112,7 @@ class TestViewCommand:
 
     def test_view_displays_steps(self, runner: CliRunner, sample_jsonl: Path) -> None:
         """Should display steps in trace."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["view", str(sample_jsonl)])
         assert result.exit_code == 0
@@ -121,7 +121,7 @@ class TestViewCommand:
 
     def test_view_json_output(self, runner: CliRunner, sample_jsonl: Path) -> None:
         """Should support --json output format."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["view", str(sample_jsonl), "--json"])
         assert result.exit_code == 0
@@ -132,7 +132,7 @@ class TestViewCommand:
 
     def test_view_multiple_runs(self, runner: CliRunner, tmp_path: Path) -> None:
         """Should handle file with multiple runs."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         trace_file = tmp_path / "multi.jsonl"
         with trace_file.open("w") as f:
@@ -148,7 +148,7 @@ class TestViewCommand:
 
     def test_view_run_index(self, runner: CliRunner, tmp_path: Path) -> None:
         """Should support --run option to select specific run."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         trace_file = tmp_path / "multi.jsonl"
         with trace_file.open("w") as f:
@@ -166,14 +166,14 @@ class TestInfoCommand:
 
     def test_info_command_exists(self, runner: CliRunner) -> None:
         """Should have an info command."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["info"])
         assert result.exit_code == 0
 
     def test_info_shows_version(self, runner: CliRunner) -> None:
         """Should show package version."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["info"])
         assert result.exit_code == 0
@@ -181,7 +181,7 @@ class TestInfoCommand:
 
     def test_info_shows_exporters(self, runner: CliRunner) -> None:
         """Should list available exporters."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["info"])
         assert result.exit_code == 0
@@ -193,21 +193,21 @@ class TestStatsCommand:
 
     def test_stats_command_exists(self, runner: CliRunner) -> None:
         """Should have a stats command."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["stats", "--help"])
         assert result.exit_code == 0
 
     def test_stats_requires_file(self, runner: CliRunner) -> None:
         """Should require a file path."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["stats"])
         assert result.exit_code != 0
 
     def test_stats_shows_summary(self, runner: CliRunner, tmp_path: Path) -> None:
         """Should show trace statistics."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         trace_file = tmp_path / "stats.jsonl"
         with trace_file.open("w") as f:
@@ -228,14 +228,14 @@ class TestExportCommand:
 
     def test_export_command_exists(self, runner: CliRunner) -> None:
         """Should have an export command."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["export", "--help"])
         assert result.exit_code == 0
 
     def test_export_to_html(self, runner: CliRunner, sample_jsonl: Path, tmp_path: Path) -> None:
         """Should export trace to HTML."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         output_file = tmp_path / "output.html"
         result = runner.invoke(
@@ -248,7 +248,7 @@ class TestExportCommand:
 
     def test_export_requires_file(self, runner: CliRunner) -> None:
         """Should require input file."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["export"])
         assert result.exit_code != 0
@@ -259,14 +259,14 @@ class TestValidateCommand:
 
     def test_validate_command_exists(self, runner: CliRunner) -> None:
         """Should have a validate command."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["validate", "--help"])
         assert result.exit_code == 0
 
     def test_validate_valid_file(self, runner: CliRunner, sample_jsonl: Path) -> None:
         """Should validate a valid trace file."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         result = runner.invoke(app, ["validate", str(sample_jsonl)])
         assert result.exit_code == 0
@@ -274,7 +274,7 @@ class TestValidateCommand:
 
     def test_validate_invalid_json(self, runner: CliRunner, tmp_path: Path) -> None:
         """Should report invalid JSON."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         invalid_file = tmp_path / "invalid.jsonl"
         invalid_file.write_text("not valid json\n")
@@ -285,7 +285,7 @@ class TestValidateCommand:
 
     def test_validate_missing_fields(self, runner: CliRunner, tmp_path: Path) -> None:
         """Should report missing required fields."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         invalid_file = tmp_path / "missing.jsonl"
         invalid_file.write_text('{"foo": "bar"}\n')
@@ -303,7 +303,7 @@ class TestErrorHandling:
         import stat
 
         try:
-            from agenttrace.cli.main import app
+            from tracecraft.cli.main import app
 
             # Create a directory without read permission
             protected_dir = tmp_path / "protected"
@@ -328,7 +328,7 @@ class TestOutputFormatting:
 
     def test_view_tree_format(self, runner: CliRunner, tmp_path: Path) -> None:
         """Should display hierarchical steps in tree format."""
-        from agenttrace.cli.main import app
+        from tracecraft.cli.main import app
 
         run = AgentRun(name="hierarchical_run", start_time=datetime.now(UTC))
 

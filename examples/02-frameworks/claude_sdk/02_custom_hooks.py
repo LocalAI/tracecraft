@@ -2,7 +2,7 @@
 """
 Claude Agent SDK - Custom Hooks with Tracing
 
-Demonstrates combining AgentTrace tracing with custom hooks.
+Demonstrates combining TraceCraft tracing with custom hooks.
 
 This example shows how to:
 - Add custom hooks alongside tracing hooks
@@ -10,7 +10,7 @@ This example shows how to:
 - Block dangerous commands
 
 Prerequisites:
-    - pip install agenttrace claude-code-sdk
+    - pip install tracecraft claude-code-sdk
     - ANTHROPIC_API_KEY environment variable
 
 Usage:
@@ -24,8 +24,8 @@ import os
 from datetime import UTC, datetime
 from typing import Any
 
-from agenttrace import AgentTraceRuntime
-from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+from tracecraft import TraceCraftRuntime
+from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 
 
 async def main() -> None:
@@ -45,8 +45,8 @@ async def main() -> None:
         return
 
     # Initialize tracing
-    runtime = AgentTraceRuntime(console=True, jsonl=False)
-    tracer = ClaudeAgentTracer(runtime=runtime)
+    runtime = TraceCraftRuntime(console=True, jsonl=False)
+    tracer = ClaudeTraceCraftr(runtime=runtime)
 
     # Custom audit hook for file operations
     audit_log: list[str] = []
@@ -117,19 +117,19 @@ def print_custom_hooks_demo() -> None:
 Custom Hooks with Tracing
 =========================
 
-ClaudeAgentTracer's get_options() method merges your custom hooks
+ClaudeTraceCraftr's get_options() method merges your custom hooks
 with the tracing hooks automatically.
 
 Example: Adding Audit Logging
 -----------------------------
 
 ```python
-from agenttrace import AgentTraceRuntime
-from agenttrace.adapters.claude_sdk import ClaudeAgentTracer
+from tracecraft import TraceCraftRuntime
+from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 from claude_code_sdk import query, HookMatcher
 
-runtime = AgentTraceRuntime(console=True)
-tracer = ClaudeAgentTracer(runtime=runtime)
+runtime = TraceCraftRuntime(console=True)
+tracer = ClaudeTraceCraftr(runtime=runtime)
 
 # Custom audit hook
 audit_log = []

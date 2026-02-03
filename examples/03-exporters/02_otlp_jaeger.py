@@ -28,7 +28,7 @@ Usage:
 
 Expected Output:
     - Traces visible in Jaeger UI
-    - Service name: agenttrace-example
+    - Service name: tracecraft-example
 """
 
 from __future__ import annotations
@@ -38,10 +38,10 @@ import sys
 import time
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+import tracecraft
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
 
 def check_prerequisites() -> bool:
@@ -61,22 +61,22 @@ def main() -> None:
     endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
 
     print("=" * 60)
-    print("AgentTrace OTLP Export to Jaeger")
+    print("TraceCraft OTLP Export to Jaeger")
     print("=" * 60)
     print(f"\nExporting to: {endpoint}")
 
     # Create OTLP exporter
-    from agenttrace.exporters.otlp import OTLPExporter
+    from tracecraft.exporters.otlp import OTLPExporter
 
     otlp_exporter = OTLPExporter(
         endpoint=endpoint,
-        service_name="agenttrace-example",
+        service_name="tracecraft-example",
         # Optional: Add authentication headers
         # headers={"Authorization": "Bearer your-token"},
     )
 
     # Initialize with OTLP export enabled
-    runtime = agenttrace.init(
+    runtime = tracecraft.init(
         console=True,
         jsonl=True,
         jsonl_path="traces.jsonl",
@@ -136,7 +136,7 @@ def main() -> None:
     print("\nExample complete!")
     print("\nTraces exported to OTLP collector!")
     print("View in Jaeger UI: http://localhost:16686")
-    print("Look for service: agenttrace-example")
+    print("Look for service: tracecraft-example")
     print("\nKey points:")
     print("  - OTLPExporter converts AgentRun to OpenTelemetry spans")
     print("  - Each step becomes a span in the trace")

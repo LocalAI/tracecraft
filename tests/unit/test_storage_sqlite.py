@@ -6,9 +6,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
-from agenttrace.storage.base import TraceQuery
-from agenttrace.storage.sqlite import SQLiteTraceStore
+from tracecraft.core.models import AgentRun, Step, StepType
+from tracecraft.storage.base import TraceQuery
+from tracecraft.storage.sqlite import SQLiteTraceStore
 
 
 class TestSQLiteStorage:
@@ -784,26 +784,33 @@ class TestPlaygroundIterations:
 class TestSchemaMigration:
     """Tests for schema migration."""
 
-    def test_fresh_install_creates_v2(self, tmp_path):
-        """Test that fresh installation creates schema v2."""
+    def test_fresh_install_creates_v5(self, tmp_path):
+        """Test that fresh installation creates schema v5."""
         db_path = tmp_path / "fresh.db"
         store = SQLiteTraceStore(db_path)
 
         # Check schema version
         results = store.execute_sql("SELECT version FROM schema_version")
-        assert results[0]["version"] == 2
+        assert results[0]["version"] == 5
 
-        # Check new tables exist
+        # Check new tables exist (v2 tables)
         tables = store.execute_sql("SELECT name FROM sqlite_master WHERE type='table'")
         table_names = {t["name"] for t in tables}
         assert "projects" in table_names
         assert "trace_versions" in table_names
         assert "playground_iterations" in table_names
+        # Check v3 evaluation tables
+        assert "evaluation_sets" in table_names
+        assert "evaluation_cases" in table_names
+        assert "evaluation_runs" in table_names
+        assert "evaluation_results" in table_names
+        # Check v5 agents table
+        assert "agents" in table_names
 
         store.close()
 
-    def test_v1_to_v2_migration(self, tmp_path):
-        """Test migration from v1 to v2 schema."""
+    def test_v1_to_v5_migration(self, tmp_path):
+        """Test migration from v1 to v5 schema."""
         import sqlite3
 
         db_path = tmp_path / "migrate.db"
@@ -877,21 +884,29 @@ class TestSchemaMigration:
         # Now open with SQLiteTraceStore - should trigger migration
         store = SQLiteTraceStore(db_path)
 
-        # Check schema version is now 2
+        # Check schema version is now 5
         results = store.execute_sql("SELECT version FROM schema_version")
-        assert results[0]["version"] == 2
+        assert results[0]["version"] == 5
 
-        # Check new tables exist
+        # Check new tables exist (v2 tables)
         tables = store.execute_sql("SELECT name FROM sqlite_master WHERE type='table'")
         table_names = {t["name"] for t in tables}
         assert "projects" in table_names
         assert "trace_versions" in table_names
         assert "playground_iterations" in table_names
+        # Check v3 evaluation tables
+        assert "evaluation_sets" in table_names
+        assert "evaluation_cases" in table_names
+        assert "evaluation_runs" in table_names
+        assert "evaluation_results" in table_names
+        # Check v5 agents table
+        assert "agents" in table_names
 
-        # Check traces table has project_id column
+        # Check traces table has project_id and agent_id columns
         columns = store.execute_sql("PRAGMA table_info(traces)")
         column_names = {c["name"] for c in columns}
         assert "project_id" in column_names
+        assert "agent_id" in column_names
 
         # Check existing data is preserved
         results = store.execute_sql("SELECT name FROM traces")

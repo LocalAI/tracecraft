@@ -30,10 +30,10 @@ import sys
 from datetime import UTC, datetime
 from typing import Annotated, Literal, TypedDict
 
-import agenttrace
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -53,8 +53,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -151,7 +151,7 @@ Respond with just the category name."""
 
     app = graph.compile()
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
 
     # Test with different query types
     queries = [
@@ -230,7 +230,7 @@ def pipeline_example() -> None:
 
     app = graph.compile()
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
 
     text = """
     The new AI model achieved remarkable results on all benchmarks,
@@ -258,7 +258,7 @@ def pipeline_example() -> None:
 def main() -> None:
     """Run the multi-node graph examples."""
     print("=" * 60)
-    print("AgentTrace LangGraph Multi-Node Graphs")
+    print("TraceCraft LangGraph Multi-Node Graphs")
     print("=" * 60)
 
     conditional_routing_example()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""LlamaIndex Advanced RAG - Trace complex RAG patterns with AgentTrace.
+"""LlamaIndex Advanced RAG - Trace complex RAG patterns with TraceCraft.
 
 Demonstrates advanced RAG patterns including custom retrievers,
 query transformations, and response synthesis.
@@ -28,10 +28,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.adapters.llamaindex import AgentTraceLlamaIndexCallback
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.llamaindex import TraceCraftLlamaIndexCallback
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -54,8 +54,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -71,7 +71,7 @@ def custom_retriever_example() -> None:
 
     print("\n--- Custom Retriever Example ---")
 
-    handler = AgentTraceLlamaIndexCallback()
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
     Settings.llm = OpenAI(model="gpt-4o-mini", max_tokens=200)
     Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
@@ -127,7 +127,7 @@ def query_engine_with_modes_example() -> None:
 
     print("\n--- Query Engine Response Modes Example ---")
 
-    handler = AgentTraceLlamaIndexCallback()
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
     Settings.llm = OpenAI(model="gpt-4o-mini", max_tokens=200)
     Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
@@ -166,7 +166,7 @@ def multi_document_rag_example() -> None:
 
     print("\n--- Multi-Document RAG Example ---")
 
-    handler = AgentTraceLlamaIndexCallback()
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
     Settings.llm = OpenAI(model="gpt-4o-mini", max_tokens=200)
     Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
@@ -175,7 +175,7 @@ def multi_document_rag_example() -> None:
     # Documents from different "sources"
     tech_docs = [
         Document(
-            text="AgentTrace is an observability SDK for AI agents. "
+            text="TraceCraft is an observability SDK for AI agents. "
             "It supports tracing for LangChain, LlamaIndex, and PydanticAI.",
             metadata={"source": "tech_docs", "category": "overview"},
         ),
@@ -188,12 +188,12 @@ def multi_document_rag_example() -> None:
 
     tutorial_docs = [
         Document(
-            text="To get started with AgentTrace, install it via pip: pip install agenttrace. "
+            text="To get started with TraceCraft, install it via pip: pip install tracecraft. "
             "Then import the runtime and initialize it with your preferred exporters.",
             metadata={"source": "tutorial", "category": "getting_started"},
         ),
         Document(
-            text="For LlamaIndex integration, use the AgentTraceLlamaIndexCallback handler. "
+            text="For LlamaIndex integration, use the TraceCraftLlamaIndexCallback handler. "
             "Register it with Settings.callback_manager to trace all operations.",
             metadata={"source": "tutorial", "category": "integration"},
         ),
@@ -207,7 +207,7 @@ def multi_document_rag_example() -> None:
         index = VectorStoreIndex.from_documents(all_docs)
         query_engine = index.as_query_engine(similarity_top_k=3)
 
-        response = query_engine.query("How do I use AgentTrace with LlamaIndex?")
+        response = query_engine.query("How do I use TraceCraft with LlamaIndex?")
 
     runtime.end_run(run)
     handler.clear()
@@ -228,7 +228,7 @@ def hybrid_search_example() -> None:
 
     print("\n--- Hybrid Search Example ---")
 
-    handler = AgentTraceLlamaIndexCallback()
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
     Settings.llm = OpenAI(model="gpt-4o-mini", max_tokens=200)
     Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
@@ -259,7 +259,7 @@ def hybrid_search_example() -> None:
 def main() -> None:
     """Run the advanced RAG examples."""
     print("=" * 60)
-    print("AgentTrace LlamaIndex Advanced RAG")
+    print("TraceCraft LlamaIndex Advanced RAG")
     print("=" * 60)
 
     custom_retriever_example()

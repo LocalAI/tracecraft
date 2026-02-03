@@ -1,6 +1,6 @@
 # Azure AI Foundry Deployment Guide
 
-Deploy AgentTrace-instrumented applications to Azure with AI Foundry observability.
+Deploy TraceCraft-instrumented applications to Azure with AI Foundry observability.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Deploy AgentTrace-instrumented applications to Azure with AI Foundry observabili
 │                                                              │
 │  ┌─────────────────┐      ┌──────────────────────────────┐  │
 │  │   Your Agent    │─────▶│    Application Insights       │  │
-│  │  (AgentTrace    │      │   (AI Foundry Observability)  │  │
+│  │  (TraceCraft    │      │   (AI Foundry Observability)  │  │
 │  │   enabled)      │      └──────────────────────────────┘  │
 │  └─────────────────┘                     │                  │
 │                                          ▼                  │
@@ -36,17 +36,17 @@ Deploy AgentTrace-instrumented applications to Azure with AI Foundry observabili
 3. Click **Overview** > **Connection String**
 4. Copy the connection string
 
-### 2. Install AgentTrace
+### 2. Install TraceCraft
 
 ```bash
-pip install agenttrace[azure-foundry]
+pip install tracecraft[azure-foundry]
 ```
 
 ### 3. Configure Exporter
 
 ```python
-import agenttrace
-from agenttrace.contrib.azure import create_foundry_exporter
+import tracecraft
+from tracecraft.contrib.azure import create_foundry_exporter
 
 # Create exporter with AI Foundry features
 exporter = create_foundry_exporter(
@@ -66,8 +66,8 @@ exporter = create_foundry_exporter(
     agent_description="Researches topics and synthesizes information",
 )
 
-# Initialize AgentTrace
-agenttrace.init(
+# Initialize TraceCraft
+tracecraft.init(
     exporters=[exporter],
     console=False,  # Disable console in production
     jsonl=False,    # Disable local JSONL
@@ -79,22 +79,22 @@ agenttrace.init(
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `APPLICATIONINSIGHTS_CONNECTION_STRING` | Azure connection string | Yes |
-| `AGENTTRACE_AZURE_FOUNDRY_ENABLED` | Enable Azure export | No |
-| `AGENTTRACE_AZURE_CONTENT_RECORDING` | Record prompts/responses | No |
-| `AGENTTRACE_AZURE_AGENT_NAME` | Agent name for traces | No |
-| `AGENTTRACE_AZURE_AGENT_ID` | Agent ID for traces | No |
+| `TRACECRAFT_AZURE_FOUNDRY_ENABLED` | Enable Azure export | No |
+| `TRACECRAFT_AZURE_CONTENT_RECORDING` | Record prompts/responses | No |
+| `TRACECRAFT_AZURE_AGENT_NAME` | Agent name for traces | No |
+| `TRACECRAFT_AZURE_AGENT_ID` | Agent ID for traces | No |
 
 ## Azure Functions Deployment
 
 ```python
 # function_app.py
 import azure.functions as func
-import agenttrace
-from agenttrace.contrib.azure import configure_for_azure_functions
+import tracecraft
+from tracecraft.contrib.azure import configure_for_azure_functions
 
 # Configure at function app startup
 exporter = configure_for_azure_functions(service_name="my-function")
-agenttrace.init(exporters=[exporter], console=False, jsonl=False)
+tracecraft.init(exporters=[exporter], console=False, jsonl=False)
 
 app = func.FunctionApp()
 
@@ -142,22 +142,22 @@ spec:
             secretKeyRef:
               name: azure-appinsights
               key: connection-string
-        - name: AGENTTRACE_AZURE_AGENT_NAME
+        - name: TRACECRAFT_AZURE_AGENT_NAME
           value: "aks-research-agent"
 ```
 
 ### 3. Application Code
 
 ```python
-from agenttrace.contrib.azure import configure_for_aks
+from tracecraft.contrib.azure import configure_for_aks
 
 exporter = configure_for_aks(service_name="my-aks-agent")
-agenttrace.init(exporters=[exporter])
+tracecraft.init(exporters=[exporter])
 ```
 
 ## OTel GenAI Semantic Conventions
 
-AgentTrace exports traces following OTel GenAI semantic conventions:
+TraceCraft exports traces following OTel GenAI semantic conventions:
 
 ### Agent Spans
 
@@ -201,7 +201,7 @@ When enabled, also includes:
 Use `AzureAITracerAdapter` for LangChain compatibility:
 
 ```python
-from agenttrace.contrib.azure import AzureAITracerAdapter
+from tracecraft.contrib.azure import AzureAITracerAdapter
 
 adapter = AzureAITracerAdapter(
     enable_content_recording=True,

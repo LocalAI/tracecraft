@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from agenttrace.core.context import get_current_run, run_context
-from agenttrace.core.models import AgentRun
+from tracecraft.core.context import get_current_run, run_context
+from tracecraft.core.models import AgentRun
 
 
 class TestGatherWithContext:
@@ -18,7 +18,7 @@ class TestGatherWithContext:
     @pytest.mark.asyncio
     async def test_gather_propagates_context(self, sample_run) -> None:
         """gather_with_context should propagate run context to all tasks."""
-        from agenttrace.contrib.async_helpers import gather_with_context
+        from tracecraft.contrib.async_helpers import gather_with_context
 
         results = []
 
@@ -43,7 +43,7 @@ class TestGatherWithContext:
     @pytest.mark.asyncio
     async def test_gather_returns_results(self, sample_run) -> None:
         """gather_with_context should return task results."""
-        from agenttrace.contrib.async_helpers import gather_with_context
+        from tracecraft.contrib.async_helpers import gather_with_context
 
         async def compute(x: int) -> int:
             return x * 2
@@ -60,7 +60,7 @@ class TestGatherWithContext:
     @pytest.mark.asyncio
     async def test_gather_handles_exceptions(self, sample_run) -> None:
         """gather_with_context should propagate exceptions."""
-        from agenttrace.contrib.async_helpers import gather_with_context
+        from tracecraft.contrib.async_helpers import gather_with_context
 
         async def fail() -> None:
             raise ValueError("Test error")
@@ -71,7 +71,7 @@ class TestGatherWithContext:
     @pytest.mark.asyncio
     async def test_gather_return_exceptions(self, sample_run) -> None:
         """gather_with_context should support return_exceptions."""
-        from agenttrace.contrib.async_helpers import gather_with_context
+        from tracecraft.contrib.async_helpers import gather_with_context
 
         async def succeed() -> str:
             return "ok"
@@ -96,7 +96,7 @@ class TestTaskWithContext:
     @pytest.mark.asyncio
     async def test_task_propagates_context(self, sample_run) -> None:
         """create_task_with_context should propagate run context."""
-        from agenttrace.contrib.async_helpers import create_task_with_context
+        from tracecraft.contrib.async_helpers import create_task_with_context
 
         result = []
 
@@ -114,7 +114,7 @@ class TestTaskWithContext:
     @pytest.mark.asyncio
     async def test_task_with_name(self, sample_run) -> None:
         """create_task_with_context should support task names."""
-        from agenttrace.contrib.async_helpers import create_task_with_context
+        from tracecraft.contrib.async_helpers import create_task_with_context
 
         async def dummy() -> None:
             pass
@@ -132,7 +132,7 @@ class TestRunInExecutorWithContext:
     @pytest.mark.asyncio
     async def test_executor_propagates_context(self, sample_run) -> None:
         """run_in_executor_with_context should propagate context to thread."""
-        from agenttrace.contrib.async_helpers import run_in_executor_with_context
+        from tracecraft.contrib.async_helpers import run_in_executor_with_context
 
         result = []
 
@@ -151,7 +151,7 @@ class TestRunInExecutorWithContext:
     @pytest.mark.asyncio
     async def test_executor_returns_result(self, sample_run) -> None:
         """run_in_executor_with_context should return function result."""
-        from agenttrace.contrib.async_helpers import run_in_executor_with_context
+        from tracecraft.contrib.async_helpers import run_in_executor_with_context
 
         def compute() -> int:
             return 42
@@ -170,7 +170,7 @@ class TestAsyncContextCopy:
         """Nested async tasks should maintain context isolation."""
         from datetime import UTC, datetime
 
-        from agenttrace.contrib.async_helpers import gather_with_context
+        from tracecraft.contrib.async_helpers import gather_with_context
 
         results = []
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""OpenAI Function Calling - Trace function calls with AgentTrace.
+"""OpenAI Function Calling - Trace function calls with TraceCraft.
 
 Demonstrates how to trace OpenAI function calling (tool use) patterns
-using AgentTrace decorators.
+using TraceCraft decorators.
 
 Prerequisites:
     - pip install openai
@@ -29,10 +29,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+import tracecraft
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
 
 def check_prerequisites() -> bool:
@@ -51,8 +51,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -274,7 +274,7 @@ def parallel_tool_example() -> None:
 def main() -> None:
     """Run the OpenAI function calling examples."""
     print("=" * 60)
-    print("AgentTrace OpenAI Function Calling")
+    print("TraceCraft OpenAI Function Calling")
     print("=" * 60)
 
     single_tool_example()

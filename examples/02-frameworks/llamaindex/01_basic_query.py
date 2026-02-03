@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""LlamaIndex Basic Query - Trace LlamaIndex operations with AgentTrace.
+"""LlamaIndex Basic Query - Trace LlamaIndex operations with TraceCraft.
 
-Demonstrates how to use the AgentTrace span handler to automatically trace
+Demonstrates how to use the TraceCraft span handler to automatically trace
 LlamaIndex operations including completions, chat, RAG, and streaming.
 
 Prerequisites:
@@ -28,10 +28,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.adapters.llamaindex import AgentTraceLlamaIndexCallback
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.llamaindex import TraceCraftLlamaIndexCallback
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -51,8 +51,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -67,8 +67,8 @@ def simple_completion_example() -> None:
 
     print("\n--- Simple Completion Example ---")
 
-    # Set up AgentTrace callback handler
-    handler = AgentTraceLlamaIndexCallback()
+    # Set up TraceCraft callback handler
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
 
     # Create LLM
@@ -95,7 +95,7 @@ def chat_example() -> None:
 
     print("\n--- Chat Example ---")
 
-    handler = AgentTraceLlamaIndexCallback()
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
 
     llm = OpenAI(model="gpt-4o-mini", max_tokens=100)
@@ -130,7 +130,7 @@ def rag_example() -> None:
 
     print("\n--- RAG Example ---")
 
-    handler = AgentTraceLlamaIndexCallback()
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
     Settings.llm = OpenAI(model="gpt-4o-mini", max_tokens=200)
     Settings.chunk_size = 256
@@ -168,7 +168,7 @@ def streaming_example() -> None:
 
     print("\n--- Streaming Example ---")
 
-    handler = AgentTraceLlamaIndexCallback()
+    handler = TraceCraftLlamaIndexCallback()
     Settings.callback_manager = CallbackManager(handlers=[handler])
 
     llm = OpenAI(model="gpt-4o-mini", max_tokens=100)
@@ -190,7 +190,7 @@ def streaming_example() -> None:
 def main() -> None:
     """Run the LlamaIndex examples."""
     print("=" * 60)
-    print("AgentTrace LlamaIndex Integration")
+    print("TraceCraft LlamaIndex Integration")
     print("=" * 60)
 
     simple_completion_example()
@@ -202,7 +202,7 @@ def main() -> None:
     print("Example complete!")
     print("=" * 60)
     print("\nKey points:")
-    print("  - Use AgentTraceLlamaIndexCallback with Settings.callback_manager")
+    print("  - Use TraceCraftLlamaIndexCallback with Settings.callback_manager")
     print("  - All LlamaIndex operations are traced automatically")
     print("  - RAG pipelines show embeddings, retrieval, and generation")
     print("\nNext steps:")

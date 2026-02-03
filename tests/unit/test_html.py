@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
-from agenttrace.exporters.html import HTMLExporter
+from tracecraft.core.models import AgentRun, Step, StepType
+from tracecraft.exporters.html import HTMLExporter
 
 
 @pytest.fixture

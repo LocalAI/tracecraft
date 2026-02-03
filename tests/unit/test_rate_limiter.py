@@ -13,7 +13,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun
+from tracecraft.core.models import AgentRun
 
 
 class TestRateLimitedExporter:
@@ -21,7 +21,7 @@ class TestRateLimitedExporter:
 
     def test_rate_limited_exporter_wraps_exporter(self) -> None:
         """RateLimitedExporter should wrap another exporter."""
-        from agenttrace.exporters.rate_limited import RateLimitedExporter
+        from tracecraft.exporters.rate_limited import RateLimitedExporter
 
         mock_exporter = MagicMock()
         rate_limited = RateLimitedExporter(
@@ -33,7 +33,7 @@ class TestRateLimitedExporter:
 
     def test_export_within_rate_limit(self, sample_run) -> None:
         """Exports within rate limit should succeed immediately."""
-        from agenttrace.exporters.rate_limited import RateLimitedExporter
+        from tracecraft.exporters.rate_limited import RateLimitedExporter
 
         mock_exporter = MagicMock()
         rate_limited = RateLimitedExporter(
@@ -49,7 +49,7 @@ class TestRateLimitedExporter:
 
     def test_export_respects_rate_limit(self, sample_run) -> None:
         """Exports should be rate limited."""
-        from agenttrace.exporters.rate_limited import RateLimitedExporter
+        from tracecraft.exporters.rate_limited import RateLimitedExporter
 
         mock_exporter = MagicMock()
         rate_limited = RateLimitedExporter(
@@ -73,7 +73,7 @@ class TestRateLimitedExporter:
 
     def test_burst_allows_initial_burst(self, sample_run) -> None:
         """Burst tokens should allow immediate exports up to burst limit."""
-        from agenttrace.exporters.rate_limited import RateLimitedExporter
+        from tracecraft.exporters.rate_limited import RateLimitedExporter
 
         mock_exporter = MagicMock()
         rate_limited = RateLimitedExporter(
@@ -94,7 +94,7 @@ class TestRateLimitedExporter:
 
     def test_rate_limiter_non_blocking_mode(self, sample_run) -> None:
         """Non-blocking mode should drop exports when rate exceeded."""
-        from agenttrace.exporters.rate_limited import RateLimitedExporter
+        from tracecraft.exporters.rate_limited import RateLimitedExporter
 
         mock_exporter = MagicMock()
         rate_limited = RateLimitedExporter(
@@ -114,7 +114,7 @@ class TestRateLimitedExporter:
 
     def test_rate_limiter_tracks_dropped_exports(self, sample_run) -> None:
         """Should track number of dropped exports."""
-        from agenttrace.exporters.rate_limited import RateLimitedExporter
+        from tracecraft.exporters.rate_limited import RateLimitedExporter
 
         mock_exporter = MagicMock()
         rate_limited = RateLimitedExporter(
@@ -133,7 +133,7 @@ class TestRateLimitedExporter:
 
     def test_rate_limiter_shutdown(self, sample_run) -> None:  # noqa: ARG002
         """Shutdown should propagate to underlying exporter."""
-        from agenttrace.exporters.rate_limited import RateLimitedExporter
+        from tracecraft.exporters.rate_limited import RateLimitedExporter
 
         mock_exporter = MagicMock()
         rate_limited = RateLimitedExporter(
@@ -151,7 +151,7 @@ class TestTokenBucket:
 
     def test_token_bucket_initial_tokens(self) -> None:
         """Token bucket should start with burst tokens."""
-        from agenttrace.exporters.rate_limited import TokenBucket
+        from tracecraft.exporters.rate_limited import TokenBucket
 
         bucket = TokenBucket(rate=10.0, burst=5)
 
@@ -164,7 +164,7 @@ class TestTokenBucket:
 
     def test_token_bucket_refills(self) -> None:
         """Token bucket should refill over time."""
-        from agenttrace.exporters.rate_limited import TokenBucket
+        from tracecraft.exporters.rate_limited import TokenBucket
 
         bucket = TokenBucket(rate=100.0, burst=1)  # 100 tokens/sec
 
@@ -180,7 +180,7 @@ class TestTokenBucket:
 
     def test_token_bucket_blocking_acquire(self) -> None:
         """Blocking acquire should wait for token."""
-        from agenttrace.exporters.rate_limited import TokenBucket
+        from tracecraft.exporters.rate_limited import TokenBucket
 
         bucket = TokenBucket(rate=50.0, burst=1)  # 50 tokens/sec
 

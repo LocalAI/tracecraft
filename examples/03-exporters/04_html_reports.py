@@ -5,7 +5,7 @@ Demonstrates how to generate HTML reports for trace visualization,
 sharing, and debugging.
 
 Prerequisites:
-    - AgentTrace installed
+    - TraceCraft installed
 
 Environment Variables:
     - None required
@@ -27,21 +27,21 @@ import webbrowser
 from datetime import UTC, datetime
 from pathlib import Path
 
-import agenttrace
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
-from agenttrace.exporters.html import HTMLExporter
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+import tracecraft
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from tracecraft.exporters.html import HTMLExporter
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
 
 def main() -> None:
     """Generate an HTML report from a traced workflow."""
     print("=" * 60)
-    print("AgentTrace HTML Report Generation")
+    print("TraceCraft HTML Report Generation")
     print("=" * 60)
 
-    # Initialize AgentTrace (console only, we'll use HTML exporter separately)
-    runtime = agenttrace.init(console=True, jsonl=False)
+    # Initialize TraceCraft (console only, we'll use HTML exporter separately)
+    runtime = tracecraft.init(console=True, jsonl=False)
 
     # Define traced functions for a realistic workflow
     @trace_tool(name="search_documents")

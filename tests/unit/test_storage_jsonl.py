@@ -6,9 +6,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from agenttrace.core.models import AgentRun
-from agenttrace.storage.base import TraceQuery
-from agenttrace.storage.jsonl import JSONLTraceStore
+from tracecraft.core.models import AgentRun
+from tracecraft.storage.base import TraceQuery
+from tracecraft.storage.jsonl import JSONLTraceStore
 
 
 class TestJSONLStorage:

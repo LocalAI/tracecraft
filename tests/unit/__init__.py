@@ -1,1 +1,1 @@
-"""Unit tests for AgentTrace."""
+"""Unit tests for TraceCraft."""

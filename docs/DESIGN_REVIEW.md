@@ -1,6 +1,6 @@
 # Design Review: Addressing Opinionated Decisions
 
-This document analyzes the 10 most opinionated aspects of AgentTrace and provides recommendations on whether redesign is warranted, along with specific design proposals where applicable.
+This document analyzes the 10 most opinionated aspects of TraceCraft and provides recommendations on whether redesign is warranted, along with specific design proposals where applicable.
 
 ---
 
@@ -21,8 +21,8 @@ For each concern, I evaluate:
 ### Current Design
 
 ```python
-# Only way to use AgentTrace
-agenttrace.init(config=config)
+# Only way to use TraceCraft
+tracecraft.init(config=config)
 runtime = get_runtime()  # Returns global singleton
 ```
 
@@ -41,21 +41,21 @@ runtime = get_runtime()  # Returns global singleton
 
 ```python
 # KEEP: Global convenience API (unchanged)
-import agenttrace
-agenttrace.init()
+import tracecraft
+tracecraft.init()
 
 @trace_agent(name="my_agent")
 def my_agent(): ...
 
 # ADD: Explicit instance API for advanced users
-from agenttrace import AgentTraceRuntime
+from tracecraft import TraceCraftRuntime
 
 # Create isolated runtime instances
-runtime_tenant_a = AgentTraceRuntime(
+runtime_tenant_a = TraceCraftRuntime(
     config=ConfigA(),
     exporters=[ExporterA()]
 )
-runtime_tenant_b = AgentTraceRuntime(
+runtime_tenant_b = TraceCraftRuntime(
     config=ConfigB(),
     exporters=[ExporterB()]
 )
@@ -73,7 +73,7 @@ def my_agent(): ...
 ### Implementation Notes
 
 - Global `init()` creates a default runtime stored in module state
-- `AgentTraceRuntime` is a first-class, instantiable class
+- `TraceCraftRuntime` is a first-class, instantiable class
 - Decorators accept optional `runtime` parameter; default to global
 - Context managers allow scoped runtime selection
 - Enables testing with isolated runtimes per test
@@ -108,9 +108,9 @@ processors = [
 ### Proposed Design
 
 ```python
-from agenttrace import AgentTraceConfig, ProcessorOrder
+from tracecraft import TraceCraftConfig, ProcessorOrder
 
-config = AgentTraceConfig()
+config = TraceCraftConfig()
 
 # Option 1: Predefined strategies
 config.processor_order = ProcessorOrder.EFFICIENCY  # Sample → Redact → Enrich
@@ -186,7 +186,7 @@ def my_agent(query: str, api_key: str, user_id: str):
     ...
 
 # Option 3: Parameter-level annotation (more Pythonic)
-from agenttrace import Sensitive
+from tracecraft import Sensitive
 
 @trace_agent(name="my_agent")
 def my_agent(
@@ -251,7 +251,7 @@ class SchemaDialect(Enum):
 DEFAULT_SCHEMA_DIALECT = SchemaDialect.OTEL_GENAI
 
 # Configuration
-config = AgentTraceConfig()
+config = TraceCraftConfig()
 config.schema_dialect = SchemaDialect.OTEL_GENAI      # Default
 config.schema_dialect = SchemaDialect.OPENINFERENCE   # For Arize/Phoenix users
 config.schema_dialect = SchemaDialect.BOTH            # Explicit opt-in for compatibility
@@ -321,8 +321,8 @@ def get_default_exporters() -> dict:
 def detect_environment() -> str:
     """Detect environment from various signals."""
     # 1. Explicit configuration
-    if os.getenv("AGENTTRACE_ENVIRONMENT"):
-        return os.getenv("AGENTTRACE_ENVIRONMENT")
+    if os.getenv("TRACECRAFT_ENVIRONMENT"):
+        return os.getenv("TRACECRAFT_ENVIRONMENT")
 
     # 2. Common cloud indicators
     if os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
@@ -343,16 +343,16 @@ def detect_environment() -> str:
 ### Alternative: Explicit Mode Selection
 
 ```python
-import agenttrace
+import tracecraft
 
 # Quick local development (current behavior)
-agenttrace.init(mode="local")  # Console + JSONL enabled
+tracecraft.init(mode="local")  # Console + JSONL enabled
 
 # Production mode
-agenttrace.init(mode="production")  # Only configured exporters, no defaults
+tracecraft.init(mode="production")  # Only configured exporters, no defaults
 
 # Explicit (always works)
-agenttrace.init(
+tracecraft.init(
     console=False,
     jsonl=False,
     exporters=[OTLPExporter(...)]
@@ -399,20 +399,20 @@ class RedactionConfig:
     mode: RedactionMode = RedactionMode.MASK  # "[REDACTED]" replacement
 
 # Development override for debugging
-agenttrace.init(
+tracecraft.init(
     mode="development",  # Implies redaction disabled for debugging
 )
 
 # Or explicit
-config = AgentTraceConfig()
+config = TraceCraftConfig()
 config.redaction.enabled = False  # Explicit opt-out
 
 # Production should require explicit disable
 if environment == "production" and not config.redaction.enabled:
     warnings.warn(
         "PII redaction is disabled in production. "
-        "Set AGENTTRACE_REDACTION_ENABLED=true or acknowledge with "
-        "AGENTTRACE_ALLOW_UNREDACTED_PRODUCTION=true"
+        "Set TRACECRAFT_REDACTION_ENABLED=true or acknowledge with "
+        "TRACECRAFT_ALLOW_UNREDACTED_PRODUCTION=true"
     )
 ```
 
@@ -422,7 +422,7 @@ if environment == "production" and not config.redaction.enabled:
 - Add `mode="development"` that disables redaction + enables console/JSONL
 - In production, warn if redaction explicitly disabled
 - Document migration path for existing users
-- Consider a `AGENTTRACE_UNSAFE_DISABLE_REDACTION=true` env var for explicit acknowledgment
+- Consider a `TRACECRAFT_UNSAFE_DISABLE_REDACTION=true` env var for explicit acknowledgment
 
 ---
 
@@ -532,7 +532,7 @@ Full redesign is too costly. Instead:
 ```python
 # 1. Document limitations clearly
 """
-Note: AgentTrace uses Python ContextVars for trace context propagation.
+Note: TraceCraft uses Python ContextVars for trace context propagation.
 In async code, context is automatically propagated in most cases, but
 may be lost when using:
 - asyncio.create_task() without context copying
@@ -543,7 +543,7 @@ Use the provided helpers for these cases.
 """
 
 # 2. Provide async-aware helpers (already partially exist)
-from agenttrace.contrib.async_helpers import (
+from tracecraft.contrib.async_helpers import (
     create_task_with_context,
     gather_with_context,
     run_in_executor_with_context,
@@ -556,7 +556,7 @@ task = asyncio.create_task(my_coroutine())
 task = create_task_with_context(my_coroutine())
 
 # 3. Add context snapshot/restore for manual cases
-from agenttrace import capture_context, restore_context
+from tracecraft import capture_context, restore_context
 
 ctx = capture_context()  # Snapshot current trace context
 
@@ -709,8 +709,8 @@ class EnvironmentSettings(BaseSettings):
         return v.lower()
 
 # Usage
-AGENTTRACE_ENVIRONMENT=canary  # Works!
-AGENTTRACE_ENVIRONMENT=my-custom-env  # Works with warning
+TRACECRAFT_ENVIRONMENT=canary  # Works!
+TRACECRAFT_ENVIRONMENT=my-custom-env  # Works with warning
 ```
 
 ### Implementation Notes
@@ -787,7 +787,7 @@ config.redaction.enabled = False  # Explicit opt-out
 config.schema_dialect = SchemaDialect.BOTH  # Explicit opt-in
 
 # If you relied on console/JSONL in production:
-agenttrace.init(console=True, jsonl=True)  # Explicit enable
+tracecraft.init(console=True, jsonl=True)  # Explicit enable
 ```
 
 ### Deprecation Strategy

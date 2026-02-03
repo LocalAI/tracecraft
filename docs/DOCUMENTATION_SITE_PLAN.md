@@ -1,4 +1,4 @@
-# Documentation Site Plan for AgentTrace
+# Documentation Site Plan for TraceCraft
 
 ## Current State Assessment
 
@@ -96,13 +96,13 @@ docs/
 │   └── evaluation.md           # Link to examples/06-evaluation
 ├── reference/
 │   ├── api/                    # Auto-generated from docstrings
-│   │   ├── core.md             # agenttrace.core module
-│   │   ├── instrumentation.md  # agenttrace.instrumentation module
-│   │   ├── exporters.md        # agenttrace.exporters module
-│   │   ├── processors.md       # agenttrace.processors module
-│   │   ├── adapters.md         # agenttrace.adapters module
-│   │   ├── schema.md           # agenttrace.schema module
-│   │   └── storage.md          # agenttrace.storage module
+│   │   ├── core.md             # tracecraft.core module
+│   │   ├── instrumentation.md  # tracecraft.instrumentation module
+│   │   ├── exporters.md        # tracecraft.exporters module
+│   │   ├── processors.md       # tracecraft.processors module
+│   │   ├── adapters.md         # tracecraft.adapters module
+│   │   ├── schema.md           # tracecraft.schema module
+│   │   └── storage.md          # tracecraft.storage module
 │   ├── cli.md                  # Command-line interface reference
 │   └── configuration.md        # All config options with defaults
 ├── integrations/
@@ -191,12 +191,12 @@ docs/
 ## Example mkdocs.yml Configuration
 
 ```yaml
-site_name: AgentTrace
-site_url: https://agenttrace.dev
+site_name: TraceCraft
+site_url: https://tracecraft.dev
 site_description: Vendor-neutral LLM observability SDK
 
-repo_name: agenttrace/agenttrace
-repo_url: https://github.com/agenttrace/agenttrace
+repo_name: tracecraft/tracecraft
+repo_url: https://github.com/tracecraft/tracecraft
 
 theme:
   name: material
@@ -280,25 +280,25 @@ For auto-generating API docs from docstrings:
 ```markdown
 # Core Module
 
-The core module contains the fundamental data models and runtime for AgentTrace.
+The core module contains the fundamental data models and runtime for TraceCraft.
 
 ## Models
 
-::: agenttrace.core.models
+::: tracecraft.core.models
     options:
       show_root_heading: false
       members_order: source
 
 ## Runtime
 
-::: agenttrace.core.runtime
+::: tracecraft.core.runtime
     options:
       show_root_heading: false
       members_order: source
 
 ## Configuration
 
-::: agenttrace.core.config
+::: tracecraft.core.config
     options:
       show_root_heading: false
       members_order: source

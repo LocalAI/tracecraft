@@ -25,7 +25,7 @@ def demo_environment_detection():
     print("Pattern 1: Environment Detection")
     print("=" * 60)
 
-    from agenttrace.core.env_config import detect_environment, get_environment_defaults
+    from tracecraft.core.env_config import detect_environment, get_environment_defaults
 
     # Detect environment from various indicators
     env = detect_environment()
@@ -53,11 +53,11 @@ def demo_environment_detection():
     del os.environ["CI"]
 
     # Explicit override
-    os.environ["AGENTTRACE_ENVIRONMENT"] = "staging"
+    os.environ["TRACECRAFT_ENVIRONMENT"] = "staging"
     env = detect_environment()
     defaults = get_environment_defaults(env)
-    print(f"With AGENTTRACE_ENVIRONMENT=staging: env={env}, defaults={defaults}")
-    del os.environ["AGENTTRACE_ENVIRONMENT"]
+    print(f"With TRACECRAFT_ENVIRONMENT=staging: env={env}, defaults={defaults}")
+    del os.environ["TRACECRAFT_ENVIRONMENT"]
 
 
 # =============================================================================
@@ -71,18 +71,18 @@ def demo_privacy_first_defaults():
     print("Pattern 2: Privacy-First Defaults (Redaction Enabled)")
     print("=" * 60)
 
-    from agenttrace.core.config import AgentTraceConfig, RedactionConfig
+    from tracecraft.core.config import RedactionConfig, TraceCraftConfig
 
     # Default config has redaction ENABLED
-    config = AgentTraceConfig()
+    config = TraceCraftConfig()
     print(f"\nDefault redaction enabled: {config.redaction.enabled}")
 
     # To disable (e.g., for debugging):
-    debug_config = AgentTraceConfig(redaction=RedactionConfig(enabled=False))
+    debug_config = TraceCraftConfig(redaction=RedactionConfig(enabled=False))
     print(f"Debug config redaction enabled: {debug_config.redaction.enabled}")
 
     # Production config with custom redaction settings
-    production_config = AgentTraceConfig(
+    production_config = TraceCraftConfig(
         redaction=RedactionConfig(
             enabled=True,
             allowlist=["user_id"],  # Don't redact user IDs
@@ -103,15 +103,15 @@ def demo_input_exclusion():
     print("Pattern 3: Input Exclusion for Sensitive Parameters")
     print("=" * 60)
 
-    import agenttrace
-    from agenttrace import trace_agent, trace_llm, trace_tool
-    from agenttrace.core.config import AgentTraceConfig, RedactionConfig
+    import tracecraft
+    from tracecraft import trace_agent, trace_llm, trace_tool
+    from tracecraft.core.config import RedactionConfig, TraceCraftConfig
 
     # Initialize runtime (disable file exporters for demo)
-    runtime = agenttrace.TALRuntime(
+    runtime = tracecraft.TALRuntime(
         console=True,
         jsonl=False,
-        config=AgentTraceConfig(
+        config=TraceCraftConfig(
             redaction=RedactionConfig(enabled=False),  # Disable for clear demo
         ),
     )
@@ -177,9 +177,9 @@ def demo_environment_aware_mode():
     print("  - Encourages OTLP export to observability platform")
 
     # Example usage:
-    # agenttrace.init(mode="local")       # Force local defaults
-    # agenttrace.init(mode="production")  # Force production defaults
-    # agenttrace.init(mode="auto")        # Detect from environment (default)
+    # tracecraft.init(mode="local")       # Force local defaults
+    # tracecraft.init(mode="production")  # Force production defaults
+    # tracecraft.init(mode="auto")        # Detect from environment (default)
 
 
 # =============================================================================
@@ -193,13 +193,13 @@ def demo_processor_ordering():
     print("Pattern 5: Processor Pipeline Ordering")
     print("=" * 60)
 
-    from agenttrace.core.config import (
-        AgentTraceConfig,
+    from tracecraft.core.config import (
         ProcessorOrder,
         RedactionConfig,
         SamplingConfig,
+        TraceCraftConfig,
     )
-    from agenttrace.core.runtime import TALRuntime
+    from tracecraft.core.runtime import TALRuntime
 
     # SAFETY order (default): Enrich -> Redact -> Sample
     # - Redacts PII before sampling decision
@@ -208,7 +208,7 @@ def demo_processor_ordering():
     print("Pipeline: Enrichment -> Redaction -> Sampling")
     print("Ensures PII is redacted before any data leaves")
 
-    safety_config = AgentTraceConfig(
+    safety_config = TraceCraftConfig(
         processor_order=ProcessorOrder.SAFETY,
         redaction=RedactionConfig(enabled=True),
         sampling=SamplingConfig(rate=0.5),
@@ -227,7 +227,7 @@ def demo_processor_ordering():
     print("Pipeline: Sampling -> Redaction -> Enrichment")
     print("Samples first to reduce processing overhead")
 
-    efficiency_config = AgentTraceConfig(
+    efficiency_config = TraceCraftConfig(
         processor_order=ProcessorOrder.EFFICIENCY,
         redaction=RedactionConfig(enabled=True),
         sampling=SamplingConfig(rate=0.5),
@@ -260,18 +260,18 @@ def demo_custom_environments():
 
     # Custom environments work but show a warning
     print("\n--- Custom Environment (shows warning) ---")
-    os.environ["AGENTTRACE_ENVIRONMENT"] = "my-custom-env"
+    os.environ["TRACECRAFT_ENVIRONMENT"] = "my-custom-env"
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        from agenttrace.core.env_config import detect_environment
+        from tracecraft.core.env_config import detect_environment
 
         env = detect_environment()
         if w:
             print(f"Warning: {w[-1].message}")
         print(f"Environment still works: {env}")
 
-    del os.environ["AGENTTRACE_ENVIRONMENT"]
+    del os.environ["TRACECRAFT_ENVIRONMENT"]
 
 
 # =============================================================================
@@ -285,16 +285,16 @@ def demo_complete_production_setup():
     print("Pattern 7: Complete Production Setup")
     print("=" * 60)
 
-    from agenttrace.core.config import (
-        AgentTraceConfig,
+    from tracecraft.core.config import (
         ProcessorOrder,
         RedactionConfig,
         SamplingConfig,
+        TraceCraftConfig,
     )
-    from agenttrace.core.runtime import TALRuntime
+    from tracecraft.core.runtime import TALRuntime
 
     # Production configuration
-    production_config = AgentTraceConfig(
+    production_config = TraceCraftConfig(
         service_name="my-production-agent",
         # Processor pipeline
         processor_order=ProcessorOrder.SAFETY,  # Redact before sampling
@@ -338,7 +338,7 @@ def demo_complete_production_setup():
 def main():
     """Run all production configuration demos."""
     print("\n" + "#" * 60)
-    print("# AgentTrace Production Configuration Examples")
+    print("# TraceCraft Production Configuration Examples")
     print("#" * 60)
 
     demo_environment_detection()

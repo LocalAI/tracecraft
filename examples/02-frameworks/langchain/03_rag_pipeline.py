@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""LangChain RAG Pipeline - Trace retrieval-augmented generation with AgentTrace.
+"""LangChain RAG Pipeline - Trace retrieval-augmented generation with TraceCraft.
 
 Demonstrates how to trace RAG pipelines including document retrieval,
 context injection, and LLM generation.
@@ -28,10 +28,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -51,8 +51,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -71,8 +71,8 @@ def simple_rag_example() -> None:
 
     # Sample documents
     documents = [
-        "AgentTrace is an observability SDK for AI agents.",
-        "AgentTrace supports LangChain, LlamaIndex, and PydanticAI.",
+        "TraceCraft is an observability SDK for AI agents.",
+        "TraceCraft supports LangChain, LlamaIndex, and PydanticAI.",
         "Traces can be exported to JSONL, HTML, or OTLP backends.",
         "The library uses a decorator-based API for manual tracing.",
         "Processors can enrich traces with cost and token data.",
@@ -106,12 +106,12 @@ Answer:"""
         | StrOutputParser()
     )
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_simple_rag", start_time=datetime.now(UTC))
 
     with run_context(run):
         result = chain.invoke(
-            "What frameworks does AgentTrace support?",
+            "What frameworks does TraceCraft support?",
             config={"callbacks": [handler]},
         )
 
@@ -172,7 +172,7 @@ def conversational_rag_example() -> None:
         | StrOutputParser()
     )
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_conversational_rag", start_time=datetime.now(UTC))
 
     with run_context(run):
@@ -255,7 +255,7 @@ Provide your answer and cite sources."""
         | StrOutputParser()
     )
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_rag_with_sources", start_time=datetime.now(UTC))
 
     with run_context(run):
@@ -273,7 +273,7 @@ Provide your answer and cite sources."""
 def main() -> None:
     """Run the LangChain RAG examples."""
     print("=" * 60)
-    print("AgentTrace LangChain RAG Pipelines")
+    print("TraceCraft LangChain RAG Pipelines")
     print("=" * 60)
 
     simple_rag_example()

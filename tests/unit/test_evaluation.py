@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.models import AgentRun, Step, StepType
 
 
 class TestEvaluationStep:
@@ -13,7 +13,7 @@ class TestEvaluationStep:
 
     def test_evaluation_step_creates_step(self):
         """Test evaluation_step creates a Step."""
-        from agenttrace.contrib.evaluation import evaluation_step
+        from tracecraft.contrib.evaluation import evaluation_step
 
         with evaluation_step("test_eval") as step:
             assert step.type == StepType.EVALUATION
@@ -22,21 +22,21 @@ class TestEvaluationStep:
 
     def test_evaluation_step_with_evaluator_name(self):
         """Test evaluation_step captures evaluator name."""
-        from agenttrace.contrib.evaluation import evaluation_step
+        from tracecraft.contrib.evaluation import evaluation_step
 
         with evaluation_step("test_eval", evaluator_name="relevance") as step:
             assert step.inputs["evaluator_name"] == "relevance"
 
     def test_evaluation_step_with_inputs(self):
         """Test evaluation_step captures inputs."""
-        from agenttrace.contrib.evaluation import evaluation_step
+        from tracecraft.contrib.evaluation import evaluation_step
 
         with evaluation_step("test_eval", inputs={"question": "What is AI?"}) as step:
             assert step.inputs["question"] == "What is AI?"
 
     def test_evaluation_step_captures_error(self):
         """Test evaluation_step captures errors."""
-        from agenttrace.contrib.evaluation import evaluation_step
+        from tracecraft.contrib.evaluation import evaluation_step
 
         with pytest.raises(ValueError), evaluation_step("test_eval") as step:
             raise ValueError("Test error")
@@ -46,7 +46,7 @@ class TestEvaluationStep:
 
     def test_evaluation_step_sets_duration(self):
         """Test evaluation_step sets duration on exit."""
-        from agenttrace.contrib.evaluation import evaluation_step
+        from tracecraft.contrib.evaluation import evaluation_step
 
         with evaluation_step("test_eval") as step:
             pass
@@ -57,8 +57,8 @@ class TestEvaluationStep:
 
     def test_evaluation_step_with_run_context(self):
         """Test evaluation_step attaches to run."""
-        from agenttrace.contrib.evaluation import evaluation_step
-        from agenttrace.core.context import run_context
+        from tracecraft.contrib.evaluation import evaluation_step
+        from tracecraft.core.context import run_context
 
         run = AgentRun(name="test", start_time=datetime.now(UTC))
 
@@ -71,7 +71,7 @@ class TestRecordEvaluationResult:
 
     def test_record_scores(self):
         """Test recording evaluation scores."""
-        from agenttrace.contrib.evaluation import (
+        from tracecraft.contrib.evaluation import (
             evaluation_step,
             record_evaluation_result,
         )
@@ -87,7 +87,7 @@ class TestRecordEvaluationResult:
 
     def test_record_passed(self):
         """Test recording pass/fail status."""
-        from agenttrace.contrib.evaluation import (
+        from tracecraft.contrib.evaluation import (
             evaluation_step,
             record_evaluation_result,
         )
@@ -100,7 +100,7 @@ class TestRecordEvaluationResult:
 
     def test_record_metadata(self):
         """Test recording metadata."""
-        from agenttrace.contrib.evaluation import (
+        from tracecraft.contrib.evaluation import (
             evaluation_step,
             record_evaluation_result,
         )
@@ -120,7 +120,7 @@ class TestCreateTracedEvaluator:
 
     def test_wrap_evaluator_function(self):
         """Test wrapping an evaluator function."""
-        from agenttrace.contrib.evaluation import create_traced_evaluator
+        from tracecraft.contrib.evaluation import create_traced_evaluator
 
         def my_evaluator(_output: str) -> dict[str, float]:
             return {"score": 0.9}
@@ -132,7 +132,7 @@ class TestCreateTracedEvaluator:
 
     def test_wrapped_evaluator_has_custom_name(self):
         """Test wrapped evaluator can have custom name."""
-        from agenttrace.contrib.evaluation import create_traced_evaluator
+        from tracecraft.contrib.evaluation import create_traced_evaluator
 
         def my_evaluator(_output: str) -> dict[str, float]:
             return {"score": 0.9}
@@ -149,7 +149,7 @@ class TestHasMLflow:
 
     def test_has_mlflow_returns_bool(self):
         """Test has_mlflow returns a boolean."""
-        from agenttrace.contrib.evaluation import has_mlflow
+        from tracecraft.contrib.evaluation import has_mlflow
 
         result = has_mlflow()
         assert isinstance(result, bool)
@@ -160,20 +160,20 @@ class TestMLflowEvaluationFunctions:
 
     def test_evaluate_with_mlflow_raises_when_not_installed(self):
         """Test evaluate_with_mlflow raises when MLflow not installed."""
-        from agenttrace.contrib.evaluation import has_mlflow
+        from tracecraft.contrib.evaluation import has_mlflow
 
         if not has_mlflow():
-            from agenttrace.contrib.evaluation import evaluate_with_mlflow
+            from tracecraft.contrib.evaluation import evaluate_with_mlflow
 
             with pytest.raises(ImportError):
                 evaluate_with_mlflow(data=None)
 
     def test_log_evaluation_to_mlflow_raises_when_not_installed(self):
         """Test log_evaluation_to_mlflow raises when MLflow not installed."""
-        from agenttrace.contrib.evaluation import has_mlflow
+        from tracecraft.contrib.evaluation import has_mlflow
 
         if not has_mlflow():
-            from agenttrace.contrib.evaluation import log_evaluation_to_mlflow
+            from tracecraft.contrib.evaluation import log_evaluation_to_mlflow
 
             step = Step(
                 trace_id=uuid4(),

@@ -1,6 +1,6 @@
 # LlamaIndex Integration Examples
 
-Trace LlamaIndex applications using the `AgentTraceLlamaIndexCallback`.
+Trace LlamaIndex applications using the `TraceCraftLlamaIndexCallback`.
 
 ## Prerequisites
 
@@ -14,11 +14,11 @@ export OPENAI_API_KEY=sk-...
 ```python
 from llama_index.core import Settings
 from llama_index.core.callbacks import CallbackManager
-from agenttrace.adapters.llamaindex import AgentTraceLlamaIndexCallback
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+from tracecraft.adapters.llamaindex import TraceCraftLlamaIndexCallback
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
-handler = AgentTraceLlamaIndexCallback()
+handler = TraceCraftLlamaIndexCallback()
 Settings.callback_manager = CallbackManager(handlers=[handler])
 
 run = AgentRun(name="my_query", start_time=datetime.now(UTC))

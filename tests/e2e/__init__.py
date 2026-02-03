@@ -1,1 +1,1 @@
-"""End-to-end tests for AgentTrace."""
+"""End-to-end tests for TraceCraft."""

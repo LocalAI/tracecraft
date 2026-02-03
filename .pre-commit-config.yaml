@@ -1,4 +1,4 @@
-# Pre-commit configuration for AgentTrace
+# Pre-commit configuration for TraceCraft
 # See https://pre-commit.com for more information
 # Run `pre-commit install` to set up the git hooks
 # Run `pre-commit run --all-files` to run all hooks on all files

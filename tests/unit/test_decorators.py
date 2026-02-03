@@ -15,9 +15,9 @@ class TestTraceAgentDecorator:
 
     def test_trace_agent_creates_step(self):
         """@trace_agent should create a step of type AGENT."""
-        from agenttrace.core.context import get_current_step, set_current_run
-        from agenttrace.core.models import AgentRun, StepType
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import get_current_step, set_current_run
+        from tracecraft.core.models import AgentRun, StepType
+        from tracecraft.instrumentation.decorators import trace_agent
 
         # Set up a run context
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
@@ -42,9 +42,9 @@ class TestTraceAgentDecorator:
 
     def test_trace_agent_captures_return_value(self):
         """@trace_agent should capture return value as output."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -64,9 +64,9 @@ class TestTraceAgentDecorator:
 
     def test_trace_agent_captures_inputs(self):
         """@trace_agent should capture function arguments as inputs."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -87,9 +87,9 @@ class TestTraceAgentDecorator:
         """@trace_agent should record start_time, end_time, and duration_ms."""
         import time
 
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -111,9 +111,9 @@ class TestTraceAgentDecorator:
 
     def test_trace_agent_uses_function_name_if_not_specified(self):
         """@trace_agent should use function name if name not provided."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -134,9 +134,9 @@ class TestTraceToolDecorator:
 
     def test_trace_tool_creates_step(self):
         """@trace_tool should create a step of type TOOL."""
-        from agenttrace.core.context import get_current_step, set_current_run
-        from agenttrace.core.models import AgentRun, StepType
-        from agenttrace.instrumentation.decorators import trace_tool
+        from tracecraft.core.context import get_current_step, set_current_run
+        from tracecraft.core.models import AgentRun, StepType
+        from tracecraft.instrumentation.decorators import trace_tool
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -159,9 +159,9 @@ class TestTraceToolDecorator:
 
     def test_trace_tool_captures_inputs_and_outputs(self):
         """@trace_tool should capture inputs and outputs."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_tool
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_tool
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -187,9 +187,9 @@ class TestAsyncDecoratorSupport:
     @pytest.mark.asyncio
     async def test_trace_agent_async_function(self):
         """@trace_agent should work with async functions."""
-        from agenttrace.core.context import get_current_step, set_current_run
-        from agenttrace.core.models import AgentRun, StepType
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import get_current_step, set_current_run
+        from tracecraft.core.models import AgentRun, StepType
+        from tracecraft.instrumentation.decorators import trace_agent
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -214,9 +214,9 @@ class TestAsyncDecoratorSupport:
     @pytest.mark.asyncio
     async def test_trace_tool_async_function(self):
         """@trace_tool should work with async functions."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun, StepType
-        from agenttrace.instrumentation.decorators import trace_tool
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun, StepType
+        from tracecraft.instrumentation.decorators import trace_tool
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -240,9 +240,9 @@ class TestExceptionHandling:
 
     def test_decorator_captures_exception(self):
         """Decorator should capture exception in step.error and step.error_type."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -264,9 +264,9 @@ class TestExceptionHandling:
 
     def test_tool_decorator_captures_exception(self):
         """@trace_tool should capture exceptions properly."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_tool
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_tool
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -287,9 +287,9 @@ class TestExceptionHandling:
     @pytest.mark.asyncio
     async def test_async_decorator_captures_exception(self):
         """Async decorator should capture exceptions properly."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -314,9 +314,9 @@ class TestStepNesting:
 
     def test_nested_decorators_create_hierarchy(self):
         """Nested decorated functions should create parent-child steps."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent, trace_tool
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent, trace_tool
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -347,9 +347,9 @@ class TestStepNesting:
     @pytest.mark.asyncio
     async def test_async_nested_decorators(self):
         """Async nested decorated functions should maintain hierarchy."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent, trace_tool
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent, trace_tool
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -379,9 +379,9 @@ class TestTraceLLMDecorator:
 
     def test_trace_llm_creates_step(self):
         """@trace_llm should create a step of type LLM."""
-        from agenttrace.core.context import get_current_step, set_current_run
-        from agenttrace.core.models import AgentRun, StepType
-        from agenttrace.instrumentation.decorators import trace_llm
+        from tracecraft.core.context import get_current_step, set_current_run
+        from tracecraft.core.models import AgentRun, StepType
+        from tracecraft.instrumentation.decorators import trace_llm
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -406,9 +406,9 @@ class TestTraceLLMDecorator:
 
     def test_trace_llm_captures_token_counts(self):
         """@trace_llm should support capturing token counts."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -430,9 +430,9 @@ class TestTraceRetrievalDecorator:
 
     def test_trace_retrieval_creates_step(self):
         """@trace_retrieval should create a step of type RETRIEVAL."""
-        from agenttrace.core.context import get_current_step, set_current_run
-        from agenttrace.core.models import AgentRun, StepType
-        from agenttrace.instrumentation.decorators import trace_retrieval
+        from tracecraft.core.context import get_current_step, set_current_run
+        from tracecraft.core.models import AgentRun, StepType
+        from tracecraft.instrumentation.decorators import trace_retrieval
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -459,9 +459,9 @@ class TestInputExclusion:
 
     def test_exclude_inputs_single_param(self):
         """Should exclude a single parameter from captured inputs."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -480,9 +480,9 @@ class TestInputExclusion:
 
     def test_exclude_inputs_multiple_params(self):
         """Should exclude multiple parameters from captured inputs."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_tool
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_tool
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -502,9 +502,9 @@ class TestInputExclusion:
 
     def test_capture_inputs_false(self):
         """Should capture no inputs when capture_inputs=False."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -522,9 +522,9 @@ class TestInputExclusion:
 
     def test_exclude_inputs_with_kwargs(self):
         """Should handle exclusion with **kwargs."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -549,9 +549,9 @@ class TestInputExclusion:
     @pytest.mark.asyncio
     async def test_exclude_inputs_async(self):
         """Should work with async functions."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -571,9 +571,9 @@ class TestInputExclusion:
 
     def test_exclude_nonexistent_param_is_noop(self):
         """Excluding a nonexistent parameter should be a no-op."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -596,9 +596,9 @@ class TestStepContextManager:
 
     def test_step_context_manager_creates_step(self):
         """step() context manager should create and manage a step."""
-        from agenttrace.core.context import get_current_step, set_current_run
-        from agenttrace.core.models import AgentRun, StepType
-        from agenttrace.instrumentation.decorators import step
+        from tracecraft.core.context import get_current_step, set_current_run
+        from tracecraft.core.models import AgentRun, StepType
+        from tracecraft.instrumentation.decorators import step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -617,9 +617,9 @@ class TestStepContextManager:
 
     def test_step_context_manager_captures_exception(self):
         """step() context manager should capture exceptions."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun, StepType
-        from agenttrace.instrumentation.decorators import step
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun, StepType
+        from tracecraft.instrumentation.decorators import step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)
@@ -640,9 +640,9 @@ class TestStepContextManager:
 
     def test_step_context_manager_nesting(self):
         """Nested step() calls should create hierarchy."""
-        from agenttrace.core.context import set_current_run
-        from agenttrace.core.models import AgentRun, StepType
-        from agenttrace.instrumentation.decorators import step
+        from tracecraft.core.context import set_current_run
+        from tracecraft.core.models import AgentRun, StepType
+        from tracecraft.instrumentation.decorators import step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
         set_current_run(run)

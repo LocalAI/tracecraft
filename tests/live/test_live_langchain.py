@@ -26,15 +26,15 @@ class TestLiveLangChainBasic:
         pytest.importorskip("langchain_openai")
         from langchain_openai import ChatOpenAI
 
-        import agenttrace
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        runtime = agenttrace.init(console=True, jsonl=True, jsonl_path=temp_jsonl_path)
+        runtime = tracecraft.init(console=True, jsonl=True, jsonl_path=temp_jsonl_path)
 
         llm = ChatOpenAI(model=live_test_model, max_tokens=max_tokens)
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
 
         run = AgentRun(name="test_langchain_simple", start_time=datetime.now(UTC))
 
@@ -68,12 +68,12 @@ class TestLiveLangChainBasic:
         from langchain_core.prompts import ChatPromptTemplate
         from langchain_openai import ChatOpenAI
 
-        import agenttrace
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        runtime = agenttrace.init(console=True, jsonl=False)
+        runtime = tracecraft.init(console=True, jsonl=False)
 
         prompt = ChatPromptTemplate.from_messages(
             [
@@ -84,7 +84,7 @@ class TestLiveLangChainBasic:
         llm = ChatOpenAI(model=live_test_model, max_tokens=max_tokens)
         chain = prompt | llm
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_chain_template", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -112,12 +112,12 @@ class TestLiveLangChainTools:
         from langchain_core.tools import tool
         from langchain_openai import ChatOpenAI
 
-        import agenttrace
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        agenttrace.init(console=True, jsonl=False)
+        tracecraft.init(console=True, jsonl=False)
 
         @tool
         def calculator(expression: str) -> str:
@@ -130,7 +130,7 @@ class TestLiveLangChainTools:
         llm = ChatOpenAI(model=live_test_model, max_tokens=max_tokens)
         llm_with_tools = llm.bind_tools([calculator])
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_tools", start_time=datetime.now(UTC))
 
         with run_context(run):
@@ -156,15 +156,15 @@ class TestLiveLangChainStreaming:
         pytest.importorskip("langchain_openai")
         from langchain_openai import ChatOpenAI
 
-        import agenttrace
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        agenttrace.init(console=True, jsonl=False)
+        tracecraft.init(console=True, jsonl=False)
 
         llm = ChatOpenAI(model=live_test_model, max_tokens=max_tokens, streaming=True)
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
 
         run = AgentRun(name="test_streaming", start_time=datetime.now(UTC))
 
@@ -194,16 +194,16 @@ class TestLiveLangChainErrors:
         import openai
         from langchain_openai import ChatOpenAI
 
-        import agenttrace
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        runtime = agenttrace.init(console=True, jsonl=False)
+        runtime = tracecraft.init(console=True, jsonl=False)
 
         # Use invalid model to trigger error
         llm = ChatOpenAI(model="invalid-model-xyz", max_tokens=max_tokens)
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
 
         run = AgentRun(name="test_error", start_time=datetime.now(UTC))
 
@@ -233,12 +233,12 @@ class TestLiveLangChainComplex:
         from langchain_core.prompts import ChatPromptTemplate
         from langchain_openai import ChatOpenAI
 
-        import agenttrace
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        runtime = agenttrace.init(console=True, jsonl=False)
+        runtime = tracecraft.init(console=True, jsonl=False)
 
         llm = ChatOpenAI(model=live_test_model, max_tokens=max_tokens)
 
@@ -256,7 +256,7 @@ class TestLiveLangChainComplex:
             | StrOutputParser()
         )
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_multi_step", start_time=datetime.now(UTC))
 
         with run_context(run):

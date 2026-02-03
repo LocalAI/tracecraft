@@ -7,7 +7,7 @@ Set up monitoring and alerting for your agent systems.
 
 ## Overview
 
-AgentTrace supports alerting through:
+TraceCraft supports alerting through:
 
 - **Webhook Alerts** - Send to Slack, PagerDuty, custom endpoints
 - **Quality Monitoring** - Alert on quality score thresholds
@@ -29,7 +29,7 @@ AgentTrace supports alerting through:
 ## Slack Alerts
 
 ```python
-from agenttrace.alerting import AlertingProcessor, AlertRule, SlackAlertFormatter
+from tracecraft.alerting import AlertingProcessor, AlertRule, SlackAlertFormatter
 
 alerter = AlertingProcessor(
     rules=[
@@ -49,7 +49,7 @@ alerter = AlertingProcessor(
     ]
 )
 
-runtime = agenttrace.init(processors=[alerter])
+runtime = tracecraft.init(processors=[alerter])
 ```
 
 ### Slack Message Format
@@ -65,7 +65,7 @@ The `SlackAlertFormatter` produces Block Kit messages with:
 ## PagerDuty Integration
 
 ```python
-from agenttrace.alerting import AlertRule, PagerDutyAlertFormatter
+from tracecraft.alerting import AlertRule, PagerDutyAlertFormatter
 
 alerter = AlertingProcessor(
     rules=[
@@ -87,7 +87,7 @@ alerter = AlertingProcessor(
 Monitor quality metrics from evaluation frameworks:
 
 ```python
-from agenttrace.alerting import QualityScoreProcessor, QualityThreshold, QualityMetric
+from tracecraft.alerting import QualityScoreProcessor, QualityThreshold, QualityMetric
 
 quality_monitor = QualityScoreProcessor(
     thresholds=[
@@ -116,7 +116,7 @@ quality_monitor = QualityScoreProcessor(
 Quick helpers for common patterns:
 
 ```python
-from agenttrace.alerting import (
+from tracecraft.alerting import (
     create_error_alert,
     create_high_cost_alert,
     create_slow_trace_alert,

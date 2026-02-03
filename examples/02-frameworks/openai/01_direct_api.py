@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """OpenAI Direct API - Trace OpenAI SDK calls with decorators.
 
-Demonstrates how to trace direct OpenAI API calls using AgentTrace decorators.
+Demonstrates how to trace direct OpenAI API calls using TraceCraft decorators.
 This approach works for any LLM provider where you're making direct API calls.
 
 Prerequisites:
@@ -27,10 +27,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm
+import tracecraft
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm
 
 
 def check_prerequisites() -> bool:
@@ -50,8 +50,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -124,7 +124,7 @@ def chat_agent(question: str) -> str:
 def main() -> None:
     """Run the OpenAI direct API example."""
     print("=" * 60)
-    print("AgentTrace OpenAI Direct API Example")
+    print("TraceCraft OpenAI Direct API Example")
     print("=" * 60)
 
     run = AgentRun(name="openai_example", start_time=datetime.now(UTC))

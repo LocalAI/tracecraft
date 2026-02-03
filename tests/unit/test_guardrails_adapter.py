@@ -10,8 +10,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun, StepType
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun, StepType
 
 
 class TestGuardrailStep:
@@ -19,7 +19,7 @@ class TestGuardrailStep:
 
     def test_create_guardrail_step(self) -> None:
         """Should be able to create a GUARDRAIL step."""
-        from agenttrace.adapters.guardrails import guardrail_step
+        from tracecraft.adapters.guardrails import guardrail_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -32,7 +32,7 @@ class TestGuardrailStep:
 
     def test_guardrail_step_captures_guard_name(self) -> None:
         """Should capture guard_name in inputs."""
-        from agenttrace.adapters.guardrails import guardrail_step
+        from tracecraft.adapters.guardrails import guardrail_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -43,7 +43,7 @@ class TestGuardrailStep:
 
     def test_guardrail_step_captures_inputs(self) -> None:
         """Should capture custom inputs."""
-        from agenttrace.adapters.guardrails import guardrail_step
+        from tracecraft.adapters.guardrails import guardrail_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -54,7 +54,7 @@ class TestGuardrailStep:
 
     def test_guardrail_step_captures_duration(self) -> None:
         """Should capture duration."""
-        from agenttrace.adapters.guardrails import guardrail_step
+        from tracecraft.adapters.guardrails import guardrail_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -67,7 +67,7 @@ class TestGuardrailStep:
 
     def test_guardrail_step_captures_error(self) -> None:
         """Should capture errors during validation."""
-        from agenttrace.adapters.guardrails import guardrail_step
+        from tracecraft.adapters.guardrails import guardrail_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -79,7 +79,7 @@ class TestGuardrailStep:
 
     def test_guardrail_step_without_run_context(self) -> None:
         """Should work without run context (creates dummy step)."""
-        from agenttrace.adapters.guardrails import guardrail_step
+        from tracecraft.adapters.guardrails import guardrail_step
 
         # No run context - should not raise
         with guardrail_step("validate") as step:
@@ -94,7 +94,7 @@ class TestTrackValidation:
 
     def test_track_validation_creates_step(self) -> None:
         """Should create a guardrail step with guard name."""
-        from agenttrace.adapters.guardrails import track_validation
+        from tracecraft.adapters.guardrails import track_validation
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -107,7 +107,7 @@ class TestTrackValidation:
 
     def test_track_validation_with_input_text(self) -> None:
         """Should capture input text."""
-        from agenttrace.adapters.guardrails import track_validation
+        from tracecraft.adapters.guardrails import track_validation
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -118,7 +118,7 @@ class TestTrackValidation:
 
     def test_track_validation_with_metadata(self) -> None:
         """Should store metadata in attributes."""
-        from agenttrace.adapters.guardrails import track_validation
+        from tracecraft.adapters.guardrails import track_validation
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -137,7 +137,7 @@ class TestRecordValidationResult:
 
     def test_record_passed_validation(self) -> None:
         """Should record passed validation."""
-        from agenttrace.adapters.guardrails import (
+        from tracecraft.adapters.guardrails import (
             guardrail_step,
             record_validation_result,
         )
@@ -156,7 +156,7 @@ class TestRecordValidationResult:
 
     def test_record_failed_validation(self) -> None:
         """Should record failed validation with details."""
-        from agenttrace.adapters.guardrails import (
+        from tracecraft.adapters.guardrails import (
             guardrail_step,
             record_validation_result,
         )
@@ -178,7 +178,7 @@ class TestRecordValidationResult:
 
     def test_record_validation_with_reasks(self) -> None:
         """Should record reask count."""
-        from agenttrace.adapters.guardrails import (
+        from tracecraft.adapters.guardrails import (
             guardrail_step,
             record_validation_result,
         )
@@ -201,7 +201,7 @@ class TestWrapGuard:
 
     def test_wrap_guard_without_guardrails(self) -> None:
         """Should return guard unchanged when guardrails not installed."""
-        from agenttrace.adapters.guardrails import wrap_guard
+        from tracecraft.adapters.guardrails import wrap_guard
 
         mock_guard = object()
         result = wrap_guard(mock_guard)

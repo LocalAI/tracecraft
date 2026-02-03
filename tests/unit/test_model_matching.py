@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from agenttrace.processors.enrichment import (
+from tracecraft.processors.enrichment import (
     DEFAULT_PRICING,
     ModelPricing,
     TokenEnrichmentProcessor,

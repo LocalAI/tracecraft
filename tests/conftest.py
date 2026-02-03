@@ -1,11 +1,37 @@
 """
-Pytest configuration and shared fixtures for AgentTrace tests.
+Pytest configuration and shared fixtures for TraceCraft tests.
 """
 
 from datetime import datetime
 from uuid import uuid4
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def reset_runtime():
+    """Reset the global runtime singleton before each test."""
+    import tracecraft.core.runtime as runtime_module
+
+    # Reset before test
+    with runtime_module._runtime_lock:
+        if runtime_module._runtime is not None:
+            try:
+                runtime_module._runtime.shutdown()
+            except Exception:
+                pass
+        runtime_module._runtime = None
+
+    yield
+
+    # Cleanup after test
+    with runtime_module._runtime_lock:
+        if runtime_module._runtime is not None:
+            try:
+                runtime_module._runtime.shutdown()
+            except Exception:
+                pass
+        runtime_module._runtime = None
 
 
 @pytest.fixture
@@ -35,7 +61,7 @@ def mock_outputs():
 @pytest.fixture
 def sample_step(trace_id, sample_timestamp):
     """Create a sample Step for testing."""
-    from agenttrace.core.models import Step, StepType
+    from tracecraft.core.models import Step, StepType
 
     return Step(
         trace_id=trace_id,
@@ -48,7 +74,7 @@ def sample_step(trace_id, sample_timestamp):
 @pytest.fixture
 def sample_run(sample_timestamp):
     """Create a sample AgentRun for testing."""
-    from agenttrace.core.models import AgentRun
+    from tracecraft.core.models import AgentRun
 
     return AgentRun(
         name="sample_run",

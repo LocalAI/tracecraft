@@ -3,7 +3,7 @@
 > **Status: In Progress** - 1 of 8 planned examples available.
 > Run `05_multi_agent.py` to see multi-agent collaboration patterns.
 
-Advanced AgentTrace patterns for specialized use cases.
+Advanced TraceCraft patterns for specialized use cases.
 
 ## Overview
 
@@ -23,7 +23,7 @@ Advanced AgentTrace patterns for specialized use cases.
 Capture token-level timing for streaming responses:
 
 ```python
-from agenttrace.instrumentation.streaming import trace_llm_stream
+from tracecraft.instrumentation.streaming import trace_llm_stream
 
 @trace_llm_stream(name="streaming_llm")
 async def stream_response(prompt: str):
@@ -48,7 +48,7 @@ async def stream_response(prompt: str):
 Track agent memory operations:
 
 ```python
-from agenttrace.instrumentation.decorators import trace_memory
+from tracecraft.instrumentation.decorators import trace_memory
 
 @trace_memory(name="conversation_memory")
 def store_message(session_id: str, message: str) -> None:
@@ -66,7 +66,7 @@ def retrieve_context(session_id: str) -> list[str]:
 Trace guardrail validations:
 
 ```python
-from agenttrace.adapters.guardrails import trace_guardrail
+from tracecraft.adapters.guardrails import trace_guardrail
 
 @trace_guardrail(name="toxicity_filter")
 def check_toxicity(text: str) -> bool:
@@ -142,10 +142,10 @@ def receive_messages() -> list[str]:
 Use the terminal UI for debugging:
 
 ```python
-from agenttrace.tui import launch_tui
+from tracecraft.tui import launch_tui
 
 # Launch TUI with trace file
-launch_tui("traces/agenttrace.jsonl")
+launch_tui("traces/tracecraft.jsonl")
 
 # Or with live streaming
 launch_tui(runtime=runtime, live=True)
@@ -164,9 +164,9 @@ launch_tui(runtime=runtime, live=True)
 Replay and modify traces:
 
 ```python
-from agenttrace.playground import TracePlayground
+from tracecraft.playground import TracePlayground
 
-playground = TracePlayground("traces/agenttrace.jsonl")
+playground = TracePlayground("traces/tracecraft.jsonl")
 
 # Load a specific trace
 trace = playground.load_trace(trace_id="abc123")
@@ -191,16 +191,16 @@ result = await playground.replay(modified)
 Use cloud-specific utilities:
 
 ```python
-from agenttrace.contrib.aws import (
+from tracecraft.contrib.aws import (
     get_bedrock_trace_config,
     trace_sagemaker_endpoint,
 )
 
-from agenttrace.contrib.azure import (
+from tracecraft.contrib.azure import (
     get_azure_openai_trace_config,
 )
 
-from agenttrace.contrib.gcp import (
+from tracecraft.contrib.gcp import (
     get_vertex_ai_trace_config,
 )
 ```
@@ -224,7 +224,7 @@ def call_bedrock(prompt: str) -> str:
 Isolate traces by tenant:
 
 ```python
-from agenttrace.core.context import tenant_context
+from tracecraft.core.context import tenant_context
 
 with tenant_context("tenant_abc"):
     # All traces tagged with tenant_id="tenant_abc"
@@ -242,8 +242,8 @@ tenant_traces = filter(
 Define custom step types:
 
 ```python
-from agenttrace.core.models import StepType
-from agenttrace.instrumentation.decorators import trace_custom
+from tracecraft.core.models import StepType
+from tracecraft.instrumentation.decorators import trace_custom
 
 # Register custom type
 StepType.register("VALIDATION", emoji="✅")
@@ -259,7 +259,7 @@ def validate_schema(data: dict) -> bool:
 Profile trace performance:
 
 ```python
-from agenttrace.profiling import profile_trace
+from tracecraft.profiling import profile_trace
 
 with profile_trace() as profiler:
     result = await my_agent(input)

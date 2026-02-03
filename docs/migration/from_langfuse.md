@@ -1,10 +1,10 @@
-# Migrating from Langfuse to AgentTrace
+# Migrating from Langfuse to TraceCraft
 
-This guide helps you migrate from Langfuse to AgentTrace for LLM observability.
+This guide helps you migrate from Langfuse to TraceCraft for LLM observability.
 
 ## Key Differences
 
-| Feature | Langfuse | AgentTrace |
+| Feature | Langfuse | TraceCraft |
 |---------|----------|------------|
 | Architecture | Cloud + self-host | Local-first |
 | UI | Web dashboard | HTML reports + OTLP backends |
@@ -13,12 +13,12 @@ This guide helps you migrate from Langfuse to AgentTrace for LLM observability.
 
 ## Migration Steps
 
-### 1. Install AgentTrace
+### 1. Install TraceCraft
 
 ```bash
-pip install agenttrace
+pip install tracecraft
 # or
-uv add agenttrace
+uv add tracecraft
 ```
 
 ### 2. Replace Langfuse Decorators
@@ -36,12 +36,12 @@ def my_agent(query: str) -> str:
     return process(query)
 ```
 
-**After (AgentTrace):**
+**After (TraceCraft):**
 
 ```python
-import agenttrace
+import tracecraft
 
-@agenttrace.trace_agent(name="my_agent")
+@tracecraft.trace_agent(name="my_agent")
 def my_agent(query: str) -> str:
     # Metadata captured automatically from function args
     return process(query)
@@ -62,11 +62,11 @@ span.end(output=result)
 trace.update(output=final_result)
 ```
 
-**After (AgentTrace):**
+**After (TraceCraft):**
 
 ```python
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun, Step, StepType
 from datetime import UTC, datetime
 
 run = AgentRun(name="my-trace", start_time=datetime.now(UTC))
@@ -97,12 +97,12 @@ handler = CallbackHandler()
 chain.invoke(input, config={"callbacks": [handler]})
 ```
 
-**After (AgentTrace):**
+**After (TraceCraft):**
 
 ```python
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-handler = AgentTraceCallbackHandler()
+handler = TraceCraftCallbackHandler()
 chain.invoke(input, config={"callbacks": [handler]})
 ```
 
@@ -116,24 +116,24 @@ os.environ["LANGFUSE_SECRET_KEY"] = "sk-..."
 os.environ["LANGFUSE_HOST"] = "https://cloud.langfuse.com"
 ```
 
-**After (AgentTrace):**
+**After (TraceCraft):**
 
 ```python
-import agenttrace
-from agenttrace.exporters.otlp import OTLPExporter
+import tracecraft
+from tracecraft.exporters.otlp import OTLPExporter
 
 # For local development
-agenttrace.init(console=True, jsonl=True)
+tracecraft.init(console=True, jsonl=True)
 
 # For production (Jaeger, Honeycomb, etc.)
-agenttrace.init(exporters=[
+tracecraft.init(exporters=[
     OTLPExporter(endpoint="http://collector:4317")
 ])
 ```
 
 ## Feature Mapping
 
-| Langfuse Feature | AgentTrace Equivalent |
+| Langfuse Feature | TraceCraft Equivalent |
 |------------------|----------------------|
 | `@observe()` | `@trace_agent`, `@trace_llm`, `@trace_tool` |
 | `langfuse.trace()` | `AgentRun` + `run_context` |

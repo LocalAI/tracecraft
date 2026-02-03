@@ -35,7 +35,7 @@ jobs:
         run: uv run mypy src/
 
       - name: Run tests with coverage
-        run: uv run pytest --cov=src/agenttrace --cov-report=xml --cov-fail-under=80
+        run: uv run pytest --cov=src/tracecraft --cov-report=xml --cov-fail-under=80
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4

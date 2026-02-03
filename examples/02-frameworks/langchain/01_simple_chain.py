@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""LangChain Simple Chain - Basic LCEL chain with AgentTrace.
+"""LangChain Simple Chain - Basic LCEL chain with TraceCraft.
 
-Demonstrates how to use the AgentTrace callback handler to automatically
+Demonstrates how to use the TraceCraft callback handler to automatically
 trace LangChain chains, including prompts, LLM calls, and outputs.
 
 Prerequisites:
@@ -28,10 +28,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -51,8 +51,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -76,9 +76,9 @@ def simple_chain_example() -> None:
     llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=100)
     chain = prompt | llm
 
-    # Create AgentTrace callback handler
+    # Create TraceCraft callback handler
     # This automatically traces all LangChain operations
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
 
     # Create a run to group traces
     run = AgentRun(name="langchain_simple_chain", start_time=datetime.now(UTC))
@@ -119,7 +119,7 @@ def chain_with_tools_example() -> None:
     llm = ChatOpenAI(model="gpt-4o-mini", max_tokens=100)
     llm_with_tools = llm.bind_tools([calculator])
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_tools", start_time=datetime.now(UTC))
 
     with run_context(run):
@@ -159,7 +159,7 @@ def multi_step_chain_example() -> None:
         | StrOutputParser()
     )
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_multi_step", start_time=datetime.now(UTC))
 
     with run_context(run):
@@ -178,7 +178,7 @@ def multi_step_chain_example() -> None:
 def main() -> None:
     """Run the LangChain examples."""
     print("=" * 60)
-    print("AgentTrace LangChain Integration")
+    print("TraceCraft LangChain Integration")
     print("=" * 60)
 
     simple_chain_example()
@@ -189,7 +189,7 @@ def main() -> None:
     print("Example complete!")
     print("=" * 60)
     print("\nKey points:")
-    print("  - Use AgentTraceCallbackHandler for automatic tracing")
+    print("  - Use TraceCraftCallbackHandler for automatic tracing")
     print("  - Pass handler via config={'callbacks': [handler]}")
     print("  - Chain operations are traced hierarchically")
     print("  - Tools and LLM calls are captured separately")

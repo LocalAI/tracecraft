@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun
+from tracecraft.core.models import AgentRun
 
 
 class TestAgentCoreExporter:
@@ -19,7 +19,7 @@ class TestAgentCoreExporter:
 
     def test_create_agentcore_exporter(self) -> None:
         """create_agentcore_exporter should return configured exporter."""
-        from agenttrace.contrib.aws import create_agentcore_exporter
+        from tracecraft.contrib.aws import create_agentcore_exporter
 
         exporter = create_agentcore_exporter(
             service_name="test-agent",
@@ -31,7 +31,7 @@ class TestAgentCoreExporter:
 
     def test_create_agentcore_exporter_stores_config(self) -> None:
         """create_agentcore_exporter should store AgentCoreConfig on exporter."""
-        from agenttrace.contrib.aws import AgentCoreConfig, create_agentcore_exporter
+        from tracecraft.contrib.aws import AgentCoreConfig, create_agentcore_exporter
 
         exporter = create_agentcore_exporter(
             session_id="session-123",
@@ -46,7 +46,7 @@ class TestAgentCoreExporter:
 
     def test_create_agentcore_exporter_default_endpoint(self) -> None:
         """create_agentcore_exporter should default to localhost:4317."""
-        from agenttrace.contrib.aws import create_agentcore_exporter
+        from tracecraft.contrib.aws import create_agentcore_exporter
 
         exporter = create_agentcore_exporter()
 
@@ -54,7 +54,7 @@ class TestAgentCoreExporter:
 
     def test_create_agentcore_exporter_custom_endpoint(self) -> None:
         """create_agentcore_exporter should accept custom endpoint."""
-        from agenttrace.contrib.aws import create_agentcore_exporter
+        from tracecraft.contrib.aws import create_agentcore_exporter
 
         exporter = create_agentcore_exporter(
             endpoint="http://adot-collector:4317",
@@ -68,7 +68,7 @@ class TestConfigureForAgentCoreRuntime:
 
     def test_configure_for_agentcore_runtime(self) -> None:
         """configure_for_agentcore_runtime should return configured exporter."""
-        from agenttrace.contrib.aws import configure_for_agentcore_runtime
+        from tracecraft.contrib.aws import configure_for_agentcore_runtime
 
         exporter = configure_for_agentcore_runtime(
             service_name="my-agent",
@@ -82,9 +82,9 @@ class TestConfigureForAgentCoreRuntime:
 
     def test_configure_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """configure_for_agentcore_runtime should use environment variables."""
-        from agenttrace.contrib.aws import configure_for_agentcore_runtime
+        from tracecraft.contrib.aws import configure_for_agentcore_runtime
 
-        monkeypatch.setenv("AGENTTRACE_AWS_SESSION_ID", "env-session-789")
+        monkeypatch.setenv("TRACECRAFT_AWS_SESSION_ID", "env-session-789")
 
         exporter = configure_for_agentcore_runtime()
 
@@ -98,7 +98,7 @@ class TestInjectXRayContext:
 
     def test_inject_xray_context(self, sample_run: AgentRun) -> None:
         """inject_xray_context should add X-Ray header to carrier."""
-        from agenttrace.contrib.aws import inject_xray_context
+        from tracecraft.contrib.aws import inject_xray_context
 
         carrier: dict[str, str] = {}
         inject_xray_context(carrier, sample_run)
@@ -111,7 +111,7 @@ class TestInjectXRayContext:
 
     def test_inject_xray_context_with_session_id(self, sample_run: AgentRun) -> None:
         """inject_xray_context should add session header when provided."""
-        from agenttrace.contrib.aws import inject_xray_context
+        from tracecraft.contrib.aws import inject_xray_context
 
         carrier: dict[str, str] = {}
         inject_xray_context(carrier, sample_run, session_id="my-session")
@@ -121,7 +121,7 @@ class TestInjectXRayContext:
 
     def test_inject_xray_context_uses_run_session(self, sample_run_with_session: AgentRun) -> None:
         """inject_xray_context should use session_id from run if not provided."""
-        from agenttrace.contrib.aws import inject_xray_context
+        from tracecraft.contrib.aws import inject_xray_context
 
         carrier: dict[str, str] = {}
         inject_xray_context(carrier, sample_run_with_session)
@@ -131,7 +131,7 @@ class TestInjectXRayContext:
 
     def test_inject_xray_context_sampled_flag(self, sample_run: AgentRun) -> None:
         """inject_xray_context should respect sampled parameter."""
-        from agenttrace.contrib.aws import inject_xray_context
+        from tracecraft.contrib.aws import inject_xray_context
 
         # Test sampled=True
         carrier: dict[str, str] = {}
@@ -149,7 +149,7 @@ class TestExtractXRayContext:
 
     def test_extract_xray_context(self) -> None:
         """extract_xray_context should parse valid X-Ray header."""
-        from agenttrace.contrib.aws import extract_xray_context
+        from tracecraft.contrib.aws import extract_xray_context
 
         carrier = {
             "X-Amzn-Trace-Id": "Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1"
@@ -166,7 +166,7 @@ class TestExtractXRayContext:
 
     def test_extract_xray_context_with_session(self) -> None:
         """extract_xray_context should extract session ID when present."""
-        from agenttrace.contrib.aws import extract_xray_context
+        from tracecraft.contrib.aws import extract_xray_context
 
         carrier = {
             "X-Amzn-Trace-Id": "Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1",
@@ -181,7 +181,7 @@ class TestExtractXRayContext:
 
     def test_extract_xray_context_missing_header(self) -> None:
         """extract_xray_context should return None when header missing."""
-        from agenttrace.contrib.aws import extract_xray_context
+        from tracecraft.contrib.aws import extract_xray_context
 
         carrier: dict[str, str] = {}
 
@@ -195,7 +195,7 @@ class TestAgentCoreConfig:
 
     def test_agentcore_config_defaults(self) -> None:
         """AgentCoreConfig should have sensible defaults."""
-        from agenttrace.contrib.aws import AgentCoreConfig
+        from tracecraft.contrib.aws import AgentCoreConfig
 
         config = AgentCoreConfig()
 
@@ -205,7 +205,7 @@ class TestAgentCoreConfig:
 
     def test_agentcore_config_with_values(self) -> None:
         """AgentCoreConfig should accept custom values."""
-        from agenttrace.contrib.aws import AgentCoreConfig
+        from tracecraft.contrib.aws import AgentCoreConfig
 
         config = AgentCoreConfig(
             session_id="session-123",
@@ -223,11 +223,11 @@ class TestAWSAgentCoreConfigEnv:
 
     def test_load_config_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """load_config_from_env should load AWS AgentCore config."""
-        from agenttrace.core.config import load_config_from_env
+        from tracecraft.core.config import load_config_from_env
 
-        monkeypatch.setenv("AGENTTRACE_AWS_AGENTCORE_ENABLED", "true")
-        monkeypatch.setenv("AGENTTRACE_AWS_XRAY_PROPAGATION", "false")
-        monkeypatch.setenv("AGENTTRACE_AWS_SESSION_ID", "env-session")
+        monkeypatch.setenv("TRACECRAFT_AWS_AGENTCORE_ENABLED", "true")
+        monkeypatch.setenv("TRACECRAFT_AWS_XRAY_PROPAGATION", "false")
+        monkeypatch.setenv("TRACECRAFT_AWS_SESSION_ID", "env-session")
         monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://custom:4317")
 
         config = load_config_from_env()
@@ -239,7 +239,7 @@ class TestAWSAgentCoreConfigEnv:
 
     def test_aws_config_defaults(self) -> None:
         """AWS AgentCore config should have sensible defaults."""
-        from agenttrace.core.config import AWSAgentCoreConfig
+        from tracecraft.core.config import AWSAgentCoreConfig
 
         config = AWSAgentCoreConfig()
 

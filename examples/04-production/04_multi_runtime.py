@@ -18,9 +18,9 @@ import asyncio
 from typing import Any
 from unittest.mock import MagicMock
 
-from agenttrace import AgentTraceRuntime, trace_agent
-from agenttrace.core.config import AgentTraceConfig, RedactionConfig, SamplingConfig
-from agenttrace.core.context import get_current_runtime
+from tracecraft import TraceCraftRuntime, trace_agent
+from tracecraft.core.config import RedactionConfig, SamplingConfig, TraceCraftConfig
+from tracecraft.core.context import get_current_runtime
 
 # =============================================================================
 # Demo 1: Creating Multiple Runtime Instances
@@ -34,7 +34,7 @@ def demo_multiple_runtimes():
     print("=" * 60)
 
     # Tenant A configuration - high compliance
-    config_a = AgentTraceConfig(
+    config_a = TraceCraftConfig(
         service_name="tenant-a-service",
         redaction=RedactionConfig(enabled=True),  # Strict privacy
         sampling=SamplingConfig(rate=1.0),  # Keep all traces
@@ -43,7 +43,7 @@ def demo_multiple_runtimes():
     )
 
     # Tenant B configuration - performance focused
-    config_b = AgentTraceConfig(
+    config_b = TraceCraftConfig(
         service_name="tenant-b-service",
         redaction=RedactionConfig(enabled=False),  # No redaction for internal use
         sampling=SamplingConfig(rate=0.1),  # Sample 10%
@@ -51,8 +51,8 @@ def demo_multiple_runtimes():
         jsonl_enabled=False,
     )
 
-    runtime_a = AgentTraceRuntime(console=False, jsonl=False, config=config_a)
-    runtime_b = AgentTraceRuntime(console=False, jsonl=False, config=config_b)
+    runtime_a = TraceCraftRuntime(console=False, jsonl=False, config=config_a)
+    runtime_b = TraceCraftRuntime(console=False, jsonl=False, config=config_b)
 
     print("\nRuntime A (High Compliance):")
     print(f"  Service: {runtime_a._config.service_name}")
@@ -77,8 +77,8 @@ def demo_runtime_context_scoping():
     print("=" * 60)
 
     # Create two runtimes
-    runtime_a = AgentTraceRuntime(console=False, jsonl=False)
-    runtime_b = AgentTraceRuntime(console=False, jsonl=False)
+    runtime_a = TraceCraftRuntime(console=False, jsonl=False)
+    runtime_b = TraceCraftRuntime(console=False, jsonl=False)
 
     print("\n--- Using trace_context() ---")
 
@@ -115,8 +115,8 @@ def demo_decorator_with_runtime():
     print("=" * 60)
 
     # Create tenant-specific runtimes
-    tenant_a_runtime = AgentTraceRuntime(console=True, jsonl=False)
-    tenant_b_runtime = AgentTraceRuntime(console=True, jsonl=False)
+    tenant_a_runtime = TraceCraftRuntime(console=True, jsonl=False)
+    tenant_b_runtime = TraceCraftRuntime(console=True, jsonl=False)
 
     # Define agents bound to specific runtimes
     @trace_agent(name="tenant_a_agent", runtime=tenant_a_runtime)
@@ -160,20 +160,20 @@ def demo_runtime_factory():
         """Factory for creating and caching tenant-specific runtimes."""
 
         def __init__(self):
-            self._runtimes: dict[str, AgentTraceRuntime] = {}
+            self._runtimes: dict[str, TraceCraftRuntime] = {}
 
-        def get_runtime(self, tenant_id: str) -> AgentTraceRuntime:
+        def get_runtime(self, tenant_id: str) -> TraceCraftRuntime:
             """Get or create runtime for tenant."""
             if tenant_id not in self._runtimes:
                 # Create tenant-specific configuration
-                config = AgentTraceConfig(
+                config = TraceCraftConfig(
                     service_name=f"service-{tenant_id}",
                     redaction=RedactionConfig(enabled=True),
                     console_enabled=False,
                     jsonl_enabled=False,
                 )
 
-                self._runtimes[tenant_id] = AgentTraceRuntime(
+                self._runtimes[tenant_id] = TraceCraftRuntime(
                     console=False,
                     jsonl=False,
                     config=config,
@@ -219,13 +219,13 @@ def demo_runtime_isolation():
     exporter_b = MagicMock()
     exporter_b.export.side_effect = lambda run: exports_b.append(run)
 
-    runtime_a = AgentTraceRuntime(
+    runtime_a = TraceCraftRuntime(
         console=False,
         jsonl=False,
         exporters=[exporter_a],
     )
 
-    runtime_b = AgentTraceRuntime(
+    runtime_b = TraceCraftRuntime(
         console=False,
         jsonl=False,
         exporters=[exporter_b],
@@ -268,16 +268,16 @@ def demo_async_isolation():
     print("Demo 6: Concurrent Async Runtime Isolation")
     print("=" * 60)
 
-    runtime_a = AgentTraceRuntime(console=False, jsonl=False)
-    runtime_b = AgentTraceRuntime(console=False, jsonl=False)
+    runtime_a = TraceCraftRuntime(console=False, jsonl=False)
+    runtime_b = TraceCraftRuntime(console=False, jsonl=False)
 
-    async def process_tenant_a() -> AgentTraceRuntime | None:
+    async def process_tenant_a() -> TraceCraftRuntime | None:
         """Process request for tenant A."""
         with runtime_a.trace_context():
             await asyncio.sleep(0.01)  # Simulate async work
             return get_current_runtime()
 
-    async def process_tenant_b() -> AgentTraceRuntime | None:
+    async def process_tenant_b() -> TraceCraftRuntime | None:
         """Process request for tenant B."""
         with runtime_b.trace_context():
             await asyncio.sleep(0.01)  # Simulate async work
@@ -323,21 +323,21 @@ def demo_real_world_service():
 
     # Runtime factory with different configs per tenant tier
     tenant_configs = {
-        "enterprise": AgentTraceConfig(
+        "enterprise": TraceCraftConfig(
             service_name="enterprise-service",
             redaction=RedactionConfig(enabled=True),
             sampling=SamplingConfig(rate=1.0),  # Keep all
             console_enabled=False,
             jsonl_enabled=False,
         ),
-        "standard": AgentTraceConfig(
+        "standard": TraceCraftConfig(
             service_name="standard-service",
             redaction=RedactionConfig(enabled=True),
             sampling=SamplingConfig(rate=0.5),  # Keep 50%
             console_enabled=False,
             jsonl_enabled=False,
         ),
-        "free": AgentTraceConfig(
+        "free": TraceCraftConfig(
             service_name="free-service",
             redaction=RedactionConfig(enabled=True),
             sampling=SamplingConfig(rate=0.1),  # Keep 10%
@@ -352,14 +352,14 @@ def demo_real_world_service():
         "hobby-user": "free",
     }
 
-    runtimes: dict[str, AgentTraceRuntime] = {}
+    runtimes: dict[str, TraceCraftRuntime] = {}
 
-    def get_tenant_runtime(tenant_id: str) -> AgentTraceRuntime:
+    def get_tenant_runtime(tenant_id: str) -> TraceCraftRuntime:
         """Get runtime for tenant based on their tier."""
         if tenant_id not in runtimes:
             tier = tenant_tiers.get(tenant_id, "free")
             config = tenant_configs[tier]
-            runtimes[tenant_id] = AgentTraceRuntime(console=False, jsonl=False, config=config)
+            runtimes[tenant_id] = TraceCraftRuntime(console=False, jsonl=False, config=config)
         return runtimes[tenant_id]
 
     def process_request(ctx: TenantContext, query: str) -> str:
@@ -406,7 +406,7 @@ def demo_real_world_service():
 def main():
     """Run all multi-runtime demos."""
     print("\n" + "#" * 60)
-    print("# AgentTrace Multi-Runtime Examples")
+    print("# TraceCraft Multi-Runtime Examples")
     print("#" * 60)
 
     demo_multiple_runtimes()

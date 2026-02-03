@@ -13,13 +13,13 @@ from datetime import UTC, datetime
 
 import pytest
 
-from agenttrace.core.context import (
+from tracecraft.core.context import (
     get_current_run,
     get_current_step,
     run_context,
     step_context,
 )
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.models import AgentRun, Step, StepType
 
 
 class TestTALContextExecutor:
@@ -27,7 +27,7 @@ class TestTALContextExecutor:
 
     def test_executor_creation(self) -> None:
         """Should create an executor with default thread count."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         executor = TALContextExecutor()
         assert executor is not None
@@ -35,7 +35,7 @@ class TestTALContextExecutor:
 
     def test_executor_with_max_workers(self) -> None:
         """Should accept max_workers parameter."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         executor = TALContextExecutor(max_workers=4)
         assert executor is not None
@@ -43,14 +43,14 @@ class TestTALContextExecutor:
 
     def test_executor_context_manager(self) -> None:
         """Should work as context manager."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         with TALContextExecutor() as executor:
             assert executor is not None
 
     def test_submit_without_context(self) -> None:
         """Should work without active context."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         def task() -> str:
             return "result"
@@ -65,7 +65,7 @@ class TestContextPropagation:
 
     def test_propagates_run_context(self) -> None:
         """Should propagate current run to thread."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         captured_run: AgentRun | None = None
 
@@ -84,7 +84,7 @@ class TestContextPropagation:
 
     def test_propagates_step_context(self) -> None:
         """Should propagate current step to thread."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         captured_step: Step | None = None
 
@@ -113,7 +113,7 @@ class TestContextPropagation:
 
     def test_propagates_both_contexts(self) -> None:
         """Should propagate both run and step context."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         captured_run: AgentRun | None = None
         captured_step: Step | None = None
@@ -150,7 +150,7 @@ class TestContextIsolation:
 
     def test_context_snapshot_is_independent(self) -> None:
         """Context changes in thread should not affect main context."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         main_run_after: AgentRun | None = None
 
@@ -174,7 +174,7 @@ class TestContextIsolation:
 
     def test_concurrent_tasks_isolated(self) -> None:
         """Concurrent tasks should have isolated contexts."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         results: dict[str, str | None] = {}
 
@@ -202,7 +202,7 @@ class TestSubmitWithArgs:
 
     def test_submit_with_positional_args(self) -> None:
         """Should pass positional arguments to task."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         def add(a: int, b: int) -> int:
             return a + b
@@ -213,7 +213,7 @@ class TestSubmitWithArgs:
 
     def test_submit_with_keyword_args(self) -> None:
         """Should pass keyword arguments to task."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         def greet(name: str, greeting: str = "Hello") -> str:
             return f"{greeting}, {name}!"
@@ -224,7 +224,7 @@ class TestSubmitWithArgs:
 
     def test_submit_with_context_and_args(self) -> None:
         """Should pass context and arguments together."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         def process(data: str) -> str:
             run = get_current_run()
@@ -243,7 +243,7 @@ class TestMapMethod:
 
     def test_map_propagates_context(self) -> None:
         """Should propagate context to all map workers."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         def process_item(item: int) -> tuple[int, str | None]:
             run = get_current_run()
@@ -262,7 +262,7 @@ class TestMapMethod:
 
     def test_map_with_timeout(self) -> None:
         """Should support timeout parameter."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         def fast_task(x: int) -> int:
             return x * 2
@@ -277,7 +277,7 @@ class TestShutdown:
 
     def test_shutdown_waits_for_tasks(self) -> None:
         """Should wait for pending tasks on shutdown."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         completed = []
 
@@ -297,7 +297,7 @@ class TestShutdown:
 
     def test_shutdown_no_wait(self) -> None:
         """Should return immediately with wait=False."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         executor = TALContextExecutor(max_workers=1)
         executor.shutdown(wait=False)
@@ -309,7 +309,7 @@ class TestExceptionHandling:
 
     def test_exception_in_task(self) -> None:
         """Should propagate exceptions from tasks."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         def failing_task() -> None:
             raise ValueError("Task failed")
@@ -321,7 +321,7 @@ class TestExceptionHandling:
 
     def test_exception_preserves_context(self) -> None:
         """Should still have context when task raises."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         captured_context: str | None = None
 
@@ -347,7 +347,7 @@ class TestAsCompletedIntegration:
 
     def test_works_with_as_completed(self) -> None:
         """Should work correctly with as_completed."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         def task(delay: float, value: str) -> str:
             time.sleep(delay)
@@ -375,7 +375,7 @@ class TestContextCopyFunction:
 
     def test_copy_context_run_available(self) -> None:
         """Should export copy_context_run helper."""
-        from agenttrace.contrib.executors import copy_context_run
+        from tracecraft.contrib.executors import copy_context_run
 
         def simple_task() -> str:
             return "done"
@@ -386,7 +386,7 @@ class TestContextCopyFunction:
 
     def test_copy_context_run_with_args(self) -> None:
         """Should pass args through copy_context_run."""
-        from agenttrace.contrib.executors import copy_context_run
+        from tracecraft.contrib.executors import copy_context_run
 
         def task_with_args(a: int, b: int) -> int:
             return a + b
@@ -396,7 +396,7 @@ class TestContextCopyFunction:
 
     def test_copy_context_run_preserves_context(self) -> None:
         """Should preserve context when used manually."""
-        from agenttrace.contrib.executors import copy_context_run
+        from tracecraft.contrib.executors import copy_context_run
 
         captured: str | None = None
 
@@ -418,7 +418,7 @@ class TestContextCopyFunction:
 
     def test_copy_context_run_with_standard_executor(self) -> None:
         """Should work with standard ThreadPoolExecutor."""
-        from agenttrace.contrib.executors import copy_context_run
+        from tracecraft.contrib.executors import copy_context_run
 
         captured: str | None = None
 
@@ -443,7 +443,7 @@ class TestNestedContexts:
 
     def test_nested_executors(self) -> None:
         """Should work with nested executor calls."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         inner_results: list[str] = []
 
@@ -483,13 +483,13 @@ class TestExecutorProtocol:
         """Should be a subclass of Executor."""
         from concurrent.futures import Executor
 
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         assert issubclass(TALContextExecutor, Executor)
 
     def test_submit_returns_future(self) -> None:
         """Should return Future from submit."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         with TALContextExecutor(max_workers=1) as executor:
             future = executor.submit(lambda: 42)
@@ -498,7 +498,7 @@ class TestExecutorProtocol:
 
     def test_map_returns_iterator(self) -> None:
         """Should return iterator from map."""
-        from agenttrace.contrib.executors import TALContextExecutor
+        from tracecraft.contrib.executors import TALContextExecutor
 
         with TALContextExecutor(max_workers=1) as executor:
             result = executor.map(lambda x: x * 2, [1, 2, 3])

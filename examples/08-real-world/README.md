@@ -3,7 +3,7 @@
 > **Status: Coming Soon** - This section is planned but examples are not yet implemented.
 > See [09-advanced/05_multi_agent.py](../09-advanced/05_multi_agent.py) for multi-agent patterns.
 
-Complete, production-realistic applications demonstrating AgentTrace integration.
+Complete, production-realistic applications demonstrating TraceCraft integration.
 
 ## Overview
 
@@ -48,7 +48,7 @@ rag_chatbot/
 User Query
     ↓
 ┌─────────────────────────────────┐
-│         AgentTrace Run          │
+│         TraceCraft Run          │
 ├─────────────────────────────────┤
 │  ┌─────────────┐                │
 │  │  Retriever  │ @trace_retrieval

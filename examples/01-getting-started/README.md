@@ -1,6 +1,6 @@
 # 01 - Getting Started
 
-Learn the fundamentals of AgentTrace in under 30 minutes. These examples require no API keys and run with mocked LLM calls.
+Learn the fundamentals of TraceCraft in under 30 minutes. These examples require no API keys and run with mocked LLM calls.
 
 ## Learning Path
 
@@ -14,7 +14,7 @@ Learn the fundamentals of AgentTrace in under 30 minutes. These examples require
 ## Prerequisites
 
 - Python 3.10+
-- AgentTrace installed: `pip install agenttrace`
+- TraceCraft installed: `pip install tracecraft`
 
 No API keys or external services required.
 
@@ -38,7 +38,7 @@ python run_example.py 01-getting-started/01_hello_world.py
 
 ### 01_hello_world.py
 
-- Initialize AgentTrace with `agenttrace.init()`
+- Initialize TraceCraft with `tracecraft.init()`
 - Use `@trace_llm` decorator
 - Group traces with `runtime.run()`
 - View traces in console and JSONL
@@ -65,8 +65,8 @@ python run_example.py 01-getting-started/01_hello_world.py
 
 - Default configuration
 - Init parameters
-- Environment variables (all `AGENTTRACE_*` vars)
-- Configuration objects (`AgentTraceConfig`)
+- Environment variables (all `TRACECRAFT_*` vars)
+- Configuration objects (`TraceCraftConfig`)
 - Loading config with overrides
 - Environment-specific configuration (dev/staging/prod)
 
@@ -75,7 +75,7 @@ python run_example.py 01-getting-started/01_hello_world.py
 ### Decorators
 
 ```python
-from agenttrace.instrumentation.decorators import (
+from tracecraft.instrumentation.decorators import (
     trace_agent,      # Agent-level orchestration
     trace_llm,        # LLM calls
     trace_tool,       # Tools and utilities
@@ -90,9 +90,9 @@ def my_llm_function(prompt: str) -> str:
 ### Context Managers
 
 ```python
-import agenttrace
+import tracecraft
 
-runtime = agenttrace.init()
+runtime = tracecraft.init()
 
 # Sync
 with runtime.run("my_run"):
@@ -106,9 +106,9 @@ async with runtime.run_async("my_async_run"):
 ### Configuration
 
 ```python
-from agenttrace.core.config import AgentTraceConfig, SamplingConfig
+from tracecraft.core.config import TraceCraftConfig, SamplingConfig
 
-config = AgentTraceConfig(
+config = TraceCraftConfig(
     service_name="my-service",
     sampling=SamplingConfig(rate=0.5),
 )
@@ -117,8 +117,8 @@ config = AgentTraceConfig(
 Or via environment variables:
 
 ```bash
-export AGENTTRACE_SERVICE_NAME=my-service
-export AGENTTRACE_SAMPLING_RATE=0.5
+export TRACECRAFT_SERVICE_NAME=my-service
+export TRACECRAFT_SAMPLING_RATE=0.5
 ```
 
 ## Output
@@ -126,7 +126,7 @@ export AGENTTRACE_SAMPLING_RATE=0.5
 All examples produce:
 
 1. **Console output** - Rich tree visualization of traces
-2. **JSONL file** - `traces/agenttrace.jsonl` (or custom path)
+2. **JSONL file** - `traces/tracecraft.jsonl` (or custom path)
 
 Example console output:
 
@@ -144,12 +144,12 @@ AgentRun: my_run
 ### "No traces appearing"
 
 - Ensure you're using a context manager or calling `runtime.end_run(run)`
-- Check that `AGENTTRACE_CONSOLE_ENABLED` isn't set to `false`
+- Check that `TRACECRAFT_CONSOLE_ENABLED` isn't set to `false`
 
-### "ModuleNotFoundError: agenttrace"
+### "ModuleNotFoundError: tracecraft"
 
 ```bash
-pip install agenttrace
+pip install tracecraft
 ```
 
 ### "Permission denied" for traces file

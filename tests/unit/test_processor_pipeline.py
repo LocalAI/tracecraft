@@ -14,7 +14,7 @@ from uuid import uuid4
 import pytest
 
 if TYPE_CHECKING:
-    from agenttrace.core.models import AgentRun
+    from tracecraft.core.models import AgentRun
 
 
 class TestBaseProcessor:
@@ -22,20 +22,20 @@ class TestBaseProcessor:
 
     def test_base_processor_is_abstract(self) -> None:
         """BaseProcessor should be abstract and not directly instantiable."""
-        from agenttrace.processors.base import BaseProcessor
+        from tracecraft.processors.base import BaseProcessor
 
         with pytest.raises(TypeError):
             BaseProcessor()  # type: ignore
 
     def test_processor_has_process_method(self) -> None:
         """Processors must implement the process method."""
-        from agenttrace.processors.base import BaseProcessor
+        from tracecraft.processors.base import BaseProcessor
 
         assert hasattr(BaseProcessor, "process")
 
     def test_processor_has_name_property(self) -> None:
         """Processors should have a name property."""
-        from agenttrace.processors.base import BaseProcessor
+        from tracecraft.processors.base import BaseProcessor
 
         assert hasattr(BaseProcessor, "name")
 
@@ -45,8 +45,8 @@ class TestRedactionProcessorAdapter:
 
     def test_redaction_adapter_processes_run(self, sample_run_with_pii) -> None:
         """Redaction adapter should redact PII from run."""
-        from agenttrace.processors.base import RedactionProcessorAdapter
-        from agenttrace.processors.redaction import RedactionProcessor
+        from tracecraft.processors.base import RedactionProcessorAdapter
+        from tracecraft.processors.redaction import RedactionProcessor
 
         processor = RedactionProcessor()
         adapter = RedactionProcessorAdapter(processor)
@@ -61,8 +61,8 @@ class TestRedactionProcessorAdapter:
 
     def test_redaction_adapter_returns_new_run(self, sample_run_with_pii) -> None:
         """Redaction adapter should return a new run, not mutate original."""
-        from agenttrace.processors.base import RedactionProcessorAdapter
-        from agenttrace.processors.redaction import RedactionProcessor
+        from tracecraft.processors.base import RedactionProcessorAdapter
+        from tracecraft.processors.redaction import RedactionProcessor
 
         processor = RedactionProcessor()
         adapter = RedactionProcessorAdapter(processor)
@@ -80,8 +80,8 @@ class TestSamplingProcessorAdapter:
 
     def test_sampling_adapter_keeps_at_rate_1(self, sample_run) -> None:
         """Sampling adapter should keep runs at 100% rate."""
-        from agenttrace.processors.base import SamplingProcessorAdapter
-        from agenttrace.processors.sampling import SamplingProcessor
+        from tracecraft.processors.base import SamplingProcessorAdapter
+        from tracecraft.processors.sampling import SamplingProcessor
 
         processor = SamplingProcessor(default_rate=1.0)
         adapter = SamplingProcessorAdapter(processor)
@@ -93,8 +93,8 @@ class TestSamplingProcessorAdapter:
 
     def test_sampling_adapter_drops_at_rate_0(self, sample_run) -> None:
         """Sampling adapter should drop runs at 0% rate."""
-        from agenttrace.processors.base import SamplingProcessorAdapter
-        from agenttrace.processors.sampling import SamplingProcessor
+        from tracecraft.processors.base import SamplingProcessorAdapter
+        from tracecraft.processors.sampling import SamplingProcessor
 
         processor = SamplingProcessor(default_rate=0.0)
         adapter = SamplingProcessorAdapter(processor)
@@ -105,8 +105,8 @@ class TestSamplingProcessorAdapter:
 
     def test_sampling_adapter_keeps_error_traces(self, sample_run_with_error) -> None:
         """Sampling adapter should keep error traces even at 0% rate."""
-        from agenttrace.processors.base import SamplingProcessorAdapter
-        from agenttrace.processors.sampling import SamplingProcessor
+        from tracecraft.processors.base import SamplingProcessorAdapter
+        from tracecraft.processors.sampling import SamplingProcessor
 
         processor = SamplingProcessor(default_rate=0.0, always_keep_errors=True)
         adapter = SamplingProcessorAdapter(processor)
@@ -122,8 +122,8 @@ class TestEnrichmentProcessorAdapter:
 
     def test_enrichment_adapter_adds_token_counts(self, sample_run_with_llm_step) -> None:
         """Enrichment adapter should add token counts to LLM steps."""
-        from agenttrace.processors.base import EnrichmentProcessorAdapter
-        from agenttrace.processors.enrichment import TokenEnrichmentProcessor
+        from tracecraft.processors.base import EnrichmentProcessorAdapter
+        from tracecraft.processors.enrichment import TokenEnrichmentProcessor
 
         processor = TokenEnrichmentProcessor()
         adapter = EnrichmentProcessorAdapter(processor)
@@ -144,10 +144,10 @@ class TestProcessorPipelineIntegration:
 
     def test_runtime_accepts_config(self) -> None:
         """Runtime init should accept a config object."""
-        from agenttrace.core.config import AgentTraceConfig
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.config import TraceCraftConfig
+        from tracecraft.core.runtime import TALRuntime
 
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             service_name="test-service",
             console_enabled=False,
             jsonl_enabled=False,
@@ -164,10 +164,10 @@ class TestProcessorPipelineIntegration:
 
     def test_runtime_initializes_processors_from_config(self) -> None:
         """Runtime should initialize processors from config."""
-        from agenttrace.core.config import AgentTraceConfig, RedactionConfig, SamplingConfig
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.config import RedactionConfig, SamplingConfig, TraceCraftConfig
+        from tracecraft.core.runtime import TALRuntime
 
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=False,
             redaction=RedactionConfig(enabled=True),
@@ -184,10 +184,10 @@ class TestProcessorPipelineIntegration:
 
     def test_export_applies_processors(self, sample_run_with_pii) -> None:
         """Export should apply processors before exporting."""
-        from agenttrace.core.config import AgentTraceConfig, RedactionConfig
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.config import RedactionConfig, TraceCraftConfig
+        from tracecraft.core.runtime import TALRuntime
 
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=False,
             redaction=RedactionConfig(enabled=True),
@@ -212,10 +212,10 @@ class TestProcessorPipelineIntegration:
 
     def test_export_sampling_filters_runs(self, sample_run) -> None:
         """Export should not export runs that are sampled out."""
-        from agenttrace.core.config import AgentTraceConfig, SamplingConfig
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.config import SamplingConfig, TraceCraftConfig
+        from tracecraft.core.runtime import TALRuntime
 
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=False,
             sampling=SamplingConfig(rate=0.0),  # Drop all
@@ -237,15 +237,15 @@ class TestProcessorPipelineIntegration:
 
     def test_processor_order_safety_default(self) -> None:
         """Default SAFETY order: enrichment → redaction → sampling."""
-        from agenttrace.core.config import (
-            AgentTraceConfig,
+        from tracecraft.core.config import (
             ProcessorOrder,
             RedactionConfig,
             SamplingConfig,
+            TraceCraftConfig,
         )
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.runtime import TALRuntime
 
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=False,
             processor_order=ProcessorOrder.SAFETY,
@@ -285,15 +285,15 @@ class TestProcessorPipelineIntegration:
 
     def test_processor_order_efficiency(self) -> None:
         """EFFICIENCY order: sampling → redaction → enrichment."""
-        from agenttrace.core.config import (
-            AgentTraceConfig,
+        from tracecraft.core.config import (
             ProcessorOrder,
             RedactionConfig,
             SamplingConfig,
+            TraceCraftConfig,
         )
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.runtime import TALRuntime
 
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=False,
             processor_order=ProcessorOrder.EFFICIENCY,
@@ -333,15 +333,15 @@ class TestProcessorPipelineIntegration:
 
     def test_processor_order_without_sampling(self) -> None:
         """Should work without sampling processor (rate=1.0, no error/slow options)."""
-        from agenttrace.core.config import (
-            AgentTraceConfig,
+        from tracecraft.core.config import (
             ProcessorOrder,
             RedactionConfig,
             SamplingConfig,
+            TraceCraftConfig,
         )
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.runtime import TALRuntime
 
-        config = AgentTraceConfig(
+        config = TraceCraftConfig(
             console_enabled=False,
             jsonl_enabled=False,
             processor_order=ProcessorOrder.SAFETY,
@@ -371,11 +371,11 @@ class TestEnvVarConfiguration:
     """Tests for environment variable configuration."""
 
     def test_env_var_redaction_enabled(self, sample_run_with_pii, monkeypatch) -> None:
-        """AGENTTRACE_REDACTION_ENABLED=true should enable redaction."""
-        monkeypatch.setenv("AGENTTRACE_REDACTION_ENABLED", "true")
+        """TRACECRAFT_REDACTION_ENABLED=true should enable redaction."""
+        monkeypatch.setenv("TRACECRAFT_REDACTION_ENABLED", "true")
 
-        from agenttrace.core.config import load_config_from_env
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.config import load_config_from_env
+        from tracecraft.core.runtime import TALRuntime
 
         config = load_config_from_env()
 
@@ -395,11 +395,11 @@ class TestEnvVarConfiguration:
             assert "test@example.com" not in str(exported_run.steps[0].inputs)
 
     def test_env_var_sampling_rate(self, sample_run, monkeypatch) -> None:
-        """AGENTTRACE_SAMPLING_RATE should control sampling."""
-        monkeypatch.setenv("AGENTTRACE_SAMPLING_RATE", "0.0")
+        """TRACECRAFT_SAMPLING_RATE should control sampling."""
+        monkeypatch.setenv("TRACECRAFT_SAMPLING_RATE", "0.0")
 
-        from agenttrace.core.config import load_config_from_env
-        from agenttrace.core.runtime import TALRuntime
+        from tracecraft.core.config import load_config_from_env
+        from tracecraft.core.runtime import TALRuntime
 
         config = load_config_from_env()
         assert config.sampling.rate == 0.0
@@ -422,7 +422,7 @@ class TestEnvVarConfiguration:
 @pytest.fixture
 def sample_run_with_pii(sample_timestamp) -> AgentRun:
     """Create a run with PII in step inputs."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     step = Step(
@@ -445,7 +445,7 @@ def sample_run_with_pii(sample_timestamp) -> AgentRun:
 @pytest.fixture
 def sample_run_with_error(sample_timestamp) -> AgentRun:
     """Create a run with an error."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     step = Step(
@@ -469,7 +469,7 @@ def sample_run_with_error(sample_timestamp) -> AgentRun:
 @pytest.fixture
 def sample_run_with_llm_step(sample_timestamp) -> AgentRun:
     """Create a run with an LLM step for enrichment testing."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     step = Step(

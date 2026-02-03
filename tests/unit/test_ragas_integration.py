@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.models import AgentRun, Step, StepType
 
 
 @pytest.fixture
@@ -97,7 +97,7 @@ class TestRagasHelperFunctions:
 
     def test_flatten_steps(self):
         """Test flattening nested step hierarchy."""
-        from agenttrace.integrations.ragas import _flatten_steps
+        from tracecraft.integrations.ragas import _flatten_steps
 
         trace_id = uuid4()
         child_step = Step(
@@ -125,7 +125,7 @@ class TestRagasHelperFunctions:
 
     def test_load_traces_from_jsonl(self, rag_traces_jsonl):
         """Test loading traces from JSONL file."""
-        from agenttrace.integrations.ragas import _load_traces_from_jsonl
+        from tracecraft.integrations.ragas import _load_traces_from_jsonl
 
         traces = _load_traces_from_jsonl(rag_traces_jsonl)
 
@@ -134,7 +134,7 @@ class TestRagasHelperFunctions:
 
     def test_load_traces_file_not_found(self, tmp_path):
         """Test FileNotFoundError for non-existent file."""
-        from agenttrace.integrations.ragas import _load_traces_from_jsonl
+        from tracecraft.integrations.ragas import _load_traces_from_jsonl
 
         with pytest.raises(FileNotFoundError):
             _load_traces_from_jsonl(tmp_path / "nonexistent.jsonl")
@@ -145,28 +145,28 @@ class TestFilterRagSteps:
 
     def test_includes_retrieval_steps(self, sample_rag_traces):
         """Test that retrieval steps are included."""
-        from agenttrace.integrations.ragas import filter_rag_steps
+        from tracecraft.integrations.ragas import filter_rag_steps
 
         retrieval_step = sample_rag_traces[0].steps[0]
         assert filter_rag_steps(retrieval_step) is True
 
     def test_includes_llm_steps_with_context(self, sample_rag_traces):
         """Test that LLM steps with context are included."""
-        from agenttrace.integrations.ragas import filter_rag_steps
+        from tracecraft.integrations.ragas import filter_rag_steps
 
         llm_step_with_context = sample_rag_traces[0].steps[1]
         assert filter_rag_steps(llm_step_with_context) is True
 
     def test_excludes_llm_steps_without_context(self, sample_rag_traces):
         """Test that LLM steps without context are excluded."""
-        from agenttrace.integrations.ragas import filter_rag_steps
+        from tracecraft.integrations.ragas import filter_rag_steps
 
         llm_step_no_context = sample_rag_traces[1].steps[0]
         assert filter_rag_steps(llm_step_no_context) is False
 
     def test_excludes_other_step_types(self):
         """Test that non-RAG step types are excluded."""
-        from agenttrace.integrations.ragas import filter_rag_steps
+        from tracecraft.integrations.ragas import filter_rag_steps
 
         trace_id = uuid4()
         tool_step = Step(
@@ -184,7 +184,7 @@ class TestDefaultExtractors:
 
     def test_extract_question_from_question_field(self, sample_rag_traces):
         """Test extracting question from 'question' field."""
-        from agenttrace.integrations.ragas import _default_extract_question
+        from tracecraft.integrations.ragas import _default_extract_question
 
         step = sample_rag_traces[0].steps[1]
         result = _default_extract_question(step)
@@ -193,7 +193,7 @@ class TestDefaultExtractors:
 
     def test_extract_question_from_query_field(self, sample_rag_traces):
         """Test extracting question from 'query' field."""
-        from agenttrace.integrations.ragas import _default_extract_question
+        from tracecraft.integrations.ragas import _default_extract_question
 
         step = sample_rag_traces[1].steps[0]
         result = _default_extract_question(step)
@@ -202,7 +202,7 @@ class TestDefaultExtractors:
 
     def test_extract_answer_from_answer_field(self, sample_rag_traces):
         """Test extracting answer from 'answer' field."""
-        from agenttrace.integrations.ragas import _default_extract_answer
+        from tracecraft.integrations.ragas import _default_extract_answer
 
         step = sample_rag_traces[0].steps[1]
         result = _default_extract_answer(step)
@@ -211,7 +211,7 @@ class TestDefaultExtractors:
 
     def test_extract_answer_from_response_field(self, sample_rag_traces):
         """Test extracting answer from 'response' field."""
-        from agenttrace.integrations.ragas import _default_extract_answer
+        from tracecraft.integrations.ragas import _default_extract_answer
 
         step = sample_rag_traces[1].steps[0]
         result = _default_extract_answer(step)
@@ -220,7 +220,7 @@ class TestDefaultExtractors:
 
     def test_extract_contexts_list(self, sample_rag_traces):
         """Test extracting contexts list."""
-        from agenttrace.integrations.ragas import _default_extract_contexts
+        from tracecraft.integrations.ragas import _default_extract_contexts
 
         step = sample_rag_traces[0].steps[1]
         result = _default_extract_contexts(step)
@@ -230,7 +230,7 @@ class TestDefaultExtractors:
 
     def test_extract_contexts_empty_when_missing(self, sample_rag_traces):
         """Test that empty list is returned when no contexts."""
-        from agenttrace.integrations.ragas import _default_extract_contexts
+        from tracecraft.integrations.ragas import _default_extract_contexts
 
         step = sample_rag_traces[1].steps[0]
         result = _default_extract_contexts(step)
@@ -239,7 +239,7 @@ class TestDefaultExtractors:
 
     def test_extract_ground_truth(self):
         """Test ground truth extraction."""
-        from agenttrace.integrations.ragas import _default_extract_ground_truth
+        from tracecraft.integrations.ragas import _default_extract_ground_truth
 
         trace_id = uuid4()
         step = Step(
@@ -256,7 +256,7 @@ class TestDefaultExtractors:
 
     def test_extract_ground_truth_none_when_missing(self, sample_rag_traces):
         """Test that None is returned when no ground truth."""
-        from agenttrace.integrations.ragas import _default_extract_ground_truth
+        from tracecraft.integrations.ragas import _default_extract_ground_truth
 
         step = sample_rag_traces[0].steps[0]
         result = _default_extract_ground_truth(step)

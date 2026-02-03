@@ -14,7 +14,7 @@ class TestFoundryExporter:
 
     def test_create_foundry_exporter(self) -> None:
         """create_foundry_exporter should return configured exporter."""
-        from agenttrace.contrib.azure import create_foundry_exporter
+        from tracecraft.contrib.azure import create_foundry_exporter
 
         connection_string = (
             "InstrumentationKey=test-key;"
@@ -31,7 +31,7 @@ class TestFoundryExporter:
 
     def test_create_foundry_exporter_stores_config(self) -> None:
         """create_foundry_exporter should store FoundryConfig on exporter."""
-        from agenttrace.contrib.azure import FoundryConfig, create_foundry_exporter
+        from tracecraft.contrib.azure import FoundryConfig, create_foundry_exporter
 
         connection_string = (
             "InstrumentationKey=test-key;"
@@ -56,7 +56,7 @@ class TestFoundryExporter:
 
     def test_create_foundry_exporter_content_recording_default(self) -> None:
         """create_foundry_exporter should have content recording disabled by default."""
-        from agenttrace.contrib.azure import create_foundry_exporter
+        from tracecraft.contrib.azure import create_foundry_exporter
 
         connection_string = (
             "InstrumentationKey=test-key;"
@@ -75,16 +75,16 @@ class TestConfigureForAIFoundry:
 
     def test_configure_for_ai_foundry(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """configure_for_ai_foundry should use environment variables."""
-        from agenttrace.contrib.azure import configure_for_ai_foundry
+        from tracecraft.contrib.azure import configure_for_ai_foundry
 
         connection_string = (
             "InstrumentationKey=test-key;"
             "IngestionEndpoint=https://test.applicationinsights.azure.com/"
         )
         monkeypatch.setenv("APPLICATIONINSIGHTS_CONNECTION_STRING", connection_string)
-        monkeypatch.setenv("AGENTTRACE_AZURE_CONTENT_RECORDING", "true")
-        monkeypatch.setenv("AGENTTRACE_AZURE_AGENT_NAME", "env-agent")
-        monkeypatch.setenv("AGENTTRACE_AZURE_AGENT_ID", "env-agent-id")
+        monkeypatch.setenv("TRACECRAFT_AZURE_CONTENT_RECORDING", "true")
+        monkeypatch.setenv("TRACECRAFT_AZURE_AGENT_NAME", "env-agent")
+        monkeypatch.setenv("TRACECRAFT_AZURE_AGENT_ID", "env-agent-id")
 
         exporter = configure_for_ai_foundry(service_name="my-agent")
 
@@ -96,15 +96,15 @@ class TestConfigureForAIFoundry:
 
     def test_configure_overrides_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """configure_for_ai_foundry should allow overriding env values."""
-        from agenttrace.contrib.azure import configure_for_ai_foundry
+        from tracecraft.contrib.azure import configure_for_ai_foundry
 
         connection_string = (
             "InstrumentationKey=test-key;"
             "IngestionEndpoint=https://test.applicationinsights.azure.com/"
         )
         monkeypatch.setenv("APPLICATIONINSIGHTS_CONNECTION_STRING", connection_string)
-        monkeypatch.setenv("AGENTTRACE_AZURE_CONTENT_RECORDING", "false")
-        monkeypatch.setenv("AGENTTRACE_AZURE_AGENT_NAME", "env-agent")
+        monkeypatch.setenv("TRACECRAFT_AZURE_CONTENT_RECORDING", "false")
+        monkeypatch.setenv("TRACECRAFT_AZURE_AGENT_NAME", "env-agent")
 
         exporter = configure_for_ai_foundry(
             enable_content_recording=True,
@@ -122,7 +122,7 @@ class TestFoundryConfig:
 
     def test_foundry_config_defaults(self) -> None:
         """FoundryConfig should have sensible defaults."""
-        from agenttrace.contrib.azure import FoundryConfig
+        from tracecraft.contrib.azure import FoundryConfig
 
         config = FoundryConfig()
 
@@ -134,7 +134,7 @@ class TestFoundryConfig:
 
     def test_foundry_config_with_values(self) -> None:
         """FoundryConfig should accept custom values."""
-        from agenttrace.contrib.azure import FoundryConfig
+        from tracecraft.contrib.azure import FoundryConfig
 
         config = FoundryConfig(
             enable_content_recording=True,
@@ -156,7 +156,7 @@ class TestAzureAITracerAdapter:
 
     def test_adapter_init(self) -> None:
         """AzureAITracerAdapter should initialize correctly."""
-        from agenttrace.contrib.azure import AzureAITracerAdapter
+        from tracecraft.contrib.azure import AzureAITracerAdapter
 
         adapter = AzureAITracerAdapter(
             enable_content_recording=True,
@@ -170,7 +170,7 @@ class TestAzureAITracerAdapter:
 
     def test_adapter_stores_config(self) -> None:
         """AzureAITracerAdapter should store FoundryConfig."""
-        from agenttrace.contrib.azure import AzureAITracerAdapter, FoundryConfig
+        from tracecraft.contrib.azure import AzureAITracerAdapter, FoundryConfig
 
         adapter = AzureAITracerAdapter(
             enable_content_recording=True,
@@ -183,7 +183,7 @@ class TestAzureAITracerAdapter:
 
     def test_adapter_lazy_handler_init(self) -> None:
         """AzureAITracerAdapter should lazily initialize handler."""
-        from agenttrace.contrib.azure import AzureAITracerAdapter
+        from tracecraft.contrib.azure import AzureAITracerAdapter
 
         adapter = AzureAITracerAdapter()
 
@@ -192,7 +192,7 @@ class TestAzureAITracerAdapter:
 
     def test_adapter_clear(self) -> None:
         """AzureAITracerAdapter clear should handle uninitialized handler."""
-        from agenttrace.contrib.azure import AzureAITracerAdapter
+        from tracecraft.contrib.azure import AzureAITracerAdapter
 
         adapter = AzureAITracerAdapter()
 
@@ -205,17 +205,17 @@ class TestAzureFoundryConfigEnv:
 
     def test_load_config_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """load_config_from_env should load Azure Foundry config."""
-        from agenttrace.core.config import load_config_from_env
+        from tracecraft.core.config import load_config_from_env
 
         connection_string = (
             "InstrumentationKey=test-key;"
             "IngestionEndpoint=https://test.applicationinsights.azure.com/"
         )
-        monkeypatch.setenv("AGENTTRACE_AZURE_FOUNDRY_ENABLED", "true")
+        monkeypatch.setenv("TRACECRAFT_AZURE_FOUNDRY_ENABLED", "true")
         monkeypatch.setenv("APPLICATIONINSIGHTS_CONNECTION_STRING", connection_string)
-        monkeypatch.setenv("AGENTTRACE_AZURE_CONTENT_RECORDING", "true")
-        monkeypatch.setenv("AGENTTRACE_AZURE_AGENT_NAME", "env-agent")
-        monkeypatch.setenv("AGENTTRACE_AZURE_AGENT_ID", "env-agent-id")
+        monkeypatch.setenv("TRACECRAFT_AZURE_CONTENT_RECORDING", "true")
+        monkeypatch.setenv("TRACECRAFT_AZURE_AGENT_NAME", "env-agent")
+        monkeypatch.setenv("TRACECRAFT_AZURE_AGENT_ID", "env-agent-id")
 
         config = load_config_from_env()
 
@@ -227,7 +227,7 @@ class TestAzureFoundryConfigEnv:
 
     def test_azure_config_defaults(self) -> None:
         """Azure Foundry config should have sensible defaults."""
-        from agenttrace.core.config import AzureFoundryConfig
+        from tracecraft.core.config import AzureFoundryConfig
 
         config = AzureFoundryConfig()
 
@@ -244,7 +244,7 @@ class TestAppInsightsConnectionString:
 
     def test_parse_connection_string(self) -> None:
         """parse_connection_string should extract components."""
-        from agenttrace.contrib.azure import parse_connection_string
+        from tracecraft.contrib.azure import parse_connection_string
 
         connection_string = (
             "InstrumentationKey=abc123;"
@@ -260,21 +260,21 @@ class TestAppInsightsConnectionString:
 
     def test_create_appinsights_exporter_missing_connection(self) -> None:
         """create_appinsights_exporter should raise if no connection string."""
-        from agenttrace.contrib.azure import create_appinsights_exporter
+        from tracecraft.contrib.azure import create_appinsights_exporter
 
         with pytest.raises(ValueError, match="connection string required"):
             create_appinsights_exporter()
 
     def test_create_appinsights_exporter_missing_endpoint(self) -> None:
         """create_appinsights_exporter should raise if missing IngestionEndpoint."""
-        from agenttrace.contrib.azure import create_appinsights_exporter
+        from tracecraft.contrib.azure import create_appinsights_exporter
 
         with pytest.raises(ValueError, match="missing IngestionEndpoint"):
             create_appinsights_exporter(connection_string="InstrumentationKey=test")
 
     def test_create_appinsights_exporter_missing_key(self) -> None:
         """create_appinsights_exporter should raise if missing InstrumentationKey."""
-        from agenttrace.contrib.azure import create_appinsights_exporter
+        from tracecraft.contrib.azure import create_appinsights_exporter
 
         with pytest.raises(ValueError, match="missing InstrumentationKey"):
             create_appinsights_exporter(

@@ -30,15 +30,15 @@ class TestLiveLlamaIndexBasic:
         from llama_index.core.callbacks import CallbackManager
         from llama_index.llms.openai import OpenAI
 
-        import agenttrace
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        runtime = agenttrace.init(console=True, jsonl=True, jsonl_path=temp_jsonl_path)
+        runtime = tracecraft.init(console=True, jsonl=True, jsonl_path=temp_jsonl_path)
 
         # Configure LlamaIndex
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         Settings.callback_manager = CallbackManager(handlers=[handler])
         llm = OpenAI(model=live_test_model, max_tokens=max_tokens)
 
@@ -70,14 +70,14 @@ class TestLiveLlamaIndexBasic:
         from llama_index.core.llms import ChatMessage
         from llama_index.llms.openai import OpenAI
 
-        import agenttrace
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        agenttrace.init(console=True, jsonl=False)
+        tracecraft.init(console=True, jsonl=False)
 
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         Settings.callback_manager = CallbackManager(handlers=[handler])
         llm = OpenAI(model=live_test_model, max_tokens=max_tokens)
 
@@ -112,14 +112,14 @@ class TestLiveLlamaIndexIndex:
         from llama_index.core.callbacks import CallbackManager
         from llama_index.llms.openai import OpenAI
 
-        import agenttrace
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        runtime = agenttrace.init(console=True, jsonl=False)
+        runtime = tracecraft.init(console=True, jsonl=False)
 
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         Settings.callback_manager = CallbackManager(handlers=[handler])
         Settings.llm = OpenAI(model=live_test_model, max_tokens=max_tokens)
         Settings.chunk_size = 256
@@ -163,14 +163,14 @@ class TestLiveLlamaIndexStreaming:
         from llama_index.core.callbacks import CallbackManager
         from llama_index.llms.openai import OpenAI
 
-        import agenttrace
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
+        import tracecraft
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
 
-        agenttrace.init(console=True, jsonl=False)
+        tracecraft.init(console=True, jsonl=False)
 
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         Settings.callback_manager = CallbackManager(handlers=[handler])
         llm = OpenAI(model=live_test_model, max_tokens=max_tokens)
 
@@ -205,20 +205,20 @@ class TestLiveLlamaIndexComplex:
         from llama_index.core.callbacks import CallbackManager
         from llama_index.llms.openai import OpenAI
 
-        import agenttrace
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun, StepType
+        import tracecraft
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun, StepType
 
-        runtime = agenttrace.init(console=True, jsonl=False)
+        runtime = tracecraft.init(console=True, jsonl=False)
 
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         Settings.callback_manager = CallbackManager(handlers=[handler])
         Settings.llm = OpenAI(model=live_test_model, max_tokens=max_tokens)
 
         documents = [
-            Document(text="AgentTrace is a vendor-neutral observability SDK."),
-            Document(text="AgentTrace supports LangChain, LlamaIndex, and PydanticAI."),
+            Document(text="TraceCraft is a vendor-neutral observability SDK."),
+            Document(text="TraceCraft supports LangChain, LlamaIndex, and PydanticAI."),
         ]
 
         run = AgentRun(name="test_retrieval_trace", start_time=datetime.now(UTC))
@@ -226,7 +226,7 @@ class TestLiveLlamaIndexComplex:
         with run_context(run):
             index = VectorStoreIndex.from_documents(documents)
             query_engine = index.as_query_engine()
-            response = query_engine.query("What frameworks does AgentTrace support?")
+            response = query_engine.query("What frameworks does TraceCraft support?")
 
         runtime.end_run(run)
         handler.clear()

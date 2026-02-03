@@ -9,7 +9,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.models import AgentRun, Step, StepType
 
 
 @pytest.fixture
@@ -101,7 +101,7 @@ class TestTracesToCsv:
 
     def test_exports_traces_to_csv(self, sample_traces, tmp_path):
         """Test basic CSV export."""
-        from agenttrace.datasets.converters import traces_to_csv
+        from tracecraft.datasets.converters import traces_to_csv
 
         output_path = tmp_path / "output.csv"
         count = traces_to_csv(sample_traces, output_path)
@@ -118,7 +118,7 @@ class TestTracesToCsv:
 
     def test_exports_from_jsonl_path(self, traces_jsonl, tmp_path):
         """Test export from JSONL file path."""
-        from agenttrace.datasets.converters import traces_to_csv
+        from tracecraft.datasets.converters import traces_to_csv
 
         output_path = tmp_path / "output.csv"
         count = traces_to_csv(traces_jsonl, output_path)
@@ -128,7 +128,7 @@ class TestTracesToCsv:
 
     def test_custom_columns(self, sample_traces, tmp_path):
         """Test export with custom columns."""
-        from agenttrace.datasets.converters import traces_to_csv
+        from tracecraft.datasets.converters import traces_to_csv
 
         output_path = tmp_path / "output.csv"
         columns = ["trace_id", "step_name", "model", "duration_ms"]
@@ -141,7 +141,7 @@ class TestTracesToCsv:
 
     def test_filter_function(self, sample_traces, tmp_path):
         """Test export with filter function."""
-        from agenttrace.datasets.converters import traces_to_csv
+        from tracecraft.datasets.converters import traces_to_csv
 
         output_path = tmp_path / "output.csv"
         filter_fn = lambda step: step.type.value == "llm"
@@ -152,7 +152,7 @@ class TestTracesToCsv:
 
     def test_creates_parent_directories(self, sample_traces, tmp_path):
         """Test that parent directories are created."""
-        from agenttrace.datasets.converters import traces_to_csv
+        from tracecraft.datasets.converters import traces_to_csv
 
         output_path = tmp_path / "nested" / "dir" / "output.csv"
         traces_to_csv(sample_traces, output_path)
@@ -161,7 +161,7 @@ class TestTracesToCsv:
 
     def test_csv_row_content(self, sample_traces, tmp_path):
         """Test CSV row content is correct."""
-        from agenttrace.datasets.converters import traces_to_csv
+        from tracecraft.datasets.converters import traces_to_csv
 
         output_path = tmp_path / "output.csv"
         traces_to_csv(sample_traces, output_path)
@@ -181,7 +181,7 @@ class TestTracesToJsonl:
 
     def test_exports_raw_format(self, sample_traces, tmp_path):
         """Test export in raw format."""
-        from agenttrace.datasets.converters import traces_to_jsonl
+        from tracecraft.datasets.converters import traces_to_jsonl
 
         output_path = tmp_path / "output.jsonl"
         count = traces_to_jsonl(sample_traces, output_path, format_type="raw")
@@ -199,7 +199,7 @@ class TestTracesToJsonl:
 
     def test_exports_openai_format(self, sample_traces, tmp_path):
         """Test export in OpenAI format."""
-        from agenttrace.datasets.converters import traces_to_jsonl
+        from tracecraft.datasets.converters import traces_to_jsonl
 
         output_path = tmp_path / "output.jsonl"
         count = traces_to_jsonl(sample_traces, output_path, format_type="openai")
@@ -214,7 +214,7 @@ class TestTracesToJsonl:
 
     def test_exports_anthropic_format(self, sample_traces, tmp_path):
         """Test export in Anthropic format."""
-        from agenttrace.datasets.converters import traces_to_jsonl
+        from tracecraft.datasets.converters import traces_to_jsonl
 
         output_path = tmp_path / "output.jsonl"
         count = traces_to_jsonl(sample_traces, output_path, format_type="anthropic")
@@ -228,7 +228,7 @@ class TestTracesToJsonl:
 
     def test_applies_filter(self, sample_traces, tmp_path):
         """Test filter function is applied."""
-        from agenttrace.datasets.converters import traces_to_jsonl
+        from tracecraft.datasets.converters import traces_to_jsonl
 
         output_path = tmp_path / "output.jsonl"
         filter_fn = lambda step: step.model_name == "gpt-4"
@@ -238,7 +238,7 @@ class TestTracesToJsonl:
 
     def test_loads_from_jsonl_path(self, traces_jsonl, tmp_path):
         """Test loading from JSONL path."""
-        from agenttrace.datasets.converters import traces_to_jsonl
+        from tracecraft.datasets.converters import traces_to_jsonl
 
         output_path = tmp_path / "output.jsonl"
         count = traces_to_jsonl(traces_jsonl, output_path, format_type="raw")
@@ -251,7 +251,7 @@ class TestCreateGoldenDataset:
 
     def test_creates_golden_dataset(self, sample_traces, tmp_path):
         """Test creating golden dataset."""
-        from agenttrace.datasets.converters import create_golden_dataset
+        from tracecraft.datasets.converters import create_golden_dataset
 
         output_path = tmp_path / "golden.jsonl"
         count = create_golden_dataset(sample_traces, output_path)
@@ -262,7 +262,7 @@ class TestCreateGoldenDataset:
 
     def test_includes_expected_output(self, sample_traces, tmp_path):
         """Test that expected output is included."""
-        from agenttrace.datasets.converters import create_golden_dataset
+        from tracecraft.datasets.converters import create_golden_dataset
 
         output_path = tmp_path / "golden.jsonl"
         create_golden_dataset(sample_traces, output_path, include_expected=True)
@@ -273,7 +273,7 @@ class TestCreateGoldenDataset:
 
     def test_excludes_expected_output(self, sample_traces, tmp_path):
         """Test that expected output can be excluded."""
-        from agenttrace.datasets.converters import create_golden_dataset
+        from tracecraft.datasets.converters import create_golden_dataset
 
         output_path = tmp_path / "golden.jsonl"
         create_golden_dataset(sample_traces, output_path, include_expected=False)
@@ -284,7 +284,7 @@ class TestCreateGoldenDataset:
 
     def test_includes_metadata(self, sample_traces, tmp_path):
         """Test that metadata is included."""
-        from agenttrace.datasets.converters import create_golden_dataset
+        from tracecraft.datasets.converters import create_golden_dataset
 
         output_path = tmp_path / "golden.jsonl"
         create_golden_dataset(sample_traces, output_path)
@@ -297,7 +297,7 @@ class TestCreateGoldenDataset:
 
     def test_applies_filter(self, sample_traces, tmp_path):
         """Test filter function is applied."""
-        from agenttrace.datasets.converters import create_golden_dataset
+        from tracecraft.datasets.converters import create_golden_dataset
 
         output_path = tmp_path / "golden.jsonl"
         filter_fn = lambda step: step.model_name == "gpt-4"
@@ -311,7 +311,7 @@ class TestCreateFinetuningDataset:
 
     def test_creates_openai_finetuning_dataset(self, sample_traces, tmp_path):
         """Test creating OpenAI fine-tuning dataset."""
-        from agenttrace.datasets.converters import create_finetuning_dataset
+        from tracecraft.datasets.converters import create_finetuning_dataset
 
         output_path = tmp_path / "finetune.jsonl"
         count = create_finetuning_dataset(sample_traces, output_path, format_type="openai")
@@ -324,7 +324,7 @@ class TestCreateFinetuningDataset:
 
     def test_creates_anthropic_finetuning_dataset(self, sample_traces, tmp_path):
         """Test creating Anthropic fine-tuning dataset."""
-        from agenttrace.datasets.converters import create_finetuning_dataset
+        from tracecraft.datasets.converters import create_finetuning_dataset
 
         output_path = tmp_path / "finetune.jsonl"
         count = create_finetuning_dataset(sample_traces, output_path, format_type="anthropic")
@@ -337,7 +337,7 @@ class TestCreateFinetuningDataset:
 
     def test_adds_system_prompt(self, sample_traces, tmp_path):
         """Test adding system prompt."""
-        from agenttrace.datasets.converters import create_finetuning_dataset
+        from tracecraft.datasets.converters import create_finetuning_dataset
 
         output_path = tmp_path / "finetune.jsonl"
         create_finetuning_dataset(
@@ -357,7 +357,7 @@ class TestCreateFinetuningDataset:
 
     def test_applies_filter(self, sample_traces, tmp_path):
         """Test filter function is applied."""
-        from agenttrace.datasets.converters import create_finetuning_dataset
+        from tracecraft.datasets.converters import create_finetuning_dataset
 
         output_path = tmp_path / "finetune.jsonl"
         filter_fn = lambda step: step.model_name == "gpt-4"
@@ -367,7 +367,7 @@ class TestCreateFinetuningDataset:
 
     def test_respects_quality_score(self, sample_traces, tmp_path):
         """Test quality score filtering."""
-        from agenttrace.datasets.converters import create_finetuning_dataset
+        from tracecraft.datasets.converters import create_finetuning_dataset
 
         # Add quality scores to steps
         sample_traces[0].steps[0].attributes = {"quality_score": 0.9}
@@ -381,7 +381,7 @@ class TestCreateFinetuningDataset:
 
     def test_raises_for_unknown_format(self, sample_traces, tmp_path):
         """Test ValueError for unknown format type."""
-        from agenttrace.datasets.converters import create_finetuning_dataset
+        from tracecraft.datasets.converters import create_finetuning_dataset
 
         output_path = tmp_path / "finetune.jsonl"
 
@@ -394,7 +394,7 @@ class TestHelperFunctions:
 
     def test_load_traces_from_jsonl(self, traces_jsonl):
         """Test loading traces from JSONL."""
-        from agenttrace.datasets.converters import _load_traces_from_jsonl
+        from tracecraft.datasets.converters import _load_traces_from_jsonl
 
         traces = _load_traces_from_jsonl(traces_jsonl)
 
@@ -403,14 +403,14 @@ class TestHelperFunctions:
 
     def test_load_traces_file_not_found(self, tmp_path):
         """Test FileNotFoundError for missing file."""
-        from agenttrace.datasets.converters import _load_traces_from_jsonl
+        from tracecraft.datasets.converters import _load_traces_from_jsonl
 
         with pytest.raises(FileNotFoundError):
             _load_traces_from_jsonl(tmp_path / "nonexistent.jsonl")
 
     def test_flatten_steps(self):
         """Test flattening nested steps."""
-        from agenttrace.datasets.converters import _flatten_steps
+        from tracecraft.datasets.converters import _flatten_steps
 
         trace_id = uuid4()
         child = Step(
@@ -438,7 +438,7 @@ class TestHelperFunctions:
 
     def test_extract_messages(self, sample_traces):
         """Test message extraction from step."""
-        from agenttrace.datasets.converters import _extract_messages
+        from tracecraft.datasets.converters import _extract_messages
 
         step = sample_traces[0].steps[0]
         messages = _extract_messages(step)
@@ -449,7 +449,7 @@ class TestHelperFunctions:
 
     def test_extract_messages_from_prompt(self, sample_traces):
         """Test message extraction from prompt field."""
-        from agenttrace.datasets.converters import _extract_messages
+        from tracecraft.datasets.converters import _extract_messages
 
         step = sample_traces[1].steps[0]
         messages = _extract_messages(step)
@@ -461,7 +461,7 @@ class TestHelperFunctions:
 
     def test_extract_output_text(self, sample_traces):
         """Test output text extraction."""
-        from agenttrace.datasets.converters import _extract_output_text
+        from tracecraft.datasets.converters import _extract_output_text
 
         step = sample_traces[0].steps[0]
         output = _extract_output_text(step)
@@ -470,7 +470,7 @@ class TestHelperFunctions:
 
     def test_extract_output_text_from_result(self, sample_traces):
         """Test output extraction from 'result' field."""
-        from agenttrace.datasets.converters import _extract_output_text
+        from tracecraft.datasets.converters import _extract_output_text
 
         step = sample_traces[1].steps[0]
         output = _extract_output_text(step)
@@ -483,7 +483,7 @@ class TestOpenAIFormat:
 
     def test_format_openai(self, sample_traces):
         """Test OpenAI format output."""
-        from agenttrace.datasets.converters import _format_openai
+        from tracecraft.datasets.converters import _format_openai
 
         step = sample_traces[0].steps[0]
         result = _format_openai(step)
@@ -495,7 +495,7 @@ class TestOpenAIFormat:
 
     def test_format_openai_returns_none_for_no_messages(self):
         """Test None returned when no messages can be extracted."""
-        from agenttrace.datasets.converters import _format_openai
+        from tracecraft.datasets.converters import _format_openai
 
         trace_id = uuid4()
         step = Step(
@@ -518,7 +518,7 @@ class TestAnthropicFormat:
 
     def test_format_anthropic(self, sample_traces):
         """Test Anthropic format output."""
-        from agenttrace.datasets.converters import _format_anthropic
+        from tracecraft.datasets.converters import _format_anthropic
 
         step = sample_traces[0].steps[0]
         result = _format_anthropic(step)
@@ -532,7 +532,7 @@ class TestAnthropicFormat:
 
     def test_format_anthropic_finetune_with_system(self, sample_traces):
         """Test Anthropic fine-tune format with system prompt."""
-        from agenttrace.datasets.converters import _format_anthropic_finetune
+        from tracecraft.datasets.converters import _format_anthropic_finetune
 
         step = sample_traces[0].steps[0]
         result = _format_anthropic_finetune(step, "Custom system prompt")

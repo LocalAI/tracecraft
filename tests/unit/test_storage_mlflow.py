@@ -9,8 +9,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from agenttrace.core.models import AgentRun
-from agenttrace.storage.base import TraceQuery
+from tracecraft.core.models import AgentRun
+from tracecraft.storage.base import TraceQuery
 
 # Only import pandas if available (comes with mlflow)
 pd = pytest.importorskip("pandas")
@@ -26,11 +26,11 @@ class TestMLflowStorageImport:
             import sys
 
             # Remove cached module
-            if "agenttrace.storage.mlflow" in sys.modules:
-                del sys.modules["agenttrace.storage.mlflow"]
+            if "tracecraft.storage.mlflow" in sys.modules:
+                del sys.modules["tracecraft.storage.mlflow"]
 
             with pytest.raises(ImportError, match="mlflow required"):
-                from agenttrace.storage.mlflow import MLflowTraceStore
+                from tracecraft.storage.mlflow import MLflowTraceStore
 
                 MLflowTraceStore()
 
@@ -54,10 +54,10 @@ class TestMLflowTraceStore:
             import sys
 
             # Remove cached module
-            if "agenttrace.storage.mlflow" in sys.modules:
-                del sys.modules["agenttrace.storage.mlflow"]
+            if "tracecraft.storage.mlflow" in sys.modules:
+                del sys.modules["tracecraft.storage.mlflow"]
 
-            from agenttrace.storage.mlflow import MLflowTraceStore
+            from tracecraft.storage.mlflow import MLflowTraceStore
 
             # Patch the import inside the module
             store = MLflowTraceStore.__new__(MLflowTraceStore)
@@ -82,10 +82,10 @@ class TestMLflowTraceStore:
         with patch.dict("sys.modules", {"mlflow": mock_mlflow}):
             import sys
 
-            if "agenttrace.storage.mlflow" in sys.modules:
-                del sys.modules["agenttrace.storage.mlflow"]
+            if "tracecraft.storage.mlflow" in sys.modules:
+                del sys.modules["tracecraft.storage.mlflow"]
 
-            from agenttrace.storage.mlflow import MLflowTraceStore
+            from tracecraft.storage.mlflow import MLflowTraceStore
 
             store = MLflowTraceStore.__new__(MLflowTraceStore)
             store._mlflow = mock_mlflow
@@ -128,7 +128,7 @@ class TestMLflowTraceStore:
             call_args.kwargs.get("filter_string") or call_args.args[0] if call_args.args else ""
         )
         # The filter_string is passed as a kwarg
-        assert "agenttrace.name" in str(call_args)
+        assert "tracecraft.name" in str(call_args)
 
     def test_query_builds_correct_filter_for_errors(self, store, mock_mlflow):
         """Test query builds correct filter for has_error."""
@@ -253,10 +253,10 @@ class TestMLflowQueryFilters:
         with patch.dict("sys.modules", {"mlflow": mock_mlflow}):
             import sys
 
-            if "agenttrace.storage.mlflow" in sys.modules:
-                del sys.modules["agenttrace.storage.mlflow"]
+            if "tracecraft.storage.mlflow" in sys.modules:
+                del sys.modules["tracecraft.storage.mlflow"]
 
-            from agenttrace.storage.mlflow import MLflowTraceStore
+            from tracecraft.storage.mlflow import MLflowTraceStore
 
             store = MLflowTraceStore.__new__(MLflowTraceStore)
             store._mlflow = mock_mlflow

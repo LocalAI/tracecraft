@@ -11,8 +11,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun, StepType
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun, StepType
 
 
 class TestMemoryStep:
@@ -20,7 +20,7 @@ class TestMemoryStep:
 
     def test_create_memory_step(self) -> None:
         """Should be able to create a MEMORY step."""
-        from agenttrace.contrib.memory import memory_step
+        from tracecraft.contrib.memory import memory_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -33,7 +33,7 @@ class TestMemoryStep:
 
     def test_memory_step_captures_inputs(self) -> None:
         """Memory step should capture inputs."""
-        from agenttrace.contrib.memory import memory_step
+        from tracecraft.contrib.memory import memory_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -44,7 +44,7 @@ class TestMemoryStep:
 
     def test_memory_step_captures_outputs(self) -> None:
         """Memory step should capture outputs."""
-        from agenttrace.contrib.memory import memory_step
+        from tracecraft.contrib.memory import memory_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -55,7 +55,7 @@ class TestMemoryStep:
 
     def test_memory_step_captures_duration(self) -> None:
         """Memory step should capture duration."""
-        from agenttrace.contrib.memory import memory_step
+        from tracecraft.contrib.memory import memory_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -68,7 +68,7 @@ class TestMemoryStep:
 
     def test_memory_step_captures_error(self) -> None:
         """Memory step should capture errors."""
-        from agenttrace.contrib.memory import memory_step
+        from tracecraft.contrib.memory import memory_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -80,7 +80,7 @@ class TestMemoryStep:
 
     def test_memory_step_with_metadata(self) -> None:
         """Memory step should support metadata (stored as attributes)."""
-        from agenttrace.contrib.memory import memory_step
+        from tracecraft.contrib.memory import memory_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -101,7 +101,7 @@ class TestMemoryOperations:
 
     def test_track_vector_store(self) -> None:
         """Should track vector store operations."""
-        from agenttrace.contrib.memory import track_vector_store
+        from tracecraft.contrib.memory import track_vector_store
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -122,7 +122,7 @@ class TestMemoryOperations:
 
     def test_track_conversation_history(self) -> None:
         """Should track conversation history operations."""
-        from agenttrace.contrib.memory import track_conversation_history
+        from tracecraft.contrib.memory import track_conversation_history
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -141,7 +141,7 @@ class TestMemoryOperations:
 
     def test_track_cache_operation(self) -> None:
         """Should track cache operations."""
-        from agenttrace.contrib.memory import track_cache
+        from tracecraft.contrib.memory import track_cache
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
@@ -166,7 +166,7 @@ class TestNestedMemorySteps:
 
     def test_nested_memory_steps(self) -> None:
         """Memory steps can be nested."""
-        from agenttrace.contrib.memory import memory_step
+        from tracecraft.contrib.memory import memory_step
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 

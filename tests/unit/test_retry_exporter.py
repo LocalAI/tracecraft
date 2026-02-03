@@ -12,7 +12,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun
+from tracecraft.core.models import AgentRun
 
 
 class TestRetryingExporter:
@@ -20,7 +20,7 @@ class TestRetryingExporter:
 
     def test_retrying_exporter_wraps_exporter(self) -> None:
         """RetryingExporter should wrap another exporter."""
-        from agenttrace.exporters.retry import RetryingExporter
+        from tracecraft.exporters.retry import RetryingExporter
 
         mock_exporter = MagicMock()
         retry_exporter = RetryingExporter(exporter=mock_exporter)
@@ -29,7 +29,7 @@ class TestRetryingExporter:
 
     def test_successful_export_no_retry(self, sample_run) -> None:
         """Successful export should not trigger retry."""
-        from agenttrace.exporters.retry import RetryingExporter
+        from tracecraft.exporters.retry import RetryingExporter
 
         mock_exporter = MagicMock()
         retry_exporter = RetryingExporter(exporter=mock_exporter, max_retries=3)
@@ -40,7 +40,7 @@ class TestRetryingExporter:
 
     def test_retry_on_failure(self, sample_run) -> None:
         """Should retry on export failure."""
-        from agenttrace.exporters.retry import RetryingExporter
+        from tracecraft.exporters.retry import RetryingExporter
 
         mock_exporter = MagicMock()
         # Fail twice, then succeed
@@ -62,7 +62,7 @@ class TestRetryingExporter:
 
     def test_max_retries_exceeded_raises(self, sample_run) -> None:
         """Should raise after max retries exceeded."""
-        from agenttrace.exporters.retry import RetryingExporter
+        from tracecraft.exporters.retry import RetryingExporter
 
         mock_exporter = MagicMock()
         mock_exporter.export.side_effect = ConnectionError("Always fails")
@@ -80,8 +80,8 @@ class TestRetryingExporter:
 
     def test_exponential_backoff(self, sample_run, monkeypatch) -> None:
         """Should use exponential backoff between retries."""
-        from agenttrace.exporters import retry as retry_module
-        from agenttrace.exporters.retry import RetryingExporter
+        from tracecraft.exporters import retry as retry_module
+        from tracecraft.exporters.retry import RetryingExporter
 
         sleep_calls: list[float] = []
 
@@ -115,7 +115,7 @@ class TestRetryingExporter:
 
     def test_retryable_exceptions_config(self, sample_run) -> None:
         """Should only retry on configured exception types."""
-        from agenttrace.exporters.retry import RetryingExporter
+        from tracecraft.exporters.retry import RetryingExporter
 
         mock_exporter = MagicMock()
         mock_exporter.export.side_effect = ValueError("Not retryable")
@@ -134,7 +134,7 @@ class TestRetryingExporter:
 
     def test_default_retryable_exceptions(self, sample_run) -> None:
         """Should have sensible default retryable exceptions."""
-        from agenttrace.exporters.retry import RetryingExporter
+        from tracecraft.exporters.retry import RetryingExporter
 
         mock_exporter = MagicMock()
         mock_exporter.export.side_effect = [
@@ -158,7 +158,7 @@ class TestBufferingExporter:
 
     def test_buffering_exporter_buffers_runs(self, sample_run) -> None:
         """BufferingExporter should buffer runs before flushing."""
-        from agenttrace.exporters.retry import BufferingExporter
+        from tracecraft.exporters.retry import BufferingExporter
 
         mock_exporter = MagicMock()
         buffer_exporter = BufferingExporter(
@@ -174,7 +174,7 @@ class TestBufferingExporter:
 
     def test_buffering_exporter_flushes_at_capacity(self, sample_run) -> None:
         """BufferingExporter should flush when buffer is full."""
-        from agenttrace.exporters.retry import BufferingExporter
+        from tracecraft.exporters.retry import BufferingExporter
 
         mock_exporter = MagicMock()
         buffer_exporter = BufferingExporter(
@@ -190,7 +190,7 @@ class TestBufferingExporter:
 
     def test_buffering_exporter_manual_flush(self, sample_run) -> None:
         """BufferingExporter should support manual flush."""
-        from agenttrace.exporters.retry import BufferingExporter
+        from tracecraft.exporters.retry import BufferingExporter
 
         mock_exporter = MagicMock()
         buffer_exporter = BufferingExporter(
@@ -211,7 +211,7 @@ class TestBufferingExporter:
 
     def test_buffering_exporter_flush_clears_buffer(self, sample_run) -> None:
         """Flush should clear the buffer."""
-        from agenttrace.exporters.retry import BufferingExporter
+        from tracecraft.exporters.retry import BufferingExporter
 
         mock_exporter = MagicMock()
         buffer_exporter = BufferingExporter(
@@ -227,7 +227,7 @@ class TestBufferingExporter:
 
     def test_buffering_exporter_shutdown_flushes(self, sample_run) -> None:
         """Shutdown should flush remaining runs."""
-        from agenttrace.exporters.retry import BufferingExporter
+        from tracecraft.exporters.retry import BufferingExporter
 
         mock_exporter = MagicMock()
         buffer_exporter = BufferingExporter(
@@ -244,7 +244,7 @@ class TestBufferingExporter:
 
     def test_buffering_with_retry(self, sample_run) -> None:
         """Buffering and retry should work together."""
-        from agenttrace.exporters.retry import BufferingExporter, RetryingExporter
+        from tracecraft.exporters.retry import BufferingExporter, RetryingExporter
 
         mock_exporter = MagicMock()
         retrying = RetryingExporter(exporter=mock_exporter, max_retries=2)

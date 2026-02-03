@@ -1,0 +1,12 @@
+# Minimal TraceCraft Configuration
+# Copy this to .tracecraft/config.yaml in your project
+
+env: development
+
+default:
+  storage:
+    type: jsonl
+    jsonl_path: traces/tracecraft.jsonl
+  exporters:
+    console: true
+    jsonl: true

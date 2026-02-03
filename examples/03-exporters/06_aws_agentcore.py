@@ -11,7 +11,7 @@ Prerequisites:
 Environment Variables:
     - AWS_REGION: AWS region (default: us-east-1)
     - OTEL_EXPORTER_OTLP_ENDPOINT: ADOT endpoint (default: http://localhost:4317)
-    - AGENTTRACE_AWS_SESSION_ID: Optional session ID for multi-turn tracking
+    - TRACECRAFT_AWS_SESSION_ID: Optional session ID for multi-turn tracking
 
 Usage:
     # Start ADOT collector locally (using Docker)
@@ -41,10 +41,10 @@ import sys
 import time
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+import tracecraft
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
 
 def check_prerequisites() -> bool:
@@ -68,23 +68,23 @@ def check_prerequisites() -> bool:
 def main() -> None:
     """Run the AWS AgentCore export example."""
     print("=" * 60)
-    print("AgentTrace AWS Bedrock AgentCore Export")
+    print("TraceCraft AWS Bedrock AgentCore Export")
     print("=" * 60)
 
     # Create AgentCore exporter with session tracking
-    from agenttrace.contrib.aws import create_agentcore_exporter
+    from tracecraft.contrib.aws import create_agentcore_exporter
 
     # Use a session ID for multi-turn conversation tracking
-    session_id = os.environ.get("AGENTTRACE_AWS_SESSION_ID", "demo-session-001")
+    session_id = os.environ.get("TRACECRAFT_AWS_SESSION_ID", "demo-session-001")
 
     exporter = create_agentcore_exporter(
-        service_name="agenttrace-aws-demo",
+        service_name="tracecraft-aws-demo",
         session_id=session_id,
         use_xray_propagation=True,
     )
 
     # Initialize with AWS exporter
-    runtime = agenttrace.init(
+    runtime = tracecraft.init(
         console=True,
         jsonl=False,  # Disable local JSONL for this demo
         exporters=[exporter],
@@ -133,7 +133,7 @@ def main() -> None:
     print("Running traced Bedrock agent...")
 
     # Demonstrate X-Ray context propagation
-    from agenttrace.contrib.aws import inject_xray_context
+    from tracecraft.contrib.aws import inject_xray_context
 
     with run_context(run):
         # Simulate first turn
@@ -160,7 +160,7 @@ def main() -> None:
     print("\nExample complete!")
     print("\nView traces in AWS Console:")
     print("  1. Go to CloudWatch > X-Ray > Traces")
-    print("  2. Search for service: agenttrace-aws-demo")
+    print("  2. Search for service: tracecraft-aws-demo")
     print("  3. Filter by session ID to see multi-turn correlation")
     print("\nAWS AgentCore features:")
     print("  - X-Amzn-Trace-Id header propagation")

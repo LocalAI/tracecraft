@@ -1,8 +1,8 @@
-# AgentTrace TAL
+# TraceCraft TAL
 
 **Vendor-neutral LLM observability SDK** - Instrument once, observe anywhere.
 
-AgentTrace is the "LiteLLM for Observability" - a portable Python instrumentation SDK that lets you capture consistent agent/LLM trace semantics and route them to any backend (Langfuse, Datadog, Phoenix, or any OTLP-compatible system).
+TraceCraft is the "LiteLLM for Observability" - a portable Python instrumentation SDK that lets you capture consistent agent/LLM trace semantics and route them to any backend (Langfuse, Datadog, Phoenix, or any OTLP-compatible system).
 
 ## Features
 
@@ -15,23 +15,23 @@ AgentTrace is the "LiteLLM for Observability" - a portable Python instrumentatio
 ## Installation
 
 ```bash
-pip install agenttrace
+pip install tracecraft
 ```
 
 Or with uv:
 
 ```bash
-uv add agenttrace
+uv add tracecraft
 ```
 
 ## Quick Start
 
 ```python
-import agenttrace
-from agenttrace import trace_agent, trace_tool
+import tracecraft
+from tracecraft import trace_agent, trace_tool
 
 # Initialize with defaults (console + JSONL output)
-agenttrace.init()
+tracecraft.init()
 
 @trace_agent(name="research_agent")
 async def research(query: str) -> str:
@@ -45,7 +45,7 @@ def search(query: str) -> list[str]:
 
 ## Documentation
 
-See [Documentation](https://agenttrace.dev) for full details.
+See [Documentation](https://tracecraft.dev) for full details.
 
 ## License
 

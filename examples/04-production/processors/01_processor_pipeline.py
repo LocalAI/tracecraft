@@ -18,14 +18,14 @@ from datetime import UTC, datetime
 from unittest.mock import MagicMock
 from uuid import uuid4
 
-from agenttrace.core.config import (
-    AgentTraceConfig,
+from tracecraft.core.config import (
     ProcessorOrder,
     RedactionConfig,
     SamplingConfig,
+    TraceCraftConfig,
 )
-from agenttrace.core.models import AgentRun, Step, StepType
-from agenttrace.core.runtime import TALRuntime
+from tracecraft.core.models import AgentRun, Step, StepType
+from tracecraft.core.runtime import TALRuntime
 
 # =============================================================================
 # Helper: Create sample run with PII
@@ -95,7 +95,7 @@ def demo_processor_ordering():
     print("Use case: Compliance-sensitive environments")
     print("Benefit: PII is always redacted before sampling decision")
 
-    safety_config = AgentTraceConfig(
+    safety_config = TraceCraftConfig(
         processor_order=ProcessorOrder.SAFETY,
         redaction=RedactionConfig(enabled=True),
         sampling=SamplingConfig(rate=0.5),
@@ -112,7 +112,7 @@ def demo_processor_ordering():
     print("Use case: High-throughput, cost-sensitive environments")
     print("Benefit: Samples first to reduce processing overhead")
 
-    efficiency_config = AgentTraceConfig(
+    efficiency_config = TraceCraftConfig(
         processor_order=ProcessorOrder.EFFICIENCY,
         redaction=RedactionConfig(enabled=True),
         sampling=SamplingConfig(rate=0.5),
@@ -135,8 +135,8 @@ def demo_redaction_processor():
     print("Demo 2: Redaction Processor")
     print("=" * 60)
 
-    from agenttrace.processors.base import RedactionProcessorAdapter
-    from agenttrace.processors.redaction import RedactionProcessor
+    from tracecraft.processors.base import RedactionProcessorAdapter
+    from tracecraft.processors.redaction import RedactionProcessor
 
     # Create redaction processor
     processor = RedactionProcessor()
@@ -172,8 +172,8 @@ def demo_sampling_processor():
     print("Demo 3: Sampling Processor")
     print("=" * 60)
 
-    from agenttrace.processors.base import SamplingProcessorAdapter
-    from agenttrace.processors.sampling import SamplingProcessor
+    from tracecraft.processors.base import SamplingProcessorAdapter
+    from tracecraft.processors.sampling import SamplingProcessor
 
     # Scenario 1: Drop at 0% rate
     print("\n--- Scenario: 0% Sampling Rate ---")
@@ -218,8 +218,8 @@ def demo_enrichment_processor():
     print("Demo 4: Enrichment Processor (Token Counting)")
     print("=" * 60)
 
-    from agenttrace.processors.base import EnrichmentProcessorAdapter
-    from agenttrace.processors.enrichment import TokenEnrichmentProcessor
+    from tracecraft.processors.base import EnrichmentProcessorAdapter
+    from tracecraft.processors.enrichment import TokenEnrichmentProcessor
 
     # Create enrichment processor
     processor = TokenEnrichmentProcessor()
@@ -252,7 +252,7 @@ def demo_full_pipeline():
     print("=" * 60)
 
     # Create runtime with all processors
-    config = AgentTraceConfig(
+    config = TraceCraftConfig(
         processor_order=ProcessorOrder.SAFETY,
         redaction=RedactionConfig(enabled=True),
         sampling=SamplingConfig(rate=1.0),  # Keep all for demo
@@ -306,7 +306,7 @@ def demo_performance_comparison():
     runs = [create_sample_run(include_pii=True) for _ in range(n_runs)]
 
     # SAFETY mode
-    safety_config = AgentTraceConfig(
+    safety_config = TraceCraftConfig(
         processor_order=ProcessorOrder.SAFETY,
         redaction=RedactionConfig(enabled=True),
         sampling=SamplingConfig(rate=0.1),  # Drop 90%
@@ -326,7 +326,7 @@ def demo_performance_comparison():
     safety_exports = mock_exporter.export.call_count
 
     # EFFICIENCY mode
-    efficiency_config = AgentTraceConfig(
+    efficiency_config = TraceCraftConfig(
         processor_order=ProcessorOrder.EFFICIENCY,
         redaction=RedactionConfig(enabled=True),
         sampling=SamplingConfig(rate=0.1),  # Drop 90%
@@ -374,7 +374,7 @@ def demo_performance_comparison():
 def main():
     """Run all processor pipeline demos."""
     print("\n" + "#" * 60)
-    print("# AgentTrace Processor Pipeline Examples")
+    print("# TraceCraft Processor Pipeline Examples")
     print("#" * 60)
 
     demo_processor_ordering()

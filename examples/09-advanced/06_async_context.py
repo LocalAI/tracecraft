@@ -19,8 +19,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
-from agenttrace import AgentTraceRuntime, trace_agent, trace_tool
-from agenttrace.contrib.async_helpers import (
+from tracecraft import TraceCraftRuntime, trace_agent, trace_tool
+from tracecraft.contrib.async_helpers import (
     TraceContext,
     capture_context,
     create_task_with_context,
@@ -28,7 +28,7 @@ from agenttrace.contrib.async_helpers import (
     restore_context,
     run_in_executor_with_context,
 )
-from agenttrace.core.context import get_current_run, get_current_runtime
+from tracecraft.core.context import get_current_run, get_current_runtime
 
 # =============================================================================
 # Demo 1: TraceContext Dataclass
@@ -41,7 +41,7 @@ def demo_trace_context_dataclass():
     print("Demo 1: TraceContext Dataclass")
     print("=" * 60)
 
-    runtime = AgentTraceRuntime(console=False, jsonl=False)
+    runtime = TraceCraftRuntime(console=False, jsonl=False)
 
     print("\n--- Empty Context ---")
     ctx_empty = capture_context()
@@ -74,7 +74,7 @@ def demo_gather_with_context():
     print("Demo 2: gather_with_context")
     print("=" * 60)
 
-    runtime = AgentTraceRuntime(console=False, jsonl=False)
+    runtime = TraceCraftRuntime(console=False, jsonl=False)
 
     async def task_1() -> dict[str, Any]:
         """First parallel task."""
@@ -130,7 +130,7 @@ def demo_create_task_with_context():
     print("Demo 3: create_task_with_context")
     print("=" * 60)
 
-    runtime = AgentTraceRuntime(console=False, jsonl=False)
+    runtime = TraceCraftRuntime(console=False, jsonl=False)
     results: list[dict[str, Any]] = []
 
     async def background_task(task_id: int) -> None:
@@ -180,7 +180,7 @@ def demo_run_in_executor_with_context():
     print("Demo 4: run_in_executor_with_context")
     print("=" * 60)
 
-    runtime = AgentTraceRuntime(console=False, jsonl=False)
+    runtime = TraceCraftRuntime(console=False, jsonl=False)
 
     def cpu_intensive_work(data: str) -> dict[str, Any]:
         """CPU-bound work that runs in thread pool."""
@@ -230,7 +230,7 @@ def demo_manual_context_propagation():
     print("Demo 5: Manual capture_context / restore_context")
     print("=" * 60)
 
-    runtime = AgentTraceRuntime(console=False, jsonl=False)
+    runtime = TraceCraftRuntime(console=False, jsonl=False)
 
     async def run_demo():
         with runtime.trace_context():
@@ -280,7 +280,7 @@ def demo_complex_nested_patterns():
     print("Demo 6: Complex Nested Async Patterns")
     print("=" * 60)
 
-    runtime = AgentTraceRuntime(console=True, jsonl=False)
+    runtime = TraceCraftRuntime(console=True, jsonl=False)
 
     @trace_agent(name="coordinator")
     async def coordinator() -> list[str]:
@@ -338,7 +338,7 @@ def demo_fan_out_fan_in():
     print("Demo 7: Fan-out / Fan-in Pattern")
     print("=" * 60)
 
-    runtime = AgentTraceRuntime(console=False, jsonl=False)
+    runtime = TraceCraftRuntime(console=False, jsonl=False)
 
     @trace_tool(name="fetch_chunk")
     async def fetch_chunk(chunk_id: int) -> dict[str, Any]:
@@ -398,7 +398,7 @@ def demo_background_monitoring():
     print("Demo 8: Background Monitoring with Context")
     print("=" * 60)
 
-    runtime = AgentTraceRuntime(console=False, jsonl=False)
+    runtime = TraceCraftRuntime(console=False, jsonl=False)
     monitoring_data: list[dict[str, Any]] = []
 
     async def monitor_task(ctx: TraceContext) -> None:
@@ -455,7 +455,7 @@ def demo_background_monitoring():
 def main():
     """Run all async context demos."""
     print("\n" + "#" * 60)
-    print("# AgentTrace Async Context Propagation Examples")
+    print("# TraceCraft Async Context Propagation Examples")
     print("#" * 60)
 
     demo_trace_context_dataclass()

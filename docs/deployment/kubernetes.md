@@ -1,6 +1,6 @@
 # Kubernetes Deployment Guide
 
-Deploy AgentTrace-instrumented applications to Kubernetes with OTLP export.
+Deploy TraceCraft-instrumented applications to Kubernetes with OTLP export.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Deploy AgentTrace-instrumented applications to Kubernetes with OTLP export.
 │                                                              │
 │  ┌─────────────┐      ┌──────────────────┐                  │
 │  │   Your App  │─────▶│  OTEL Collector  │                  │
-│  │  (AgentTrace│      │   (DaemonSet)    │                  │
+│  │  (TraceCraft│      │   (DaemonSet)    │                  │
 │  │   enabled)  │      └────────┬─────────┘                  │
 │  └─────────────┘               │                            │
 │                                ▼                            │
@@ -170,15 +170,15 @@ spec:
       - name: app
         image: my-llm-app:latest
         env:
-        - name: AGENTTRACE_OTLP_ENABLED
+        - name: TRACECRAFT_OTLP_ENABLED
           value: "true"
-        - name: AGENTTRACE_OTLP_ENDPOINT
+        - name: TRACECRAFT_OTLP_ENDPOINT
           value: "otel-collector.observability.svc.cluster.local:4317"
-        - name: AGENTTRACE_SERVICE_NAME
+        - name: TRACECRAFT_SERVICE_NAME
           value: "my-llm-app"
-        - name: AGENTTRACE_CONSOLE_ENABLED
+        - name: TRACECRAFT_CONSOLE_ENABLED
           value: "false"
-        - name: AGENTTRACE_REDACTION_ENABLED
+        - name: TRACECRAFT_REDACTION_ENABLED
           value: "true"
 ```
 
@@ -187,26 +187,26 @@ spec:
 ```python
 # app.py
 import os
-import agenttrace
-from agenttrace.exporters.otlp import OTLPExporter
-from agenttrace.exporters.retry import RetryingExporter
+import tracecraft
+from tracecraft.exporters.otlp import OTLPExporter
+from tracecraft.exporters.retry import RetryingExporter
 
 # Configure from environment
-endpoint = os.environ.get("AGENTTRACE_OTLP_ENDPOINT", "localhost:4317")
-service_name = os.environ.get("AGENTTRACE_SERVICE_NAME", "my-app")
+endpoint = os.environ.get("TRACECRAFT_OTLP_ENDPOINT", "localhost:4317")
+service_name = os.environ.get("TRACECRAFT_SERVICE_NAME", "my-app")
 
 # Use retrying exporter for resilience
 otlp = OTLPExporter(endpoint=endpoint, service_name=service_name)
 retrying_otlp = RetryingExporter(otlp, max_retries=3)
 
-agenttrace.init(
+tracecraft.init(
     console=False,
     jsonl=False,
     exporters=[retrying_otlp]
 )
 
 # Your application code...
-@agenttrace.trace_agent(name="my_agent")
+@tracecraft.trace_agent(name="my_agent")
 async def process_request(query: str) -> str:
     # ...
     pass
@@ -279,5 +279,5 @@ kubectl exec -it <your-pod> -- nc -zv otel-collector.observability.svc.cluster.l
 
 ```python
 import logging
-logging.getLogger("agenttrace").setLevel(logging.DEBUG)
+logging.getLogger("tracecraft").setLevel(logging.DEBUG)
 ```

@@ -1,10 +1,10 @@
-# Migrating from OpenLLMetry to AgentTrace
+# Migrating from OpenLLMetry to TraceCraft
 
-This guide helps you migrate from OpenLLMetry (Traceloop) to AgentTrace.
+This guide helps you migrate from OpenLLMetry (Traceloop) to TraceCraft.
 
 ## Key Differences
 
-| Feature | OpenLLMetry | AgentTrace |
+| Feature | OpenLLMetry | TraceCraft |
 |---------|-------------|------------|
 | Focus | Auto-instrumentation | Explicit + auto |
 | Protocol | OpenTelemetry native | OTLP export + local |
@@ -13,12 +13,12 @@ This guide helps you migrate from OpenLLMetry (Traceloop) to AgentTrace.
 
 ## Migration Steps
 
-### 1. Install AgentTrace
+### 1. Install TraceCraft
 
 ```bash
-pip install agenttrace
+pip install tracecraft
 # or
-uv add agenttrace
+uv add tracecraft
 ```
 
 ### 2. Replace Initialization
@@ -34,13 +34,13 @@ Traceloop.init(
 )
 ```
 
-**After (AgentTrace):**
+**After (TraceCraft):**
 
 ```python
-import agenttrace
-from agenttrace.exporters.otlp import OTLPExporter
+import tracecraft
+from tracecraft.exporters.otlp import OTLPExporter
 
-agenttrace.init(
+tracecraft.init(
     console=True,
     exporters=[
         OTLPExporter(
@@ -71,20 +71,20 @@ def summarize(docs: list):
     return summary
 ```
 
-**After (AgentTrace):**
+**After (TraceCraft):**
 
 ```python
-import agenttrace
+import tracecraft
 
-@agenttrace.trace_agent(name="research")
+@tracecraft.trace_agent(name="research")
 def research_workflow(query: str):
     return search_and_summarize(query)
 
-@agenttrace.trace_tool(name="search")
+@tracecraft.trace_tool(name="search")
 def search(query: str):
     return results
 
-@agenttrace.trace_agent(name="summarizer")
+@tracecraft.trace_agent(name="summarizer")
 def summarize(docs: list):
     return summary
 ```
@@ -103,11 +103,11 @@ with Traceloop.set_association_properties({
     result = my_function()
 ```
 
-**After (AgentTrace):**
+**After (TraceCraft):**
 
 ```python
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 from datetime import UTC, datetime
 
 run = AgentRun(
@@ -134,16 +134,16 @@ Traceloop.set_prompt(
 )
 ```
 
-**After (AgentTrace):**
+**After (TraceCraft):**
 
 ```python
-# AgentTrace doesn't manage prompts - use your preferred solution
+# TraceCraft doesn't manage prompts - use your preferred solution
 # Prompts are captured in LLM step inputs automatically
 ```
 
 ## Feature Mapping
 
-| OpenLLMetry Feature | AgentTrace Equivalent |
+| OpenLLMetry Feature | TraceCraft Equivalent |
 |---------------------|----------------------|
 | `@workflow` | `@trace_agent` |
 | `@task` | `@trace_tool` |
@@ -155,18 +155,18 @@ Traceloop.set_prompt(
 
 ## Keeping OpenTelemetry Native
 
-If you want to stay with pure OpenTelemetry but need AgentTrace features:
+If you want to stay with pure OpenTelemetry but need TraceCraft features:
 
 ```python
-from agenttrace.exporters.otlp import OTLPExporter
+from tracecraft.exporters.otlp import OTLPExporter
 
-# AgentTrace converts its traces to OTLP spans
+# TraceCraft converts its traces to OTLP spans
 otlp = OTLPExporter(
     endpoint="http://otel-collector:4317",
     protocol="grpc"
 )
 
-agenttrace.init(exporters=[otlp])
+tracecraft.init(exporters=[otlp])
 
 # Your existing OTEL collector config works unchanged
 ```

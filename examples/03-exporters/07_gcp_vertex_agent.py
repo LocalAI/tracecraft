@@ -10,10 +10,10 @@ Prerequisites:
 
 Environment Variables:
     - GOOGLE_CLOUD_PROJECT: Required. GCP project ID.
-    - AGENTTRACE_GCP_SESSION_ID: Optional session ID for multi-turn tracking
-    - AGENTTRACE_GCP_AGENT_NAME: Agent name for metadata
-    - AGENTTRACE_GCP_CONTENT_RECORDING: Enable content recording (true/false)
-    - AGENTTRACE_GCP_REASONING_ENGINE_ID: Reasoning Engine ID (if applicable)
+    - TRACECRAFT_GCP_SESSION_ID: Optional session ID for multi-turn tracking
+    - TRACECRAFT_GCP_AGENT_NAME: Agent name for metadata
+    - TRACECRAFT_GCP_CONTENT_RECORDING: Enable content recording (true/false)
+    - TRACECRAFT_GCP_REASONING_ENGINE_ID: Reasoning Engine ID (if applicable)
 
 Usage:
     # Set project ID
@@ -41,10 +41,10 @@ import sys
 import time
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
-from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+import tracecraft
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
 
 def check_prerequisites() -> bool:
@@ -68,28 +68,28 @@ def check_prerequisites() -> bool:
 def main() -> None:
     """Run the GCP Vertex AI Agent Builder export example."""
     print("=" * 60)
-    print("AgentTrace GCP Vertex AI Agent Builder Export")
+    print("TraceCraft GCP Vertex AI Agent Builder Export")
     print("=" * 60)
 
     # Create Vertex Agent exporter with content recording
-    from agenttrace.contrib.gcp import create_vertex_agent_exporter
+    from tracecraft.contrib.gcp import create_vertex_agent_exporter
 
     # Use a session ID for multi-turn conversation tracking
-    session_id = os.environ.get("AGENTTRACE_GCP_SESSION_ID", "demo-session-001")
+    session_id = os.environ.get("TRACECRAFT_GCP_SESSION_ID", "demo-session-001")
 
     exporter = create_vertex_agent_exporter(
         project_id=os.environ.get("GOOGLE_CLOUD_PROJECT"),
-        service_name="agenttrace-gcp-demo",
+        service_name="tracecraft-gcp-demo",
         session_id=session_id,
         enable_content_recording=True,  # Record prompts/responses
         agent_name="demo-vertex-agent",
         agent_id="agent-001",
         agent_description="A demo agent for GCP Vertex AI Agent Builder integration",
-        reasoning_engine_id=os.environ.get("AGENTTRACE_GCP_REASONING_ENGINE_ID"),
+        reasoning_engine_id=os.environ.get("TRACECRAFT_GCP_REASONING_ENGINE_ID"),
     )
 
     # Initialize with GCP exporter
-    runtime = agenttrace.init(
+    runtime = tracecraft.init(
         console=True,
         jsonl=False,  # Disable local JSONL for this demo
         exporters=[exporter],
@@ -141,7 +141,7 @@ def main() -> None:
     print("Running traced Vertex AI agent...")
 
     # Demonstrate Cloud Trace context propagation
-    from agenttrace.contrib.gcp import inject_cloudtrace_context
+    from tracecraft.contrib.gcp import inject_cloudtrace_context
 
     with run_context(run):
         # Simulate first turn
@@ -168,7 +168,7 @@ def main() -> None:
     print("\nExample complete!")
     print("\nView traces in GCP Console:")
     print("  1. Go to Cloud Trace > Trace List")
-    print("  2. Filter by service name: agenttrace-gcp-demo")
+    print("  2. Filter by service name: tracecraft-gcp-demo")
     print("  3. Filter by session ID to see multi-turn correlation")
     print("\nGCP Vertex AI Agent Builder features:")
     print("  - X-Cloud-Trace-Context header propagation")

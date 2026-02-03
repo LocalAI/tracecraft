@@ -15,7 +15,7 @@ class TestCurrentStep:
     def test_get_current_step_returns_none_when_not_set(self):
         """get_current_step should return None when no step is set."""
         # Clear any existing context first
-        from agenttrace.core.context import get_current_step, set_current_step
+        from tracecraft.core.context import get_current_step, set_current_step
 
         set_current_step(None)
 
@@ -23,7 +23,7 @@ class TestCurrentStep:
 
     def test_set_current_step(self, sample_step):
         """set_current_step should set the current step."""
-        from agenttrace.core.context import get_current_step, set_current_step
+        from tracecraft.core.context import get_current_step, set_current_step
 
         set_current_step(sample_step)
 
@@ -34,7 +34,7 @@ class TestCurrentStep:
 
     def test_set_current_step_returns_token(self, sample_step):
         """set_current_step should return a token for resetting."""
-        from agenttrace.core.context import set_current_step
+        from tracecraft.core.context import set_current_step
 
         token = set_current_step(sample_step)
 
@@ -45,12 +45,12 @@ class TestCurrentStep:
 
     def test_reset_current_step_with_token(self, trace_id, sample_timestamp):
         """reset_current_step should restore previous value using token."""
-        from agenttrace.core.context import (
+        from tracecraft.core.context import (
             get_current_step,
             reset_current_step,
             set_current_step,
         )
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         step1 = Step(
             trace_id=trace_id,
@@ -86,7 +86,7 @@ class TestCurrentRun:
 
     def test_get_current_run_returns_none_when_not_set(self):
         """get_current_run should return None when no run is set."""
-        from agenttrace.core.context import get_current_run, set_current_run
+        from tracecraft.core.context import get_current_run, set_current_run
 
         set_current_run(None)
 
@@ -94,7 +94,7 @@ class TestCurrentRun:
 
     def test_set_current_run(self, sample_run):
         """set_current_run should set the current run."""
-        from agenttrace.core.context import get_current_run, set_current_run
+        from tracecraft.core.context import get_current_run, set_current_run
 
         set_current_run(sample_run)
 
@@ -105,7 +105,7 @@ class TestCurrentRun:
 
     def test_set_current_run_returns_token(self, sample_run):
         """set_current_run should return a token for resetting."""
-        from agenttrace.core.context import set_current_run
+        from tracecraft.core.context import set_current_run
 
         token = set_current_run(sample_run)
 
@@ -116,12 +116,12 @@ class TestCurrentRun:
 
     def test_reset_current_run_with_token(self, sample_timestamp):
         """reset_current_run should restore previous value using token."""
-        from agenttrace.core.context import (
+        from tracecraft.core.context import (
             get_current_run,
             reset_current_run,
             set_current_run,
         )
-        from agenttrace.core.models import AgentRun
+        from tracecraft.core.models import AgentRun
 
         run1 = AgentRun(name="run1", start_time=sample_timestamp)
         run2 = AgentRun(name="run2", start_time=sample_timestamp)
@@ -148,7 +148,7 @@ class TestAsyncPropagation:
     @pytest.mark.asyncio
     async def test_context_propagates_through_await(self, sample_step):
         """Context should propagate through async/await calls."""
-        from agenttrace.core.context import get_current_step, set_current_step
+        from tracecraft.core.context import get_current_step, set_current_step
 
         set_current_step(sample_step)
 
@@ -165,7 +165,7 @@ class TestAsyncPropagation:
     @pytest.mark.asyncio
     async def test_context_propagates_through_nested_async(self, sample_step):
         """Context should propagate through multiple nested async calls."""
-        from agenttrace.core.context import get_current_step, set_current_step
+        from tracecraft.core.context import get_current_step, set_current_step
 
         set_current_step(sample_step)
 
@@ -184,7 +184,7 @@ class TestAsyncPropagation:
     @pytest.mark.asyncio
     async def test_run_context_propagates_through_await(self, sample_run):
         """Run context should propagate through async/await calls."""
-        from agenttrace.core.context import get_current_run, set_current_run
+        from tracecraft.core.context import get_current_run, set_current_run
 
         set_current_run(sample_run)
 
@@ -204,8 +204,8 @@ class TestContextIsolation:
     @pytest.mark.asyncio
     async def test_concurrent_tasks_have_isolated_step_context(self, trace_id, sample_timestamp):
         """Different concurrent tasks should have isolated step context."""
-        from agenttrace.core.context import get_current_step, set_current_step
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.context import get_current_step, set_current_step
+        from tracecraft.core.models import Step, StepType
 
         step1 = Step(
             trace_id=trace_id,
@@ -242,8 +242,8 @@ class TestContextIsolation:
     @pytest.mark.asyncio
     async def test_concurrent_tasks_have_isolated_run_context(self, sample_timestamp):
         """Different concurrent tasks should have isolated run context."""
-        from agenttrace.core.context import get_current_run, set_current_run
-        from agenttrace.core.models import AgentRun
+        from tracecraft.core.context import get_current_run, set_current_run
+        from tracecraft.core.models import AgentRun
 
         run1 = AgentRun(name="task1_run", start_time=sample_timestamp)
         run2 = AgentRun(name="task2_run", start_time=sample_timestamp)
@@ -268,7 +268,7 @@ class TestContextIsolation:
     @pytest.mark.asyncio
     async def test_child_task_inherits_parent_context(self, sample_step):
         """Child tasks created from a coroutine should inherit parent context."""
-        from agenttrace.core.context import get_current_step, set_current_step
+        from tracecraft.core.context import get_current_step, set_current_step
 
         set_current_step(sample_step)
 
@@ -291,7 +291,7 @@ class TestStepContextManager:
 
     def test_step_context_manager_sets_and_resets(self, sample_step):
         """step_context should set step on enter and reset on exit."""
-        from agenttrace.core.context import (
+        from tracecraft.core.context import (
             get_current_step,
             set_current_step,
             step_context,
@@ -306,12 +306,12 @@ class TestStepContextManager:
 
     def test_step_context_manager_restores_previous(self, trace_id, sample_timestamp):
         """step_context should restore previous step on exit."""
-        from agenttrace.core.context import (
+        from tracecraft.core.context import (
             get_current_step,
             set_current_step,
             step_context,
         )
-        from agenttrace.core.models import Step, StepType
+        from tracecraft.core.models import Step, StepType
 
         outer_step = Step(
             trace_id=trace_id,
@@ -338,7 +338,7 @@ class TestStepContextManager:
 
     def test_step_context_manager_handles_exception(self, sample_step):
         """step_context should reset even if exception occurs."""
-        from agenttrace.core.context import (
+        from tracecraft.core.context import (
             get_current_step,
             set_current_step,
             step_context,
@@ -358,7 +358,7 @@ class TestStepContextManager:
     @pytest.mark.asyncio
     async def test_step_context_manager_async(self, sample_step):
         """step_context should work in async context."""
-        from agenttrace.core.context import (
+        from tracecraft.core.context import (
             get_current_step,
             set_current_step,
             step_context,
@@ -381,7 +381,7 @@ class TestRunContextManager:
 
     def test_run_context_manager_sets_and_resets(self, sample_run):
         """run_context should set run on enter and reset on exit."""
-        from agenttrace.core.context import (
+        from tracecraft.core.context import (
             get_current_run,
             run_context,
             set_current_run,
@@ -396,7 +396,7 @@ class TestRunContextManager:
 
     def test_run_context_manager_handles_exception(self, sample_run):
         """run_context should reset even if exception occurs."""
-        from agenttrace.core.context import (
+        from tracecraft.core.context import (
             get_current_run,
             run_context,
             set_current_run,

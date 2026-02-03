@@ -5,8 +5,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 class TestTraceLLMStream:
@@ -15,7 +15,7 @@ class TestTraceLLMStream:
     @pytest.mark.asyncio
     async def test_trace_llm_stream_collects_tokens(self):
         """Test trace_llm_stream collects all tokens."""
-        from agenttrace.instrumentation.decorators import trace_llm_stream
+        from tracecraft.instrumentation.decorators import trace_llm_stream
 
         @trace_llm_stream(name="test_stream", model="gpt-4o", provider="openai")
         async def stream_tokens() -> AsyncGenerator[str, None]:
@@ -35,7 +35,7 @@ class TestTraceLLMStream:
     @pytest.mark.asyncio
     async def test_trace_llm_stream_creates_step(self):
         """Test trace_llm_stream creates step with correct attributes."""
-        from agenttrace.instrumentation.decorators import trace_llm_stream
+        from tracecraft.instrumentation.decorators import trace_llm_stream
 
         @trace_llm_stream(name="test_stream", model="gpt-4o", provider="openai")
         async def stream_tokens() -> AsyncGenerator[str, None]:
@@ -57,7 +57,7 @@ class TestTraceLLMStream:
     @pytest.mark.asyncio
     async def test_trace_llm_stream_aggregates_output(self):
         """Test trace_llm_stream aggregates full output."""
-        from agenttrace.instrumentation.decorators import trace_llm_stream
+        from tracecraft.instrumentation.decorators import trace_llm_stream
 
         @trace_llm_stream(name="test_stream")
         async def stream_tokens() -> AsyncGenerator[str, None]:
@@ -78,7 +78,7 @@ class TestTraceLLMStream:
     @pytest.mark.asyncio
     async def test_trace_llm_stream_captures_error(self):
         """Test trace_llm_stream captures errors."""
-        from agenttrace.instrumentation.decorators import trace_llm_stream
+        from tracecraft.instrumentation.decorators import trace_llm_stream
 
         @trace_llm_stream(name="test_stream")
         async def stream_with_error() -> AsyncGenerator[str, None]:
@@ -99,7 +99,7 @@ class TestTraceLLMStream:
     @pytest.mark.asyncio
     async def test_trace_llm_stream_uses_function_name(self):
         """Test trace_llm_stream defaults to function name."""
-        from agenttrace.instrumentation.decorators import trace_llm_stream
+        from tracecraft.instrumentation.decorators import trace_llm_stream
 
         @trace_llm_stream()
         async def my_stream_function() -> AsyncGenerator[str, None]:
@@ -121,7 +121,7 @@ class TestTraceStream:
     @pytest.mark.asyncio
     async def test_trace_stream_collects_items(self):
         """Test trace_stream collects all items."""
-        from agenttrace.instrumentation.decorators import trace_stream
+        from tracecraft.instrumentation.decorators import trace_stream
 
         @trace_stream(name="test_stream")
         async def stream_items() -> AsyncGenerator[dict, None]:
@@ -142,8 +142,8 @@ class TestTraceStream:
     @pytest.mark.asyncio
     async def test_trace_stream_creates_step(self):
         """Test trace_stream creates step."""
-        from agenttrace.core.models import StepType
-        from agenttrace.instrumentation.decorators import trace_stream
+        from tracecraft.core.models import StepType
+        from tracecraft.instrumentation.decorators import trace_stream
 
         @trace_stream(name="process_stream", step_type=StepType.WORKFLOW)
         async def process_items() -> AsyncGenerator[int, None]:
@@ -164,7 +164,7 @@ class TestTraceStream:
     @pytest.mark.asyncio
     async def test_trace_stream_counts_items(self):
         """Test trace_stream counts yielded items."""
-        from agenttrace.instrumentation.decorators import trace_stream
+        from tracecraft.instrumentation.decorators import trace_stream
 
         @trace_stream(name="test_stream")
         async def stream_items() -> AsyncGenerator[str, None]:
@@ -184,7 +184,7 @@ class TestTraceStream:
     @pytest.mark.asyncio
     async def test_trace_stream_captures_error(self):
         """Test trace_stream captures errors with partial count."""
-        from agenttrace.instrumentation.decorators import trace_stream
+        from tracecraft.instrumentation.decorators import trace_stream
 
         @trace_stream(name="test_stream")
         async def stream_with_error() -> AsyncGenerator[str, None]:
@@ -210,7 +210,7 @@ class TestStreamingWithNestedCalls:
     @pytest.mark.asyncio
     async def test_nested_streaming_calls(self):
         """Test nested streaming calls create proper hierarchy."""
-        from agenttrace.instrumentation.decorators import trace_agent, trace_llm_stream
+        from tracecraft.instrumentation.decorators import trace_agent, trace_llm_stream
 
         @trace_llm_stream(name="inner_stream")
         async def inner_stream() -> AsyncGenerator[str, None]:

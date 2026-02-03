@@ -3,7 +3,7 @@
 Run with: uv run pytest tests/live/test_live_full_pipeline.py -v --live
 Requires: OPENAI_API_KEY environment variable
 
-These tests verify the complete AgentTrace pipeline from instrumentation
+These tests verify the complete TraceCraft pipeline from instrumentation
 through processing to export.
 """
 
@@ -28,13 +28,13 @@ class TestLiveFullPipelineBasic:
         """Test complete pipeline: instrumentation → processing → console + JSONL export."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
         # Initialize with all local exporters
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=True,
             jsonl_path=temp_jsonl_path,
@@ -105,13 +105,13 @@ class TestLiveFullPipelineBasic:
         """Test pipeline with PII redaction enabled."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
         # Initialize with redaction
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=True,
             jsonl_path=temp_jsonl_path,
@@ -147,12 +147,12 @@ class TestLiveFullPipelineBasic:
         """Test pipeline correctly captures and exports errors."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_llm
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=True,
             jsonl_path=temp_jsonl_path,
@@ -199,12 +199,12 @@ class TestLiveFullPipelineAsync:
         """Test complete async pipeline."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent, trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent, trace_llm
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=True,
             jsonl_path=temp_jsonl_path,
@@ -252,13 +252,13 @@ class TestLiveFullPipelineMultiFramework:
         pytest.importorskip("langchain_openai")
         from langchain_openai import ChatOpenAI
 
-        import agenttrace
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent, trace_tool
+        import tracecraft
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent, trace_tool
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=True,
             jsonl_path=temp_jsonl_path,
@@ -275,7 +275,7 @@ class TestLiveFullPipelineMultiFramework:
 
             # LangChain LLM call
             llm = ChatOpenAI(model=live_test_model, max_tokens=max_tokens)
-            handler = AgentTraceCallbackHandler()
+            handler = TraceCraftCallbackHandler()
             response = llm.invoke(
                 f"The tool returned {tool_result}. Acknowledge it briefly.",
                 config={"callbacks": [handler]},
@@ -311,13 +311,13 @@ class TestLiveFullPipelineHTML:
         """Test complete pipeline with HTML export."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.exporters.html import HTMLExporter
-        from agenttrace.instrumentation.decorators import trace_agent, trace_llm
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.exporters.html import HTMLExporter
+        from tracecraft.instrumentation.decorators import trace_agent, trace_llm
 
-        runtime = agenttrace.init(console=True, jsonl=False)
+        runtime = tracecraft.init(console=True, jsonl=False)
 
         @trace_llm(name="chat_llm", model=live_test_model, provider="openai")
         def chat_llm(prompt: str) -> str:
@@ -368,12 +368,12 @@ class TestLiveFullPipelineComplex:
         """Test complex multi-agent workflow."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=True,
             jsonl_path=temp_jsonl_path,
@@ -454,12 +454,12 @@ class TestLiveFullPipelineComplex:
         """Test pipeline with all features enabled."""
         import openai
 
-        import agenttrace
-        from agenttrace.core.context import run_context
-        from agenttrace.core.models import AgentRun
-        from agenttrace.instrumentation.decorators import trace_agent, trace_llm, trace_tool
+        import tracecraft
+        from tracecraft.core.context import run_context
+        from tracecraft.core.models import AgentRun
+        from tracecraft.instrumentation.decorators import trace_agent, trace_llm, trace_tool
 
-        runtime = agenttrace.init(
+        runtime = tracecraft.init(
             console=True,
             jsonl=True,
             jsonl_path=temp_jsonl_path,

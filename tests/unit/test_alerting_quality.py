@@ -8,14 +8,14 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.alerting.quality import (
+from tracecraft.alerting.quality import (
     QualityAlert,
     QualityMetric,
     QualityScoreAggregator,
     QualityScoreProcessor,
     QualityThreshold,
 )
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.models import AgentRun, Step, StepType
 
 
 @pytest.fixture

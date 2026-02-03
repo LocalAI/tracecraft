@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.alerting.webhooks import (
+from tracecraft.alerting.webhooks import (
     AlertingProcessor,
     AlertRule,
     GenericAlertFormatter,
@@ -19,7 +19,7 @@ from agenttrace.alerting.webhooks import (
     create_high_token_alert,
     create_slow_trace_alert,
 )
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.models import AgentRun, Step, StepType
 
 
 @pytest.fixture
@@ -169,7 +169,7 @@ class TestSlackAlertFormatter:
         payload = formatter.format(rule, sample_run)
 
         assert "username" in payload
-        assert payload["username"] == "AgentTrace"
+        assert payload["username"] == "TraceCraft"
         assert "icon_emoji" in payload
         assert "attachments" in payload
         assert len(payload["attachments"]) == 1

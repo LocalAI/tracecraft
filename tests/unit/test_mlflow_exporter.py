@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-from agenttrace.core.models import AgentRun, Step, StepType
+from tracecraft.core.models import AgentRun, Step, StepType
 
 
 @pytest.fixture
@@ -53,7 +53,7 @@ class TestMLflowExporterInit:
             # Re-import to test with mlflow unavailable
             from importlib import reload
 
-            from agenttrace.exporters import mlflow as mlflow_module
+            from tracecraft.exporters import mlflow as mlflow_module
 
             reload(mlflow_module)
 
@@ -62,7 +62,7 @@ class TestMLflowExporterInit:
         mock_mlflow = MagicMock()
 
         with patch.dict("sys.modules", {"mlflow": mock_mlflow}):
-            from agenttrace.exporters.mlflow import MLflowExporter
+            from tracecraft.exporters.mlflow import MLflowExporter
 
             exporter = MLflowExporter(
                 tracking_uri="http://localhost:5000",
@@ -89,7 +89,7 @@ class TestMLflowExport:
         mock_mlflow.start_run.return_value = mock_run_context
 
         with patch.dict("sys.modules", {"mlflow": mock_mlflow}):
-            from agenttrace.exporters.mlflow import MLflowExporter
+            from tracecraft.exporters.mlflow import MLflowExporter
 
             exporter = MLflowExporter(experiment_name="test")
             exporter._mlflow = mock_mlflow
@@ -113,7 +113,7 @@ class TestMLflowExport:
         mock_mlflow.start_run.return_value = mock_run_context
 
         with patch.dict("sys.modules", {"mlflow": mock_mlflow}):
-            from agenttrace.exporters.mlflow import MLflowExporter
+            from tracecraft.exporters.mlflow import MLflowExporter
 
             exporter = MLflowExporter()
             exporter._mlflow = mock_mlflow
@@ -123,9 +123,9 @@ class TestMLflowExport:
 
             # Check parameters were logged
             param_calls = {call[0][0]: call[0][1] for call in mock_mlflow.log_param.call_args_list}
-            assert "agenttrace.run_id" in param_calls
-            assert "agenttrace.name" in param_calls
-            assert param_calls["agenttrace.name"] == "test_run"
+            assert "tracecraft.run_id" in param_calls
+            assert "tracecraft.name" in param_calls
+            assert param_calls["tracecraft.name"] == "test_run"
 
     def test_export_logs_metrics(self, sample_run: AgentRun):
         """Test that run metrics are logged."""
@@ -138,7 +138,7 @@ class TestMLflowExport:
         mock_mlflow.start_run.return_value = mock_run_context
 
         with patch.dict("sys.modules", {"mlflow": mock_mlflow}):
-            from agenttrace.exporters.mlflow import MLflowExporter
+            from tracecraft.exporters.mlflow import MLflowExporter
 
             exporter = MLflowExporter()
             exporter._mlflow = mock_mlflow
@@ -156,7 +156,7 @@ class TestMLflowExport:
 
     def test_export_when_mlflow_not_available(self, sample_run: AgentRun):
         """Test export does nothing when MLflow not available."""
-        from agenttrace.exporters.mlflow import MLflowExporter
+        from tracecraft.exporters.mlflow import MLflowExporter
 
         exporter = MLflowExporter()
         exporter._mlflow = None
@@ -170,7 +170,7 @@ class TestMLflowExporterHelpers:
 
     def test_count_steps(self):
         """Test step counting including children."""
-        from agenttrace.exporters.mlflow import MLflowExporter
+        from tracecraft.exporters.mlflow import MLflowExporter
 
         exporter = MLflowExporter()
         exporter._mlflow = MagicMock()
@@ -196,7 +196,7 @@ class TestMLflowExporterHelpers:
 
     def test_close_does_nothing(self):
         """Test close method doesn't raise."""
-        from agenttrace.exporters.mlflow import MLflowExporter
+        from tracecraft.exporters.mlflow import MLflowExporter
 
         exporter = MLflowExporter()
         exporter._mlflow = MagicMock()
@@ -210,7 +210,7 @@ class TestCreateMLflowExporter:
 
     def test_create_mlflow_exporter_returns_exporter(self):
         """Test factory function returns MLflowExporter."""
-        from agenttrace.exporters.mlflow import create_mlflow_exporter
+        from tracecraft.exporters.mlflow import create_mlflow_exporter
 
         exporter = create_mlflow_exporter(
             tracking_uri="http://localhost:5000",
@@ -222,7 +222,7 @@ class TestCreateMLflowExporter:
 
     def test_create_mlflow_exporter_with_kwargs(self):
         """Test factory function passes kwargs."""
-        from agenttrace.exporters.mlflow import create_mlflow_exporter
+        from tracecraft.exporters.mlflow import create_mlflow_exporter
 
         exporter = create_mlflow_exporter(
             experiment_name="test",

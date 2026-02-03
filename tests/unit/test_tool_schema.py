@@ -9,8 +9,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 class TestLangChainToolSchemaCapture:
@@ -18,9 +18,9 @@ class TestLangChainToolSchemaCapture:
 
     def test_on_tool_start_captures_description(self) -> None:
         """on_tool_start should capture tool description."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         serialized = {
@@ -43,9 +43,9 @@ class TestLangChainToolSchemaCapture:
 
     def test_on_tool_start_captures_args_schema_dict(self) -> None:
         """on_tool_start should capture args_schema as dict."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         serialized = {
@@ -73,9 +73,9 @@ class TestLangChainToolSchemaCapture:
 
     def test_on_tool_start_captures_args(self) -> None:
         """on_tool_start should capture tool args."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         serialized = {
@@ -98,9 +98,9 @@ class TestLangChainToolSchemaCapture:
 
     def test_on_tool_start_captures_return_type(self) -> None:
         """on_tool_start should capture return type."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         serialized = {
@@ -123,9 +123,9 @@ class TestLangChainToolSchemaCapture:
 
     def test_on_tool_start_captures_docstring(self) -> None:
         """on_tool_start should capture function docstring."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         def sample_func(x: str) -> str:
@@ -153,9 +153,9 @@ class TestLangChainToolSchemaCapture:
 
     def test_on_tool_start_no_schema_when_empty(self) -> None:
         """on_tool_start should not include tool_schema when empty."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         serialized = {"name": "simple_tool"}
@@ -175,9 +175,9 @@ class TestLangChainToolSchemaCapture:
 
     def test_on_tool_start_preserves_input(self) -> None:
         """on_tool_start should always preserve the input string."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
 
         serialized = {
@@ -203,18 +203,18 @@ class TestExtractToolSchema:
 
     def test_extract_empty_serialized(self) -> None:
         """Should return None for empty serialized dict."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         result = handler._extract_tool_schema({})
 
         assert result is None
 
     def test_extract_multiple_fields(self) -> None:
         """Should extract multiple schema fields."""
-        from agenttrace.adapters.langchain import AgentTraceCallbackHandler
+        from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-        handler = AgentTraceCallbackHandler()
+        handler = TraceCraftCallbackHandler()
         serialized = {
             "name": "multi_field_tool",
             "description": "Does multiple things",

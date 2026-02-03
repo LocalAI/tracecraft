@@ -19,7 +19,7 @@ class TestBaseExporter:
 
     def test_exporter_has_export_method(self):
         """Base exporter should define an export method."""
-        from agenttrace.exporters.base import BaseExporter
+        from tracecraft.exporters.base import BaseExporter
 
         # Check that the abstract class defines the method
         assert hasattr(BaseExporter, "export")
@@ -27,7 +27,7 @@ class TestBaseExporter:
 
     def test_exporter_has_close_method(self):
         """Base exporter should define a close method."""
-        from agenttrace.exporters.base import BaseExporter
+        from tracecraft.exporters.base import BaseExporter
 
         assert hasattr(BaseExporter, "close")
         assert callable(BaseExporter.close)
@@ -38,7 +38,7 @@ class TestConsoleExporter:
 
     def test_console_exporter_creates_tree(self, sample_run):
         """Console exporter should create a Rich tree structure."""
-        from agenttrace.exporters.console import ConsoleExporter
+        from tracecraft.exporters.console import ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output)
@@ -50,7 +50,7 @@ class TestConsoleExporter:
 
     def test_console_exporter_shows_step_names(self, sample_run_with_steps):
         """Console exporter should display step names."""
-        from agenttrace.exporters.console import ConsoleExporter
+        from tracecraft.exporters.console import ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output)
@@ -63,8 +63,8 @@ class TestConsoleExporter:
 
     def test_console_step_icons_agent(self, sample_run_with_agent_step):
         """Console exporter should show agent icon for AGENT steps."""
-        from agenttrace.core.models import StepType
-        from agenttrace.exporters.console import STEP_ICONS, ConsoleExporter
+        from tracecraft.core.models import StepType
+        from tracecraft.exporters.console import STEP_ICONS, ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output)
@@ -76,8 +76,8 @@ class TestConsoleExporter:
 
     def test_console_step_icons_llm(self, sample_run_with_llm_step):
         """Console exporter should show LLM icon for LLM steps."""
-        from agenttrace.core.models import StepType
-        from agenttrace.exporters.console import STEP_ICONS, ConsoleExporter
+        from tracecraft.core.models import StepType
+        from tracecraft.exporters.console import STEP_ICONS, ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output)
@@ -88,8 +88,8 @@ class TestConsoleExporter:
 
     def test_console_step_icons_tool(self, sample_run_with_tool_step):
         """Console exporter should show tool icon for TOOL steps."""
-        from agenttrace.core.models import StepType
-        from agenttrace.exporters.console import STEP_ICONS, ConsoleExporter
+        from tracecraft.core.models import StepType
+        from tracecraft.exporters.console import STEP_ICONS, ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output)
@@ -100,8 +100,8 @@ class TestConsoleExporter:
 
     def test_console_step_icons_retrieval(self, sample_run_with_retrieval_step):
         """Console exporter should show retrieval icon for RETRIEVAL steps."""
-        from agenttrace.core.models import StepType
-        from agenttrace.exporters.console import STEP_ICONS, ConsoleExporter
+        from tracecraft.core.models import StepType
+        from tracecraft.exporters.console import STEP_ICONS, ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output)
@@ -112,8 +112,8 @@ class TestConsoleExporter:
 
     def test_console_step_icons_error(self, sample_run_with_error_step):
         """Console exporter should show error icon for ERROR steps."""
-        from agenttrace.core.models import StepType
-        from agenttrace.exporters.console import STEP_ICONS, ConsoleExporter
+        from tracecraft.core.models import StepType
+        from tracecraft.exporters.console import STEP_ICONS, ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output)
@@ -124,7 +124,7 @@ class TestConsoleExporter:
 
     def test_console_duration_display(self, sample_run_with_timed_step):
         """Console exporter should display duration in ms."""
-        from agenttrace.exporters.console import ConsoleExporter
+        from tracecraft.exporters.console import ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output)
@@ -136,7 +136,7 @@ class TestConsoleExporter:
 
     def test_console_token_display(self, sample_run_with_token_step):
         """Console exporter should display token counts."""
-        from agenttrace.exporters.console import ConsoleExporter
+        from tracecraft.exporters.console import ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output)
@@ -149,7 +149,7 @@ class TestConsoleExporter:
 
     def test_console_nested_steps(self, sample_run_with_nested_steps):
         """Console exporter should properly display nested steps."""
-        from agenttrace.exporters.console import ConsoleExporter
+        from tracecraft.exporters.console import ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output)
@@ -162,7 +162,7 @@ class TestConsoleExporter:
 
     def test_console_exporter_color_option(self, sample_run):
         """Console exporter should support disabling color."""
-        from agenttrace.exporters.console import ConsoleExporter
+        from tracecraft.exporters.console import ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output, no_color=True)
@@ -173,7 +173,7 @@ class TestConsoleExporter:
 
     def test_console_exporter_verbose_mode(self, sample_run_with_steps):
         """Console exporter verbose mode should show inputs/outputs."""
-        from agenttrace.exporters.console import ConsoleExporter
+        from tracecraft.exporters.console import ConsoleExporter
 
         output = StringIO()
         exporter = ConsoleExporter(file=output, verbose=True)
@@ -189,7 +189,7 @@ class TestJSONLExporter:
 
     def test_jsonl_writes_valid_json(self, sample_run):
         """JSONL exporter should write valid JSON."""
-        from agenttrace.exporters.jsonl import JSONLExporter
+        from tracecraft.exporters.jsonl import JSONLExporter
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             filepath = f.name
@@ -208,8 +208,8 @@ class TestJSONLExporter:
 
     def test_jsonl_appends_to_file(self, sample_run, sample_timestamp):
         """JSONL exporter should append multiple runs."""
-        from agenttrace.core.models import AgentRun
-        from agenttrace.exporters.jsonl import JSONLExporter
+        from tracecraft.core.models import AgentRun
+        from tracecraft.exporters.jsonl import JSONLExporter
 
         run2 = AgentRun(name="second_run", start_time=sample_timestamp)
 
@@ -232,7 +232,7 @@ class TestJSONLExporter:
 
     def test_jsonl_one_run_per_line(self, sample_run):
         """JSONL exporter should write one run per line."""
-        from agenttrace.exporters.jsonl import JSONLExporter
+        from tracecraft.exporters.jsonl import JSONLExporter
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             filepath = f.name
@@ -252,7 +252,7 @@ class TestJSONLExporter:
 
     def test_jsonl_includes_steps(self, sample_run_with_steps):
         """JSONL exporter should include nested steps."""
-        from agenttrace.exporters.jsonl import JSONLExporter
+        from tracecraft.exporters.jsonl import JSONLExporter
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             filepath = f.name
@@ -271,7 +271,7 @@ class TestJSONLExporter:
 
     def test_jsonl_creates_directory_if_needed(self, sample_run):
         """JSONL exporter should create parent directories."""
-        from agenttrace.exporters.jsonl import JSONLExporter
+        from tracecraft.exporters.jsonl import JSONLExporter
 
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = Path(tmpdir) / "nested" / "dir" / "traces.jsonl"
@@ -287,7 +287,7 @@ class TestJSONLExporter:
 
     def test_jsonl_handles_datetime_serialization(self, sample_run):
         """JSONL exporter should properly serialize datetime fields."""
-        from agenttrace.exporters.jsonl import JSONLExporter
+        from tracecraft.exporters.jsonl import JSONLExporter
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             filepath = f.name
@@ -310,7 +310,7 @@ class TestJSONLExporter:
 @pytest.fixture
 def sample_run_with_steps(sample_timestamp):
     """Create a run with multiple steps."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     step1 = Step(
@@ -341,7 +341,7 @@ def sample_run_with_steps(sample_timestamp):
 @pytest.fixture
 def sample_run_with_agent_step(sample_timestamp):
     """Create a run with an agent step."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     step = Step(
@@ -362,7 +362,7 @@ def sample_run_with_agent_step(sample_timestamp):
 @pytest.fixture
 def sample_run_with_llm_step(sample_timestamp):
     """Create a run with an LLM step."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     step = Step(
@@ -383,7 +383,7 @@ def sample_run_with_llm_step(sample_timestamp):
 @pytest.fixture
 def sample_run_with_tool_step(sample_timestamp):
     """Create a run with a tool step."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     step = Step(
@@ -404,7 +404,7 @@ def sample_run_with_tool_step(sample_timestamp):
 @pytest.fixture
 def sample_run_with_retrieval_step(sample_timestamp):
     """Create a run with a retrieval step."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     step = Step(
@@ -425,7 +425,7 @@ def sample_run_with_retrieval_step(sample_timestamp):
 @pytest.fixture
 def sample_run_with_error_step(sample_timestamp):
     """Create a run with an error step."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     step = Step(
@@ -448,7 +448,7 @@ def sample_run_with_error_step(sample_timestamp):
 @pytest.fixture
 def sample_run_with_timed_step(sample_timestamp):
     """Create a run with a timed step."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     end_time = datetime.now(UTC)
@@ -472,7 +472,7 @@ def sample_run_with_timed_step(sample_timestamp):
 @pytest.fixture
 def sample_run_with_token_step(sample_timestamp):
     """Create a run with a step that has token counts."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     step = Step(
@@ -497,7 +497,7 @@ def sample_run_with_token_step(sample_timestamp):
 @pytest.fixture
 def sample_run_with_nested_steps(sample_timestamp):
     """Create a run with nested steps."""
-    from agenttrace.core.models import AgentRun, Step, StepType
+    from tracecraft.core.models import AgentRun, Step, StepType
 
     run_id = uuid4()
     parent_id = uuid4()

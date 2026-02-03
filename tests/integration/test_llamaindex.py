@@ -11,25 +11,25 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun, StepType
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun, StepType
 
 
 class TestLlamaIndexSpanHandler:
-    """Tests for AgentTraceSpanHandler."""
+    """Tests for TraceCraftSpanHandler."""
 
     def test_handler_creation(self) -> None:
         """Should create a span handler."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         assert handler is not None
 
     def test_handler_requires_active_run(self) -> None:
         """Should require an active run to capture steps."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         # No active run, spans should not be created
         span_id = handler.new_span(
             id_=str(uuid4()),
@@ -42,10 +42,10 @@ class TestLlamaIndexSpanHandler:
 
     def test_handler_with_active_run(self) -> None:
         """Should create steps when run is active."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         span_id = str(uuid4())
 
         with run_context(run):
@@ -70,10 +70,10 @@ class TestSpanTypeInference:
 
     def test_infer_llm_type(self) -> None:
         """Should infer LLM type for LLM instances."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         span_id = str(uuid4())
 
         with run_context(run):
@@ -95,10 +95,10 @@ class TestSpanTypeInference:
 
     def test_infer_retriever_type(self) -> None:
         """Should infer RETRIEVAL type for retriever instances."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         span_id = str(uuid4())
 
         with run_context(run):
@@ -120,10 +120,10 @@ class TestSpanTypeInference:
 
     def test_infer_tool_type(self) -> None:
         """Should infer TOOL type for tool instances."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         span_id = str(uuid4())
 
         with run_context(run):
@@ -146,10 +146,10 @@ class TestSpanTypeInference:
 
     def test_infer_agent_type(self) -> None:
         """Should infer AGENT type for agent instances."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         span_id = str(uuid4())
 
         with run_context(run):
@@ -171,10 +171,10 @@ class TestSpanTypeInference:
 
     def test_default_workflow_type(self) -> None:
         """Should default to WORKFLOW for unknown instances."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         span_id = str(uuid4())
 
         with run_context(run):
@@ -200,10 +200,10 @@ class TestSpanHierarchy:
 
     def test_nested_spans(self) -> None:
         """Should handle nested spans with proper hierarchy."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         parent_span_id = str(uuid4())
         child_span_id = str(uuid4())
 
@@ -254,10 +254,10 @@ class TestSourceNodeExtraction:
 
     def test_extract_source_nodes(self) -> None:
         """Should extract source documents from retrieval results."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         span_id = str(uuid4())
 
         nodes = [
@@ -305,10 +305,10 @@ class TestLLMMetadata:
 
     def test_capture_model_name(self) -> None:
         """Should capture model name from LLM instance."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         span_id = str(uuid4())
 
         llm = MockLLM(model="gpt-4")
@@ -332,10 +332,10 @@ class TestLLMMetadata:
 
     def test_capture_token_usage(self) -> None:
         """Should capture token counts from LLM response."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         span_id = str(uuid4())
 
         with run_context(run):
@@ -365,10 +365,10 @@ class TestErrorHandling:
 
     def test_capture_span_error(self) -> None:
         """Should capture errors from span drops."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         span_id = str(uuid4())
 
         with run_context(run):
@@ -391,10 +391,10 @@ class TestErrorHandling:
 
     def test_error_increments_run_count(self) -> None:
         """Should increment run.error_count on errors."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
 
         with run_context(run):
             span_id = str(uuid4())
@@ -441,10 +441,10 @@ class TestEdgeCases:
 
     def test_end_without_start(self) -> None:
         """Should handle end without corresponding start."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
 
         with run_context(run):
             # End without start - should not raise
@@ -460,10 +460,10 @@ class TestEdgeCases:
 
     def test_none_instance(self) -> None:
         """Should handle None instance gracefully."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         span_id = str(uuid4())
 
         with run_context(run):
@@ -490,9 +490,9 @@ class TestCallbackManager:
 
     def test_span_handler_protocol(self) -> None:
         """Should implement the span handler protocol methods."""
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
 
         # Should have required methods
         assert hasattr(handler, "new_span")
@@ -613,10 +613,10 @@ class TestThreadSafety:
         """Should handle concurrent span creation from multiple threads."""
         import threading
 
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         errors: list[Exception] = []
         num_threads = 10
 
@@ -654,10 +654,10 @@ class TestThreadSafety:
         """Should handle concurrent nested span creation."""
         import threading
 
-        from agenttrace.adapters.llamaindex import AgentTraceSpanHandler
+        from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
 
         run = AgentRun(name="test_run", start_time=datetime.now(UTC))
-        handler = AgentTraceSpanHandler()
+        handler = TraceCraftSpanHandler()
         errors: list[Exception] = []
         num_threads = 5
 

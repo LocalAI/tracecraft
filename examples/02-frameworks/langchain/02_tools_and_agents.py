@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""LangChain Tools and Agents - Trace tool-calling agents with AgentTrace.
+"""LangChain Tools and Agents - Trace tool-calling agents with TraceCraft.
 
 Demonstrates how to trace LangChain agents that use tools, including
 tool binding, agent executors, and the create_tool_calling_agent pattern.
@@ -28,10 +28,10 @@ import os
 import sys
 from datetime import UTC, datetime
 
-import agenttrace
-from agenttrace.adapters.langchain import AgentTraceCallbackHandler
-from agenttrace.core.context import run_context
-from agenttrace.core.models import AgentRun
+import tracecraft
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
 
 
 def check_prerequisites() -> bool:
@@ -51,8 +51,8 @@ def check_prerequisites() -> bool:
     return True
 
 
-# Initialize AgentTrace
-runtime = agenttrace.init(
+# Initialize TraceCraft
+runtime = tracecraft.init(
     console=True,
     jsonl=True,
     jsonl_path="traces.jsonl",
@@ -89,7 +89,7 @@ def tool_binding_example() -> None:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     llm_with_tools = llm.bind_tools([get_weather, calculator])
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_tool_binding", start_time=datetime.now(UTC))
 
     with run_context(run):
@@ -128,7 +128,7 @@ def tool_calling_agent_example() -> None:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     llm_with_tools = llm.bind_tools(tools)
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_tool_calling_agent", start_time=datetime.now(UTC))
 
     with run_context(run):
@@ -189,7 +189,7 @@ def structured_output_agent_example() -> None:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     llm_with_tools = llm.bind_tools([calculator])
 
-    handler = AgentTraceCallbackHandler()
+    handler = TraceCraftCallbackHandler()
     run = AgentRun(name="langchain_structured_output", start_time=datetime.now(UTC))
 
     with run_context(run):
@@ -209,7 +209,7 @@ def structured_output_agent_example() -> None:
 def main() -> None:
     """Run the LangChain tools and agents examples."""
     print("=" * 60)
-    print("AgentTrace LangChain Tools and Agents")
+    print("TraceCraft LangChain Tools and Agents")
     print("=" * 60)
 
     tool_binding_example()
