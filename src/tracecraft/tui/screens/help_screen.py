@@ -143,12 +143,10 @@ class HelpScreen(ModalScreen if TEXTUAL_AVAILABLE else object):  # type: ignore[
 
                 # Views
                 yield Static("VIEWS", classes="section-title")
-                yield Static("  i            Show inputs", classes="keybind-row")
-                yield Static("  o            Show outputs", classes="keybind-row")
-                yield Static("  a            Show attributes", classes="keybind-row")
-                yield Static("  d            Show full JSON detail", classes="keybind-row")
-                yield Static("  e            Show error (if any)", classes="keybind-row")
-                yield Static("  Tab          Cycle through views", classes="keybind-row")
+                yield Static(
+                    "  Tab          Cycle through views (Input → Output → Detail)",
+                    classes="keybind-row",
+                )
 
                 # Actions
                 yield Static("ACTIONS", classes="section-title")

@@ -49,15 +49,10 @@ def _get_bindings() -> list[Any]:
         Binding("q", "quit", "Quit"),
         Binding("r", "refresh", "Refresh"),
         Binding("slash", "filter", "Filter"),
-        Binding("i", "show_input", "Input"),
-        Binding("o", "show_output", "Output"),
-        Binding("a", "show_attributes", "Attrs"),
-        Binding("d", "show_json", "Detail"),  # Full JSON detail view
-        Binding("e", "show_error", "Error"),
+        Binding("tab", "cycle_view", "Cycle View"),  # Cycle through view modes
         Binding("p", "playground", "Play"),  # Open playground for LLM steps
         Binding("P", "project_manager", "Projects"),  # Shift+P opens project manager
         Binding("A", "assign_project", "Assign"),  # Shift+A assigns trace to project
-        Binding("tab", "cycle_view", "Cycle View"),
         Binding("question_mark", "help", "Help"),
         Binding("escape", "back", "Back"),
         # View mode switching
@@ -875,46 +870,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             self._load_runs()
             self._update_tree()
             self.notify("Data refreshed.", title="REFRESH", timeout=2)
-
-    def action_show_input(self) -> None:
-        """Show input view."""
-        from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
-
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-        io_viewer.set_mode(IOViewer.MODE_INPUT)
-        self.query_one("#mode-indicator", ModeIndicator).set_mode(IOViewer.MODE_INPUT)
-
-    def action_show_output(self) -> None:
-        """Show output view."""
-        from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
-
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-        io_viewer.set_mode(IOViewer.MODE_OUTPUT)
-        self.query_one("#mode-indicator", ModeIndicator).set_mode(IOViewer.MODE_OUTPUT)
-
-    def action_show_attributes(self) -> None:
-        """Show attributes view."""
-        from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
-
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-        io_viewer.set_mode(IOViewer.MODE_ATTRIBUTES)
-        self.query_one("#mode-indicator", ModeIndicator).set_mode(IOViewer.MODE_ATTRIBUTES)
-
-    def action_show_json(self) -> None:
-        """Show full JSON view."""
-        from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
-
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-        io_viewer.set_mode(IOViewer.MODE_JSON)
-        self.query_one("#mode-indicator", ModeIndicator).set_mode(IOViewer.MODE_JSON)
-
-    def action_show_error(self) -> None:
-        """Show error view."""
-        from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
-
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-        io_viewer.set_mode(IOViewer.MODE_ERROR)
-        self.query_one("#mode-indicator", ModeIndicator).set_mode(IOViewer.MODE_ERROR)
 
     def action_cycle_view(self) -> None:
         """Cycle through IO viewer modes."""
