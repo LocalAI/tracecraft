@@ -52,17 +52,17 @@ if TYPE_CHECKING:
 
 class ModeIndicator(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
     """
-    Mode indicator bar showing [I] [O] [A] [D] [E] with current mode highlighted.
+    Mode indicator bar showing [I] [O] [D] with current mode highlighted.
 
     Displays above the IOViewer to show current viewing mode.
+    Press Tab to cycle through modes.
     """
 
-    # Mode labels and their keybindings
+    # Simplified mode labels: Input, Output, Detail (+ Error when present)
     MODES = [
         ("I", "input", "Input"),
         ("O", "output", "Output"),
-        ("A", "attributes", "Attrs"),
-        ("D", "json", "Detail"),
+        ("D", "detail", "Detail"),
         ("E", "error", "Error"),
     ]
 
@@ -153,10 +153,10 @@ class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
     """
 
     # View modes
+    # Simplified view modes: INPUT, OUTPUT, DETAIL (+ ERROR when applicable)
     MODE_INPUT = "input"
     MODE_OUTPUT = "output"
-    MODE_ATTRIBUTES = "attributes"
-    MODE_JSON = "json"
+    MODE_DETAIL = "detail"  # Combines attributes + full JSON
     MODE_ERROR = "error"
 
     DEFAULT_CSS = f"""
@@ -208,18 +208,17 @@ class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         Set the viewing mode.
 
         Args:
-            mode: One of MODE_INPUT, MODE_OUTPUT, MODE_ATTRIBUTES, MODE_JSON, MODE_ERROR.
+            mode: One of MODE_INPUT, MODE_OUTPUT, MODE_DETAIL, MODE_ERROR.
         """
         self._mode = mode
         self._update_display()
 
     def cycle_mode(self) -> None:
-        """Cycle through viewing modes."""
+        """Cycle through viewing modes: INPUT → OUTPUT → DETAIL (→ ERROR if present)."""
         modes = [
             self.MODE_INPUT,
             self.MODE_OUTPUT,
-            self.MODE_ATTRIBUTES,
-            self.MODE_JSON,
+            self.MODE_DETAIL,
         ]
 
         # Add error mode if there's an error
@@ -260,8 +259,6 @@ class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             data = run.input
         elif self._mode == self.MODE_OUTPUT:
             data = run.output
-        elif self._mode == self.MODE_ATTRIBUTES:
-            data = {"tags": run.tags, "session_id": run.session_id, "user_id": run.user_id}
         elif self._mode == self.MODE_ERROR:
             if run.error:
                 error_type = run.error_type or "Error"
@@ -273,7 +270,7 @@ class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
                     style=PANEL_BACKGROUND,
                 )
             data = None
-        else:  # JSON mode
+        else:  # DETAIL mode - full JSON representation
             data = run.model_dump(mode="json", exclude={"steps"})
 
         return self._render_data_panel(data, title)
@@ -286,8 +283,6 @@ class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             data = step.inputs
         elif self._mode == self.MODE_OUTPUT:
             data = step.outputs
-        elif self._mode == self.MODE_ATTRIBUTES:
-            data = step.attributes
         elif self._mode == self.MODE_ERROR:
             if step.error:
                 error_type = step.error_type or "Error"
@@ -299,7 +294,7 @@ class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
                     style=PANEL_BACKGROUND,
                 )
             data = None
-        else:  # JSON mode
+        else:  # DETAIL mode - full JSON representation
             data = step.model_dump(mode="json", exclude={"children"})
 
         return self._render_data_panel(data, title)
