@@ -164,25 +164,6 @@ class HelpScreen(ModalScreen if TEXTUAL_AVAILABLE else object):  # type: ignore[
                     "  A            Assign trace to project (Shift+A)", classes="keybind-row"
                 )
 
-                # Agents
-                yield Static("AGENTS", classes="section-title")
-                yield Static("  M            Open Agent Manager (Shift+M)", classes="keybind-row")
-                yield Static(
-                    "  B            Assign trace to agent (Shift+B)", classes="keybind-row"
-                )
-
-                # Evaluations
-                yield Static("EVALUATIONS", classes="section-title")
-                yield Static("  4            Switch to Evals view", classes="keybind-row")
-                yield Static("  E            Create new eval set (Shift+E)", classes="keybind-row")
-                yield Static(
-                    "  C            Create manual eval case (Shift+C)", classes="keybind-row"
-                )
-                yield Static("  Ctrl+E       Add trace/step to eval set", classes="keybind-row")
-                yield Static(
-                    "  R            Run selected evaluation (Shift+R)", classes="keybind-row"
-                )
-
                 # Context-specific sections
                 if self._help_context == "Playground":
                     yield Static("PLAYGROUND", classes="section-title")

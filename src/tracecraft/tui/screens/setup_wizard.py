@@ -391,8 +391,8 @@ class SetupWizardScreen(Screen if TEXTUAL_AVAILABLE else object):  # type: ignor
 
         store.close()
 
-        # Add comprehensive example data (agents, evals, eval runs)
-        # This creates "Example Project" with linked agents and evaluations
+        # Add example data with sample traces
+        # This creates "Example Project" with sample traces
         _create_example_data(db_path)
 
         return f"sqlite://{db_path}"
