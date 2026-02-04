@@ -7,6 +7,7 @@ and debugging LLM/Agent traces.
 
 from __future__ import annotations
 
+from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
 # Import theme for consistent styling
@@ -566,7 +567,7 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self._update_selection()
 
     def _drill_into_project(self, project_data: dict[str, Any]) -> None:
-        """Load and display hierarchical project tree with agents, evals, and traces."""
+        """Load and display hierarchical project tree with traces."""
         from tracecraft.storage.base import TraceQuery
         from tracecraft.tui.widgets.filter_bar import FilterBar
         from tracecraft.tui.widgets.run_tree import RunTree
@@ -577,7 +578,7 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         project_id = project_data.get("id")
         project_name = project_data.get("name", "Unknown")
 
-        # Get project structure (agents, evals, trace count)
+        # Get project structure (trace count)
         structure = self._loader.store.get_project_structure(project_id)
 
         # Load preview traces for the tree (limit to 10 for performance)
@@ -792,7 +793,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self._current_run = None
         self._current_step = None
         self._current_project = None
-        self._current_agent = None
 
         # Reset breadcrumb to show current view
         self._update_breadcrumb()
@@ -814,15 +814,13 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         segment_type = data.get("type")
 
         if segment_type == "view":
-            # Navigate back to a view mode (e.g., Traces, Projects, Evals)
+            # Navigate back to a view mode (e.g., Traces, Projects)
             mode = data.get("mode")
             if mode:
                 self._view_mode = mode
-                try:
+                with suppress(Exception):
                     view_toggle = self.query_one("#view-toggle", ViewToggle)
                     view_toggle.mode = mode
-                except Exception:
-                    pass
                 self._update_tree_for_view()
                 self._update_detail_panels()
 
@@ -947,7 +945,7 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
 
         filter_bar = self.query_one("#filter-bar", FilterBar)
 
-        # If we're viewing a project's or agent's traces, go back to the list
+        # If we're viewing a project's traces, go back to the list
         if self._current_project and self._view_mode == ViewMode.TRACES:
             # Clear project filter and return to projects view
             self._current_project = None
@@ -957,17 +955,13 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             # Update view toggle to show PROJECTS
             from tracecraft.tui.widgets.view_toggle import ViewToggle
 
-            try:
+            with suppress(Exception):
                 view_toggle = self.query_one("#view-toggle", ViewToggle)
                 view_toggle.set_mode(ViewMode.PROJECTS)
-            except Exception:
-                pass
             # Pop breadcrumb
-            try:
+            with suppress(Exception):
                 breadcrumb = self.query_one("#breadcrumb", Breadcrumb)
                 breadcrumb.pop()
-            except Exception:
-                pass
             return
 
         # Standard back behavior
@@ -978,12 +972,10 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             self._current_step = None
             self._update_detail_panels()
             # Pop breadcrumb if there are extra segments
-            try:
+            with suppress(Exception):
                 breadcrumb = self.query_one("#breadcrumb", Breadcrumb)
                 if len(breadcrumb) > 1:
                     breadcrumb.pop()
-            except Exception:
-                pass
 
     def _update_detail_panels(self) -> None:
         """Update detail panels based on current selection."""
@@ -1206,11 +1198,9 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self._current_project = None
 
         # Update the view toggle widget
-        try:
+        with suppress(Exception):
             view_toggle = self.query_one("#view-toggle", ViewToggle)
             view_toggle.set_mode(ViewMode.TRACES)
-        except Exception:
-            pass
 
         self._load_runs()
         self._update_tree_for_view()
@@ -1227,10 +1217,8 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self._current_project = None
 
         # Update the view toggle widget
-        try:
+        with suppress(Exception):
             view_toggle = self.query_one("#view-toggle", ViewToggle)
             view_toggle.set_mode(ViewMode.PROJECTS)
-        except Exception:
-            pass
 
         self._update_tree_for_view()

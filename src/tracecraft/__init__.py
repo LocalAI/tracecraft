@@ -42,7 +42,6 @@ from tracecraft.instrumentation.decorators import (
 
 # Alias for more descriptive naming
 TraceCraftRuntime = TALRuntime
-TraceCraftRuntime = TALRuntime  # Deprecated alias for backwards compatibility
 
 __version__ = "0.1.0"
 __all__ = [
@@ -53,7 +52,6 @@ __all__ = [
     # Runtime
     "TALRuntime",
     "TraceCraftRuntime",  # Alias
-    "TraceCraftRuntime",  # Deprecated alias
     "init",
     "get_runtime",
     "runtime_context",

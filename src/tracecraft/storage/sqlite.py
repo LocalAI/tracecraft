@@ -22,25 +22,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Schema version for migrations
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 SCHEMA_SQL = """
--- Agents table for organizing traces by agent (Added in schema v5)
-CREATE TABLE IF NOT EXISTS agents (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT,
-    project_id TEXT,
-    agent_type TEXT,  -- e.g., 'langchain', 'openai', 'custom'
-    config TEXT,  -- JSON config
-    created_at TEXT NOT NULL,
-    updated_at TEXT,
-    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_agents_name ON agents(name);
-CREATE INDEX IF NOT EXISTS idx_agents_project ON agents(project_id);
-
 -- Traces table (run-level metadata)
 CREATE TABLE IF NOT EXISTS traces (
     id TEXT PRIMARY KEY,
@@ -59,13 +43,11 @@ CREATE TABLE IF NOT EXISTS traces (
     error_type TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     project_id TEXT,
-    agent_id TEXT,  -- Link to agents table (Added in schema v5)
 
     -- JSON blob for full trace data
     data JSON NOT NULL,
 
-    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL,
-    FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
 );
 
 -- Indexes for common queries
@@ -78,7 +60,6 @@ CREATE INDEX IF NOT EXISTS idx_traces_session ON traces(session_id);
 CREATE INDEX IF NOT EXISTS idx_traces_user ON traces(user_id);
 CREATE INDEX IF NOT EXISTS idx_traces_environment ON traces(environment);
 CREATE INDEX IF NOT EXISTS idx_traces_project ON traces(project_id);
-CREATE INDEX IF NOT EXISTS idx_traces_agent ON traces(agent_id);
 
 -- Tags table (many-to-many)
 CREATE TABLE IF NOT EXISTS trace_tags (
@@ -173,89 +154,6 @@ CREATE INDEX IF NOT EXISTS idx_iterations_version ON playground_iterations(trace
 CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER PRIMARY KEY
 );
-
--- =========================================================================
--- Evaluation Tables (Added in schema v3)
--- =========================================================================
-
--- Evaluation Sets: Collection of test cases with metric configuration
-CREATE TABLE IF NOT EXISTS evaluation_sets (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,
-    description TEXT,
-    project_id TEXT,
-    metrics_config TEXT NOT NULL DEFAULT '[]',  -- JSON array of EvaluationMetricConfig
-    default_threshold REAL DEFAULT 0.7,
-    pass_rate_threshold REAL DEFAULT 0.8,
-    tags TEXT,  -- JSON array
-    created_at TEXT NOT NULL,
-    updated_at TEXT,
-    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_eval_sets_name ON evaluation_sets(name);
-CREATE INDEX IF NOT EXISTS idx_eval_sets_project ON evaluation_sets(project_id);
-
--- Evaluation Cases: Individual test cases within a set
-CREATE TABLE IF NOT EXISTS evaluation_cases (
-    id TEXT PRIMARY KEY,
-    evaluation_set_id TEXT NOT NULL,
-    name TEXT NOT NULL,
-    input TEXT NOT NULL,  -- JSON
-    expected_output TEXT,  -- JSON
-    actual_output TEXT,  -- JSON: Actual output from trace/step for comparison
-    retrieval_context TEXT,  -- JSON array
-    source_trace_id TEXT,
-    source_step_id TEXT,
-    tags TEXT,  -- JSON array
-    created_at TEXT NOT NULL,
-    FOREIGN KEY (evaluation_set_id) REFERENCES evaluation_sets(id) ON DELETE CASCADE,
-    FOREIGN KEY (source_trace_id) REFERENCES traces(id) ON DELETE SET NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_eval_cases_set ON evaluation_cases(evaluation_set_id);
-CREATE INDEX IF NOT EXISTS idx_eval_cases_source ON evaluation_cases(source_trace_id);
-
--- Evaluation Runs: Single execution of an evaluation set
-CREATE TABLE IF NOT EXISTS evaluation_runs (
-    id TEXT PRIMARY KEY,
-    evaluation_set_id TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending',
-    total_cases INTEGER DEFAULT 0,
-    passed_cases INTEGER DEFAULT 0,
-    failed_cases INTEGER DEFAULT 0,
-    overall_pass_rate REAL,
-    metric_averages TEXT,  -- JSON object
-    passed BOOLEAN,
-    started_at TEXT NOT NULL,
-    completed_at TEXT,
-    duration_ms REAL,
-    error TEXT,
-    FOREIGN KEY (evaluation_set_id) REFERENCES evaluation_sets(id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_eval_runs_set ON evaluation_runs(evaluation_set_id);
-CREATE INDEX IF NOT EXISTS idx_eval_runs_status ON evaluation_runs(status);
-
--- Evaluation Results: Per-case results within a run
-CREATE TABLE IF NOT EXISTS evaluation_results (
-    id TEXT PRIMARY KEY,
-    evaluation_run_id TEXT NOT NULL,
-    evaluation_case_id TEXT NOT NULL,
-    trace_id TEXT,
-    actual_output TEXT,  -- JSON
-    scores TEXT NOT NULL,  -- JSON array of MetricScore
-    overall_score REAL,
-    passed BOOLEAN NOT NULL,
-    duration_ms REAL,
-    error TEXT,
-    FOREIGN KEY (evaluation_run_id) REFERENCES evaluation_runs(id) ON DELETE CASCADE,
-    FOREIGN KEY (evaluation_case_id) REFERENCES evaluation_cases(id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_eval_results_run ON evaluation_results(evaluation_run_id);
-CREATE INDEX IF NOT EXISTS idx_eval_results_case ON evaluation_results(evaluation_case_id);
-CREATE INDEX IF NOT EXISTS idx_eval_results_passed ON evaluation_results(passed);
 """
 
 
@@ -448,143 +346,26 @@ class SQLiteTraceStore(BaseTraceStore):
         cursor.execute("ALTER TABLE traces ADD COLUMN project_id TEXT")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_traces_project ON traces(project_id)")
 
-    def _migrate_v2_to_v3(self, cursor: sqlite3.Cursor) -> None:
-        """Migrate from v2 to v3: add evaluation tables."""
-        logger.info("Migrating schema from v2 to v3: adding evaluation tables")
+    def _migrate_to_v6(self, cursor: sqlite3.Cursor) -> None:
+        """Migrate to v6: remove deprecated evaluation and agents tables."""
+        logger.info("Migrating schema to v6: removing evaluation and agents tables")
 
-        # Create evaluation_sets table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS evaluation_sets (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL UNIQUE,
-                description TEXT,
-                project_id TEXT,
-                metrics_config TEXT NOT NULL DEFAULT '[]',
-                default_threshold REAL DEFAULT 0.7,
-                pass_rate_threshold REAL DEFAULT 0.8,
-                tags TEXT,
-                created_at TEXT NOT NULL,
-                updated_at TEXT,
-                FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
-            )
-        """)
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_eval_sets_name ON evaluation_sets(name)")
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_eval_sets_project ON evaluation_sets(project_id)"
-        )
+        # Drop deprecated tables (silently ignore if they don't exist)
+        deprecated_tables = [
+            "evaluation_results",
+            "evaluation_runs",
+            "evaluation_cases",
+            "evaluation_sets",
+            "agents",
+        ]
+        for table in deprecated_tables:
+            with suppress(Exception):
+                cursor.execute(f"DROP TABLE IF EXISTS {table}")  # noqa: S608
 
-        # Create evaluation_cases table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS evaluation_cases (
-                id TEXT PRIMARY KEY,
-                evaluation_set_id TEXT NOT NULL,
-                name TEXT NOT NULL,
-                input TEXT NOT NULL,
-                expected_output TEXT,
-                actual_output TEXT,
-                retrieval_context TEXT,
-                source_trace_id TEXT,
-                source_step_id TEXT,
-                tags TEXT,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY (evaluation_set_id) REFERENCES evaluation_sets(id) ON DELETE CASCADE,
-                FOREIGN KEY (source_trace_id) REFERENCES traces(id) ON DELETE SET NULL
-            )
-        """)
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_eval_cases_set ON evaluation_cases(evaluation_set_id)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_eval_cases_source ON evaluation_cases(source_trace_id)"
-        )
-
-        # Create evaluation_runs table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS evaluation_runs (
-                id TEXT PRIMARY KEY,
-                evaluation_set_id TEXT NOT NULL,
-                status TEXT NOT NULL DEFAULT 'pending',
-                total_cases INTEGER DEFAULT 0,
-                passed_cases INTEGER DEFAULT 0,
-                failed_cases INTEGER DEFAULT 0,
-                overall_pass_rate REAL,
-                metric_averages TEXT,
-                passed BOOLEAN,
-                started_at TEXT NOT NULL,
-                completed_at TEXT,
-                duration_ms REAL,
-                error TEXT,
-                FOREIGN KEY (evaluation_set_id) REFERENCES evaluation_sets(id) ON DELETE CASCADE
-            )
-        """)
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_eval_runs_set ON evaluation_runs(evaluation_set_id)"
-        )
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_eval_runs_status ON evaluation_runs(status)")
-
-        # Create evaluation_results table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS evaluation_results (
-                id TEXT PRIMARY KEY,
-                evaluation_run_id TEXT NOT NULL,
-                evaluation_case_id TEXT NOT NULL,
-                trace_id TEXT,
-                actual_output TEXT,
-                scores TEXT NOT NULL,
-                overall_score REAL,
-                passed BOOLEAN NOT NULL,
-                duration_ms REAL,
-                error TEXT,
-                FOREIGN KEY (evaluation_run_id) REFERENCES evaluation_runs(id) ON DELETE CASCADE,
-                FOREIGN KEY (evaluation_case_id) REFERENCES evaluation_cases(id) ON DELETE CASCADE
-            )
-        """)
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_eval_results_run ON evaluation_results(evaluation_run_id)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_eval_results_case ON evaluation_results(evaluation_case_id)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_eval_results_passed ON evaluation_results(passed)"
-        )
-
-    def _migrate_v3_to_v4(self, cursor: sqlite3.Cursor) -> None:
-        """Migrate from v3 to v4: add actual_output column to evaluation_cases."""
-        logger.info("Migrating schema from v3 to v4: adding actual_output to evaluation_cases")
-
-        # Add actual_output column to evaluation_cases table
+        # Drop agent_id column from traces (SQLite doesn't support DROP COLUMN directly)
+        # We'll just leave it - it will be ignored. For a clean db, create new.
         with suppress(Exception):
-            cursor.execute("ALTER TABLE evaluation_cases ADD COLUMN actual_output TEXT")
-
-    def _migrate_v4_to_v5(self, cursor: sqlite3.Cursor) -> None:
-        """Migrate from v4 to v5: add agents table and agent_id to traces."""
-        logger.info("Migrating schema from v4 to v5: adding agents table and agent_id")
-
-        # Create agents table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS agents (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT,
-                project_id TEXT,
-                agent_type TEXT,
-                config TEXT,
-                created_at TEXT NOT NULL,
-                updated_at TEXT,
-                FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
-            )
-        """)
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_agents_name ON agents(name)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_agents_project ON agents(project_id)")
-
-        # Add agent_id column to traces table
-        try:
-            cursor.execute("ALTER TABLE traces ADD COLUMN agent_id TEXT")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_traces_agent ON traces(agent_id)")
-        except Exception:
-            # Column may already exist
-            pass
+            cursor.execute("DROP INDEX IF EXISTS idx_traces_agent")
 
     def _migrate_schema(self, cursor: sqlite3.Cursor, from_version: int) -> None:
         """Run schema migrations."""
@@ -593,14 +374,8 @@ class SQLiteTraceStore(BaseTraceStore):
         if from_version < 2:
             self._migrate_v1_to_v2(cursor)
 
-        if from_version < 3:
-            self._migrate_v2_to_v3(cursor)
-
-        if from_version < 4:
-            self._migrate_v3_to_v4(cursor)
-
-        if from_version < 5:
-            self._migrate_v4_to_v5(cursor)
+        if from_version < 6:
+            self._migrate_to_v6(cursor)
 
         cursor.execute(
             "UPDATE schema_version SET version = ?",

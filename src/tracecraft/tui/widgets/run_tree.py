@@ -2,7 +2,7 @@
 Run tree widget for displaying traces hierarchically.
 
 Shows runs and their steps in a navigable tree structure.
-Supports multiple view modes: traces, projects, and agents.
+Supports multiple view modes: traces and projects.
 NOIR SIGNAL theme styling.
 """
 

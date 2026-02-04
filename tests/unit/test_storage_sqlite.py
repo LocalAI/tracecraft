@@ -784,14 +784,14 @@ class TestPlaygroundIterations:
 class TestSchemaMigration:
     """Tests for schema migration."""
 
-    def test_fresh_install_creates_v5(self, tmp_path):
-        """Test that fresh installation creates schema v5."""
+    def test_fresh_install_creates_v6(self, tmp_path):
+        """Test that fresh installation creates schema v6."""
         db_path = tmp_path / "fresh.db"
         store = SQLiteTraceStore(db_path)
 
         # Check schema version
         results = store.execute_sql("SELECT version FROM schema_version")
-        assert results[0]["version"] == 5
+        assert results[0]["version"] == 6
 
         # Check new tables exist (v2 tables)
         tables = store.execute_sql("SELECT name FROM sqlite_master WHERE type='table'")
@@ -799,18 +799,17 @@ class TestSchemaMigration:
         assert "projects" in table_names
         assert "trace_versions" in table_names
         assert "playground_iterations" in table_names
-        # Check v3 evaluation tables
-        assert "evaluation_sets" in table_names
-        assert "evaluation_cases" in table_names
-        assert "evaluation_runs" in table_names
-        assert "evaluation_results" in table_names
-        # Check v5 agents table
-        assert "agents" in table_names
+        # Evaluation and agents tables should NOT exist (removed in v6)
+        assert "evaluation_sets" not in table_names
+        assert "evaluation_cases" not in table_names
+        assert "evaluation_runs" not in table_names
+        assert "evaluation_results" not in table_names
+        assert "agents" not in table_names
 
         store.close()
 
-    def test_v1_to_v5_migration(self, tmp_path):
-        """Test migration from v1 to v5 schema."""
+    def test_v1_to_v6_migration(self, tmp_path):
+        """Test migration from v1 to v6 schema."""
         import sqlite3
 
         db_path = tmp_path / "migrate.db"
@@ -884,9 +883,9 @@ class TestSchemaMigration:
         # Now open with SQLiteTraceStore - should trigger migration
         store = SQLiteTraceStore(db_path)
 
-        # Check schema version is now 5
+        # Check schema version is now 6
         results = store.execute_sql("SELECT version FROM schema_version")
-        assert results[0]["version"] == 5
+        assert results[0]["version"] == 6
 
         # Check new tables exist (v2 tables)
         tables = store.execute_sql("SELECT name FROM sqlite_master WHERE type='table'")
@@ -894,19 +893,17 @@ class TestSchemaMigration:
         assert "projects" in table_names
         assert "trace_versions" in table_names
         assert "playground_iterations" in table_names
-        # Check v3 evaluation tables
-        assert "evaluation_sets" in table_names
-        assert "evaluation_cases" in table_names
-        assert "evaluation_runs" in table_names
-        assert "evaluation_results" in table_names
-        # Check v5 agents table
-        assert "agents" in table_names
+        # Evaluation and agents tables should NOT exist (removed in v6)
+        assert "evaluation_sets" not in table_names
+        assert "evaluation_cases" not in table_names
+        assert "evaluation_runs" not in table_names
+        assert "evaluation_results" not in table_names
+        assert "agents" not in table_names
 
-        # Check traces table has project_id and agent_id columns
+        # Check traces table has project_id column (agent_id removed in v6)
         columns = store.execute_sql("PRAGMA table_info(traces)")
         column_names = {c["name"] for c in columns}
         assert "project_id" in column_names
-        assert "agent_id" in column_names
 
         # Check existing data is preserved
         results = store.execute_sql("SELECT name FROM traces")

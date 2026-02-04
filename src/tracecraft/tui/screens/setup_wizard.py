@@ -360,7 +360,7 @@ class SetupWizardScreen(Screen if TEXTUAL_AVAILABLE else object):  # type: ignor
             self._show_error(f"Error creating demo: {e}")
 
     def _create_demo_database(self) -> str:
-        """Create a temporary database with sample trace data, agents, and evals."""
+        """Create a temporary database with sample trace data."""
         import tempfile
         from datetime import UTC, datetime
         from uuid import uuid4
