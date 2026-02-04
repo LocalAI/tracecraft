@@ -58,7 +58,6 @@ def _get_bindings() -> list[Any]:
         Binding("P", "project_manager", "Projects"),  # Shift+P opens project manager
         Binding("A", "assign_project", "Assign"),  # Shift+A assigns trace to project
         Binding("tab", "cycle_view", "Cycle View"),
-        Binding("t", "toggle_format", "Table/JSON"),  # Toggle display format
         Binding("question_mark", "help", "Help"),
         Binding("escape", "back", "Back"),
         # View mode switching
@@ -925,17 +924,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         io_viewer.cycle_mode()
         # Update mode indicator with the new mode
         self.query_one("#mode-indicator", ModeIndicator).set_mode(io_viewer.mode)
-
-    def action_toggle_format(self) -> None:
-        """Toggle display format between AUTO, TABLE, and JSON."""
-        from tracecraft.tui.widgets.io_viewer import DisplayFormat, IOViewer
-
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-        io_viewer.toggle_display_format()
-
-        # Show notification of new format
-        format_name = io_viewer.display_format.value.upper()
-        self.notify(f"Display format: {format_name}", timeout=2)
 
     def action_back(self) -> None:
         """Go back / clear selection."""

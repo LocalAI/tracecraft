@@ -8,8 +8,8 @@ NOIR SIGNAL theme styling.
 from __future__ import annotations
 
 import json
+from contextlib import suppress
 from datetime import UTC
-from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 from rich.box import SIMPLE
@@ -34,15 +34,6 @@ from tracecraft.tui.theme import (
     TEXT_MUTED,
     TEXT_PRIMARY,
 )
-
-
-class DisplayFormat(str, Enum):
-    """Display format for data in IOViewer."""
-
-    JSON = "json"
-    TABLE = "table"
-    AUTO = "auto"
-
 
 try:
     from textual.containers import Horizontal
@@ -140,7 +131,7 @@ class ModeIndicator(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignor
     def _update_display(self) -> None:
         """Update the visual state of mode indicators."""
         for _key, mode_id, _name in self.MODES:
-            try:
+            with suppress(Exception):  # Widget may not yet be mounted
                 indicator = self.query_one(f"#mode-{mode_id}", Static)
 
                 # Update classes
@@ -151,8 +142,6 @@ class ModeIndicator(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignor
                 # Show/hide error mode based on whether item has error
                 if mode_id == "error":
                     indicator.display = self._has_error
-            except Exception:
-                pass  # Widget not yet mounted
 
 
 class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
@@ -192,7 +181,6 @@ class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self._current_run: AgentRun | None = None
         self._current_step: Step | None = None
         self._mode: str = self.MODE_OUTPUT
-        self._display_format: DisplayFormat = DisplayFormat.AUTO
 
     def show_run(self, run: AgentRun | None) -> None:
         """
@@ -403,21 +391,6 @@ class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         """Get the current viewing mode."""
         return self._mode
 
-    @property
-    def display_format(self) -> DisplayFormat:
-        """Get the current display format."""
-        return self._display_format
-
-    def toggle_display_format(self) -> None:
-        """Cycle through display formats: AUTO → TABLE → JSON → AUTO."""
-        if self._display_format == DisplayFormat.AUTO:
-            self._display_format = DisplayFormat.TABLE
-        elif self._display_format == DisplayFormat.TABLE:
-            self._display_format = DisplayFormat.JSON
-        else:
-            self._display_format = DisplayFormat.AUTO
-        self._update_display()
-
     def _should_use_table(self, data: Any) -> bool:
         """Determine if data should be displayed as a table.
 
@@ -560,13 +533,8 @@ class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
                 style=PANEL_BACKGROUND,
             )
 
-        # Determine format to use
-        use_table = False
-        if self._display_format == DisplayFormat.TABLE:
-            use_table = isinstance(data, (dict, list))
-        elif self._display_format == DisplayFormat.AUTO:
-            use_table = self._should_use_table(data)
-        # JSON format always uses JSON
+        # Always use AUTO format - smart detection of best display
+        use_table = self._should_use_table(data)
 
         if use_table:
             # List of dicts - render as multi-row table
@@ -583,10 +551,9 @@ class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         except (TypeError, ValueError):
             content = Text(str(data), style=TEXT_PRIMARY)
 
-        format_indicator = "[JSON]" if self._display_format == DisplayFormat.JSON else "[AUTO]"
         return Panel(
             content,
-            title=f"{title} {format_indicator}",
+            title=title,
             title_align="left",
             border_style=PANEL_BORDER_INFO,
             style=PANEL_BACKGROUND,
