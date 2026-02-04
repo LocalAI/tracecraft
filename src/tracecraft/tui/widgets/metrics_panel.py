@@ -99,48 +99,26 @@ class MetricsPanel(Static if TEXTUAL_AVAILABLE else object):  # type: ignore[mis
         self.update(content)
 
     def _render_run_metrics(self, run: AgentRun) -> Panel:
-        """Render metrics for a run."""
+        """Render compact metrics for a run - only essential info."""
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column("Label", style=TEXT_MUTED)
         table.add_column("Value", style=TEXT_PRIMARY)
 
-        # Basic info
+        # Essential info only
         table.add_row("NAME", run.name)
-        table.add_row("ID", str(run.id)[:8])
-
-        # Source file
-        source_file = run.attributes.get("source_file")
-        if source_file:
-            # Show just the filename
-            filename = source_file.rsplit("/", 1)[-1] if "/" in source_file else source_file
-            table.add_row("SOURCE", filename)
-
-        # Timing
-        table.add_row("STARTED", run.start_time.strftime("%Y-%m-%d %H:%M:%S"))
         if run.duration_ms:
             table.add_row("DURATION", Text(format_duration(run.duration_ms), style=ACCENT_AMBER))
 
-        # Section break for tokens
-        table.add_section()
-
-        # Tokens
+        # Resource usage
         table.add_row("TOKENS", f"{run.total_tokens:,}")
         table.add_row("COST", f"${run.total_cost_usd:.4f}")
 
-        # Steps
-        table.add_row("STEPS", str(len(run.steps)))
+        # Errors only if present
         if run.error_count > 0:
             table.add_row("ERRORS", Text(str(run.error_count), style=DANGER_RED))
-        else:
-            table.add_row("ERRORS", "0")
 
-        # Tags
-        if run.tags:
-            table.add_row("TAGS", ", ".join(run.tags))
-
-        # Error
+        # Error message if present
         if run.error:
-            table.add_section()
             error_text = Text(run.error, style=DANGER_RED)
             table.add_row("ERROR", error_text)
 
@@ -153,56 +131,34 @@ class MetricsPanel(Static if TEXTUAL_AVAILABLE else object):  # type: ignore[mis
         )
 
     def _render_step_metrics(self, step: Step) -> Panel:
-        """Render metrics for a step."""
+        """Render compact metrics for a step - only essential info."""
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column("Label", style=TEXT_MUTED)
         table.add_column("Value", style=TEXT_PRIMARY)
 
-        # Basic info
+        # Essential info
         table.add_row("NAME", step.name)
         table.add_row("TYPE", step.type.value.upper())
-        table.add_row("ID", str(step.id)[:8])
-
-        # Timing
-        table.add_row("STARTED", step.start_time.strftime("%H:%M:%S.%f")[:-3])
         if step.duration_ms:
             table.add_row("DURATION", Text(format_duration(step.duration_ms), style=ACCENT_AMBER))
 
-        # LLM-specific
+        # Model name (important for LLM steps)
         if step.model_name:
-            table.add_section()
             table.add_row("MODEL", Text(step.model_name, style=INFO_BLUE))
-            if step.model_provider:
-                table.add_row("PROVIDER", step.model_provider)
 
-        # Tokens
+        # Token usage (combined for compactness)
         if step.input_tokens or step.output_tokens:
-            table.add_section()
-            table.add_row("IN TOKENS", f"{step.input_tokens or 0:,}")
-            table.add_row("OUT TOKENS", f"{step.output_tokens or 0:,}")
+            tokens = f"{step.input_tokens or 0:,} → {step.output_tokens or 0:,}"
+            table.add_row("TOKENS", tokens)
             if step.cost_usd:
                 table.add_row("COST", f"${step.cost_usd:.6f}")
 
-        # Streaming
-        if step.is_streaming:
-            table.add_section()
-            table.add_row("STREAMING", "yes")
-            if step.streaming_chunks:
-                table.add_row("CHUNKS", str(len(step.streaming_chunks)))
-
-        # Children
-        if step.children:
-            table.add_section()
-            table.add_row("CHILDREN", str(len(step.children)))
-
-        # Error
+        # Error only if present
         if step.error:
-            table.add_section()
             error_msg = step.error
             if step.error_type:
                 error_msg = f"{step.error_type}: {step.error}"
-            error_text = Text(error_msg, style=DANGER_RED)
-            table.add_row("ERROR", error_text)
+            table.add_row("ERROR", Text(error_msg, style=DANGER_RED))
 
         # Determine border color by step type
         border_color = PANEL_BORDER_DEFAULT
