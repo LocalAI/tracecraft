@@ -554,44 +554,6 @@ class IOViewer(RichLog if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             style=PANEL_BACKGROUND,
         )
 
-    def show_project(self, project: dict[str, Any]) -> None:
-        """
-        Display data for a project as a compact panel.
-
-        Args:
-            project: The project dict to display.
-        """
-        self._current_run = None
-        self._current_step = None
-        self.clear()
-
-        name = project.get("name", "Unknown")
-        description = project.get("description", "")
-        trace_count = project.get("trace_count", 0)
-        created_at = project.get("created_at", "")
-
-        # Format created date
-        created_str = self._format_relative_time(created_at)
-
-        # Build compact text display
-        content = Text()
-        content.append(f"{name}\n", style=f"{TEXT_PRIMARY} bold")
-        if description:
-            content.append(f"{description}\n", style=TEXT_MUTED)
-        content.append("\n")
-        content.append(f"Traces: {trace_count}", style=TEXT_MUTED)
-        content.append("    ", style=TEXT_MUTED)
-        content.append(f"Created: {created_str}", style=TEXT_MUTED)
-
-        panel = Panel(
-            content,
-            title="Project",
-            title_align="left",
-            border_style=PANEL_BORDER_DEFAULT,
-            style=PANEL_BACKGROUND,
-        )
-        self.write(panel)
-
     def show_run_io(self, run: AgentRun) -> None:
         """
         Display input/output data for a run.

@@ -38,7 +38,6 @@ except ImportError:
 if TYPE_CHECKING:
     from tracecraft.core.models import AgentRun, Step
     from tracecraft.tui.data.loader import TraceLoader
-    from tracecraft.tui.widgets.view_toggle import ViewMode
 
 
 def _get_bindings() -> list[Any]:
@@ -51,13 +50,8 @@ def _get_bindings() -> list[Any]:
         Binding("slash", "filter", "Filter"),
         Binding("tab", "cycle_view", "Cycle View"),  # Cycle through view modes
         Binding("p", "playground", "Play"),  # Open playground for LLM steps
-        Binding("P", "project_manager", "Projects"),  # Shift+P opens project manager
-        Binding("A", "assign_project", "Assign"),  # Shift+A assigns trace to project
         Binding("question_mark", "help", "Help"),
         Binding("escape", "back", "Back"),
-        # View mode switching
-        Binding("1", "view_traces", "Traces", show=False),
-        Binding("2", "view_projects", "Projects", show=False),
         # j/k navigation is built into Textual's Tree widget
     ]
 
@@ -317,20 +311,15 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self._runs: list[AgentRun] = []  # Cached runs for display
         self._current_run: AgentRun | None = None
         self._current_step: Step | None = None
-        self._current_project: dict[str, Any] | None = None  # Current project filter
-        self._view_mode: ViewMode | None = None  # Current view mode (imported on demand)
 
     def compose(self) -> ComposeResult:
         """Compose the UI layout."""
-        from tracecraft.tui.widgets.breadcrumb import Breadcrumb
         from tracecraft.tui.widgets.filter_bar import FilterBar
         from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
         from tracecraft.tui.widgets.metrics_panel import MetricsPanel
         from tracecraft.tui.widgets.run_tree import RunTree
-        from tracecraft.tui.widgets.view_toggle import ViewToggle
 
         yield Header()
-        yield Breadcrumb(id="breadcrumb")
 
         with Container(id="main"):
             yield FilterBar(id="filter-bar")
@@ -338,7 +327,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             with Horizontal(id="content"):
                 # Left panel: Run/Step tree
                 with Vertical(id="tree-panel"):
-                    yield ViewToggle(id="view-toggle")
                     yield RunTree(id="run-tree")
 
                 # Right panel: Details
@@ -379,14 +367,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             else:
                 # Use environment configuration as fallback
                 self._loader = get_loader_for_env(self.env)
-
-        # Initialize view mode
-        from tracecraft.tui.widgets.view_toggle import ViewMode
-
-        self._view_mode = ViewMode.TRACES
-
-        # Initialize breadcrumb
-        self._update_breadcrumb()
 
         # Load initial runs
         self._load_runs()
@@ -457,255 +437,24 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
 
     def _update_tree(self) -> None:
         """Update the run tree with current data."""
-        from tracecraft.tui.widgets.view_toggle import ViewMode
-
-        # Use view-aware update if view mode is set
-        if self._view_mode is not None:
-            self._update_tree_for_view()
-        else:
-            # Fallback for initial load before view mode is set
-            from tracecraft.tui.widgets.filter_bar import FilterBar
-            from tracecraft.tui.widgets.run_tree import RunTree
-
-            tree = self.query_one("#run-tree", RunTree)
-            tree.show_traces(self._runs)
-
-            # Update result count
-            filter_bar = self.query_one("#filter-bar", FilterBar)
-            total = self._loader.count() if self._loader else len(self._runs)
-            filter_bar.update_result_count(len(self._runs), total)
-
-    def _update_breadcrumb(self, segment: dict[str, Any] | None = None) -> None:
-        """Update the breadcrumb navigation.
-
-        If segment is provided, pushes it. Otherwise, resets to current view mode.
-        """
-        from tracecraft.tui.widgets.breadcrumb import Breadcrumb
-        from tracecraft.tui.widgets.view_toggle import ViewMode
-
-        try:
-            breadcrumb = self.query_one("#breadcrumb", Breadcrumb)
-        except Exception:
-            return  # Breadcrumb not mounted yet
-
-        if segment is not None:
-            # Push a new segment
-            breadcrumb.push(segment["label"], segment.get("data", {}))
-        else:
-            # Reset breadcrumb to show current view mode
-            breadcrumb.clear()
-            view_name = "Traces"
-            if self._view_mode == ViewMode.PROJECTS:
-                view_name = "Projects"
-            breadcrumb.push(view_name, {"type": "view", "mode": self._view_mode})
-
-    def on_tree_node_selected(self, event: Any) -> None:  # noqa: ARG002
-        """Handle tree node selection (Enter key)."""
-        self._handle_tree_selection(is_activation=True)
-
-    def on_tree_node_highlighted(self, event: Any) -> None:  # noqa: ARG002
-        """Handle tree node highlight (navigation with j/k or arrows)."""
-        self._handle_tree_selection(is_activation=False)
-
-    def _handle_tree_selection(self, *, is_activation: bool = False) -> None:
-        """
-        Handle tree selection based on view mode.
-
-        Args:
-            is_activation: True if this is an Enter key press (drill-down action).
-        """
-        from tracecraft.tui.widgets.run_tree import RunTree, TreeViewMode
-
-        tree = self.query_one("#run-tree", RunTree)
-        data = tree.get_selected_data()
-
-        if not data:
-            return
-
-        node_type = data.get("type")
-
-        # Handle project selection
-        if node_type == "project":
-            if is_activation:
-                # Drill down into project - show its traces
-                self._drill_into_project(data)
-            else:
-                # Just show project info in detail panel
-                self._show_project_details(data)
-            return
-
-        # Handle folder selection (in project tree view)
-        if node_type == "folder":
-            if is_activation:
-                # Expand/collapse folder or load more items
-                self._handle_folder_activation(data)
-            return
-
-        # Handle trace selection (dict from project tree view)
-        if node_type == "trace":
-            if is_activation:
-                # Load full trace and show details
-                self._drill_into_trace(data)
-            else:
-                # Show trace preview in detail panel
-                self._show_trace_preview(data)
-            return
-
-        # Handle "more" node (load more items)
-        if node_type == "more":
-            if is_activation:
-                self._load_more_items(data)
-            return
-
-        # Handle run/step selection (existing behavior)
-        self._update_selection()
-
-    def _drill_into_project(self, project_data: dict[str, Any]) -> None:
-        """Load and display hierarchical project tree with traces."""
-        from tracecraft.storage.base import TraceQuery
         from tracecraft.tui.widgets.filter_bar import FilterBar
         from tracecraft.tui.widgets.run_tree import RunTree
 
-        if not self._loader or not self._loader.is_sqlite:
-            return
-
-        project_id = project_data.get("id")
-        project_name = project_data.get("name", "Unknown")
-
-        # Get project structure (trace count)
-        structure = self._loader.store.get_project_structure(project_id)
-
-        # Load preview traces for the tree (limit to 10 for performance)
-        query = TraceQuery(project_id=project_id, limit=10)
-        preview_traces = self._loader.query_traces(query)
-
-        # Convert AgentRun objects to dicts for the tree
-        structure["traces"] = [
-            {
-                "id": str(trace.id),
-                "name": trace.name,
-                "duration_ms": trace.duration_ms,
-                "error": trace.error,
-            }
-            for trace in preview_traces
-        ]
-
-        # Update tree to show hierarchical project structure
         tree = self.query_one("#run-tree", RunTree)
-        tree.show_project_tree(structure)
+        tree.show_traces(self._runs)
 
-        # Update filter bar to show project filter
+        # Update result count
         filter_bar = self.query_one("#filter-bar", FilterBar)
-        filter_bar.set_project(project_id, project_name)
+        total = self._loader.count() if self._loader else len(self._runs)
+        filter_bar.update_result_count(len(self._runs), total)
 
-        # Store current project
-        self._current_project = {"id": project_id, "name": project_name}
+    def on_tree_node_selected(self, event: Any) -> None:  # noqa: ARG002
+        """Handle tree node selection (Enter key)."""
+        self._update_selection()
 
-        # Update breadcrumb
-        self._update_breadcrumb(
-            {"label": project_name, "data": {"type": "project", "id": project_id}}
-        )
-
-        self.notify(f"Viewing project: {project_name}", title="PROJECT", timeout=2)
-
-    def _show_project_details(self, project_data: dict[str, Any]) -> None:
-        """Show project information in the detail panel."""
-        from tracecraft.tui.widgets.io_viewer import IOViewer
-        from tracecraft.tui.widgets.metrics_panel import MetricsPanel
-
-        if not self._loader or not self._loader.is_sqlite:
-            return
-
-        project_id = project_data.get("id")
-
-        # Get project stats
-        stats = self._loader.store.get_project_stats(project_id)
-        project = self._loader.store.get_project(project_id)
-
-        if project:
-            metrics = self.query_one("#metrics", MetricsPanel)
-            io_viewer = self.query_one("#io-viewer", IOViewer)
-
-            # Show project in metrics panel
-            metrics.show_project(project, stats)
-
-            # Clear IO viewer or show project description
-            io_viewer.show_project(project)
-
-    def _handle_folder_activation(self, folder_data: dict[str, Any]) -> None:
-        """Handle activation of a folder node (expand/collapse or load items)."""
-        # Folders are auto-expanded by Textual tree widget
-        # This method is a placeholder for future folder-specific actions
-        pass
-
-    def _drill_into_trace(self, trace_data: dict[str, Any]) -> None:
-        """Load full trace and display it."""
-        from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
-        from tracecraft.tui.widgets.metrics_panel import MetricsPanel
-        from tracecraft.tui.widgets.run_tree import RunTree
-
-        if not self._loader:
-            return
-
-        trace_id = trace_data.get("id")
-        if not trace_id:
-            return
-
-        # Load the full trace
-        trace = self._loader.get_trace(trace_id)
-        if not trace:
-            self.notify(f"Trace not found: {trace_id}", title="ERROR", severity="error")
-            return
-
-        # Update the tree to show this trace expanded
-        tree = self.query_one("#run-tree", RunTree)
-        tree.show_traces([trace])
-
-        # Update detail panels
-        metrics = self.query_one("#metrics", MetricsPanel)
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-        mode_indicator = self.query_one("#mode-indicator", ModeIndicator)
-
-        metrics.show_run(trace)
-        io_viewer.show_run_io(trace)
-        mode_indicator.update_mode("output")
-
-        self._current_run = trace
-
-    def _show_trace_preview(self, trace_data: dict[str, Any]) -> None:
-        """Show trace preview in detail panel (without loading full trace)."""
-        from tracecraft.tui.widgets.io_viewer import IOViewer
-        from tracecraft.tui.widgets.metrics_panel import MetricsPanel
-
-        _ = self.query_one("#metrics", MetricsPanel)
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-
-        # Show basic info from the dict
-        trace_name = trace_data.get("name", "Unknown")
-        trace_id = trace_data.get("id", "")
-        duration = trace_data.get("duration_ms")
-        has_error = trace_data.get("error")
-
-        # Create a summary view
-        summary = {
-            "name": trace_name,
-            "id": trace_id,
-            "duration_ms": duration,
-            "has_error": has_error,
-            "hint": "Press Enter to view full trace",
-        }
-
-        io_viewer.show_dict(summary, title="Trace Preview")
-
-    def _load_more_items(self, data: dict[str, Any]) -> None:
-        """Load more items for a folder (e.g., more traces)."""
-        folder_type = data.get("folder_type")
-        project_id = data.get("project_id")
-
-        if folder_type == "traces" and project_id:
-            # For now, just drill into the project to show all traces
-            # Future: could implement pagination
-            self._drill_into_project({"id": project_id, "name": ""})
+    def on_tree_node_highlighted(self, event: Any) -> None:  # noqa: ARG002
+        """Handle tree node highlight (navigation with j/k or arrows)."""
+        self._update_selection()
 
     def _update_selection(self) -> None:
         """Update detail panels based on current tree selection."""
@@ -745,115 +494,23 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         if not self._loader:
             return
 
-        # Update current project from event
-        if hasattr(event, "project_id"):
-            if event.project_id:
-                self._current_project = {"id": event.project_id, "name": event.project_name}
-            else:
-                self._current_project = None
-
         # Build query from filter options
         query = TraceQuery(
             name_contains=event.filter_text if event.filter_text else None,
             has_error=True if event.show_errors_only else None,
-            project_id=event.project_id if hasattr(event, "project_id") else None,
         )
 
         # Query filtered runs
         filtered_runs = self._loader.query_traces(query)
 
         tree = self.query_one("#run-tree", RunTree)
-        # Check if any filter is actually applied
-        is_filtered = bool(
-            event.filter_text
-            or event.show_errors_only
-            or (hasattr(event, "project_id") and event.project_id)
-        )
+        is_filtered = bool(event.filter_text or event.show_errors_only)
         tree.update_runs(filtered_runs, is_filtered=is_filtered)
 
         # Update result count to show filter effect
         filter_bar = self.query_one("#filter-bar", FilterBar)
         total = self._loader.count()
         filter_bar.update_result_count(len(filtered_runs), total)
-
-    def on_view_toggle_view_changed(self, event: Any) -> None:
-        """Handle view mode changes."""
-        from tracecraft.tui.widgets.run_tree import RunTree
-        from tracecraft.tui.widgets.view_toggle import ViewMode
-
-        self._view_mode = event.mode
-
-        # Clear any current selection
-        self._current_run = None
-        self._current_step = None
-        self._current_project = None
-
-        # Reset breadcrumb to show current view
-        self._update_breadcrumb()
-
-        # Update the tree with the new view
-        self._update_tree_for_view()
-
-        # Update detail panels
-        self._update_detail_panels()
-
-    def on_breadcrumb_segment_clicked(self, event: Any) -> None:
-        """Handle breadcrumb segment click for navigation."""
-        from tracecraft.tui.widgets.view_toggle import ViewMode, ViewToggle
-
-        data = event.data
-        if not data:
-            return
-
-        segment_type = data.get("type")
-
-        if segment_type == "view":
-            # Navigate back to a view mode (e.g., Traces, Projects)
-            mode = data.get("mode")
-            if mode:
-                self._view_mode = mode
-                with suppress(Exception):
-                    view_toggle = self.query_one("#view-toggle", ViewToggle)
-                    view_toggle.mode = mode
-                self._update_tree_for_view()
-                self._update_detail_panels()
-
-        elif segment_type == "project":
-            # Navigate back to a project
-            project_id = data.get("id")
-            if project_id and self._loader and self._loader.is_sqlite:
-                project = self._loader.store.get_project(project_id)
-                if project:
-                    self._current_project = project
-                    self._drill_into_project(project)
-
-    def _update_tree_for_view(self) -> None:
-        """Update the tree based on the current view mode."""
-        from tracecraft.tui.widgets.filter_bar import FilterBar
-        from tracecraft.tui.widgets.run_tree import RunTree
-        from tracecraft.tui.widgets.view_toggle import ViewMode
-
-        if not self._loader:
-            return
-
-        tree = self.query_one("#run-tree", RunTree)
-        filter_bar = self.query_one("#filter-bar", FilterBar)
-
-        if self._view_mode == ViewMode.TRACES:
-            # Show all traces (default behavior)
-            tree.show_traces(self._runs)
-            total = self._loader.count() if self._loader else len(self._runs)
-            filter_bar.update_result_count(len(self._runs), total)
-
-        elif self._view_mode == ViewMode.PROJECTS:
-            # Show projects (if SQLite backend)
-            if self._loader.is_sqlite:
-                projects = self._loader.store.list_projects()
-                tree.show_projects(projects)
-                filter_bar.update_result_count(len(projects), len(projects))
-            else:
-                tree.show_traces([])
-                self.notify("Projects require SQLite storage.", severity="warning")
 
     # Actions
 
@@ -882,43 +539,17 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
 
     def action_back(self) -> None:
         """Go back / clear selection."""
-        from tracecraft.tui.widgets.breadcrumb import Breadcrumb
         from tracecraft.tui.widgets.filter_bar import FilterBar
-        from tracecraft.tui.widgets.view_toggle import ViewMode
 
         filter_bar = self.query_one("#filter-bar", FilterBar)
 
-        # If we're viewing a project's traces, go back to the list
-        if self._current_project and self._view_mode == ViewMode.TRACES:
-            # Clear project filter and return to projects view
-            self._current_project = None
-            filter_bar.clear_project()
-            self._view_mode = ViewMode.PROJECTS
-            self._update_tree_for_view()
-            # Update view toggle to show PROJECTS
-            from tracecraft.tui.widgets.view_toggle import ViewToggle
-
-            with suppress(Exception):
-                view_toggle = self.query_one("#view-toggle", ViewToggle)
-                view_toggle.set_mode(ViewMode.PROJECTS)
-            # Pop breadcrumb
-            with suppress(Exception):
-                breadcrumb = self.query_one("#breadcrumb", Breadcrumb)
-                breadcrumb.pop()
-            return
-
-        # Standard back behavior
+        # Standard back behavior - clear filter or selection
         if filter_bar.filter_text or filter_bar.show_errors_only:
             filter_bar.clear()
         else:
             self._current_run = None
             self._current_step = None
             self._update_detail_panels()
-            # Pop breadcrumb if there are extra segments
-            with suppress(Exception):
-                breadcrumb = self.query_one("#breadcrumb", Breadcrumb)
-                if len(breadcrumb) > 1:
-                    breadcrumb.pop()
 
     def _update_detail_panels(self) -> None:
         """Update detail panels based on current selection."""
@@ -1045,84 +676,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             )
         )
 
-    def action_project_manager(self) -> None:
-        """Open the project manager screen."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.screens.project_manager import ProjectManagerScreen
-        from tracecraft.tui.widgets.filter_bar import FilterBar
-
-        def on_project_selected(project: dict[str, Any] | None) -> None:
-            if project is None:
-                return  # Cancelled
-
-            filter_bar = self.query_one("#filter-bar", FilterBar)
-
-            if project.get("id") is None:
-                # "All Projects" selected - clear filter
-                self._current_project = None
-                filter_bar.set_project(None, None)
-                self.notify("Filter cleared.", title="ALL PROJECTS")
-            else:
-                # Specific project selected
-                self._current_project = project
-                filter_bar.set_project(project["id"], project["name"])
-                self.notify(f"Filtering: {project['name']}", title="PROJECT")
-
-        self.push_screen(
-            ProjectManagerScreen(store=self._loader.store),
-            on_project_selected,
-        )
-
-    def action_assign_project(self) -> None:
-        """Assign the current trace to a project."""
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify(
-                "SQLite storage required. Use: tracecraft ui traces.db",
-                title="SQLITE REQUIRED",
-                severity="warning",
-            )
-            return
-
-        if not self._current_run:
-            self.notify(
-                "No trace selected. Navigate with j/k, select with Enter.",
-                title="NO SELECTION",
-                severity="warning",
-            )
-            return
-
-        from tracecraft.tui.screens.trace_assign import TraceAssignScreen
-
-        def on_project_assigned(project_id: str | None) -> None:
-            if project_id is None:
-                # User cancelled or unassigned
-                if project_id == "":
-                    self.notify("Trace unassigned.", title="UNASSIGNED")
-                return
-
-            # Find project name for notification
-            if self._loader and hasattr(self._loader.store, "list_projects"):
-                projects = self._loader.store.list_projects()  # type: ignore[union-attr]
-            else:
-                projects = []
-            project = next((p for p in projects if p["id"] == project_id), None)
-            if project:
-                self.notify(f"Assigned to {project['name']}.", title="ASSIGNED")
-            else:
-                self.notify("Trace assigned.", title="ASSIGNED")
-
-        self.push_screen(
-            TraceAssignScreen(trace=self._current_run, store=self._loader.store),
-            on_project_assigned,
-        )
-
     def action_help(self) -> None:
         """Show help modal with all keybindings."""
         from tracecraft.tui.screens.help_screen import HelpScreen
@@ -1132,36 +685,3 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             return
 
         self.push_screen(HelpScreen(context="Main App"))
-
-    def action_view_traces(self) -> None:
-        """Switch to traces view."""
-        from tracecraft.tui.widgets.view_toggle import ViewMode, ViewToggle
-
-        self._view_mode = ViewMode.TRACES
-        self._current_project = None
-
-        # Update the view toggle widget
-        with suppress(Exception):
-            view_toggle = self.query_one("#view-toggle", ViewToggle)
-            view_toggle.set_mode(ViewMode.TRACES)
-
-        self._load_runs()
-        self._update_tree_for_view()
-
-    def action_view_projects(self) -> None:
-        """Switch to projects view."""
-        from tracecraft.tui.widgets.view_toggle import ViewMode, ViewToggle
-
-        if not self._loader or not self._loader.is_sqlite:
-            self.notify("Projects require SQLite storage.", severity="warning")
-            return
-
-        self._view_mode = ViewMode.PROJECTS
-        self._current_project = None
-
-        # Update the view toggle widget
-        with suppress(Exception):
-            view_toggle = self.query_one("#view-toggle", ViewToggle)
-            view_toggle.set_mode(ViewMode.PROJECTS)
-
-        self._update_tree_for_view()

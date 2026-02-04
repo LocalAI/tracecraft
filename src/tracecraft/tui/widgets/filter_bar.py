@@ -13,13 +13,10 @@ from typing import Any
 from tracecraft.tui.theme import (
     ACCENT_AMBER,
     BACKGROUND,
-    BORDER,
     INFO_BLUE,
     SURFACE,
-    SURFACE_HIGHLIGHT,
     TEXT_MUTED,
     TEXT_PRIMARY,
-    truncate_with_ellipsis,
 )
 
 try:
@@ -34,9 +31,6 @@ except ImportError:
     Input = object  # type: ignore[misc,assignment]
     Static = object  # type: ignore[misc,assignment]
     Message = object  # type: ignore[misc,assignment]
-
-# Max length for project name truncation (increased from 12)
-MAX_PROJECT_NAME_LENGTH = 20
 
 
 class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
@@ -54,16 +48,12 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
             self,
             filter_text: str,
             show_errors_only: bool = False,
-            project_id: str | None = None,
-            project_name: str | None = None,
         ) -> None:
             """Initialize the message."""
             if TEXTUAL_AVAILABLE:
                 super().__init__()
             self.filter_text = filter_text
             self.show_errors_only = show_errors_only
-            self.project_id = project_id
-            self.project_name = project_name
 
     DEFAULT_CSS = f"""
     /* NOIR SIGNAL - Filter Bar - Clean, minimal design */
@@ -118,11 +108,6 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
         text-style: bold;
     }}
 
-    FilterBar > .project-active {{
-        color: {INFO_BLUE};
-        text-style: bold;
-    }}
-
     FilterBar > .result-count {{
         margin-left: 1;
         color: {TEXT_MUTED};
@@ -136,15 +121,12 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
         super().__init__(*args, **kwargs)
         self._filter_text: str = ""
         self._show_errors_only: bool = False
-        self._project_id: str | None = None
-        self._project_name: str | None = None
 
     def compose(self) -> Any:
         """Compose the filter bar layout."""
         yield Static("/", classes="filter-label")
         yield Input(placeholder="filter traces", id="filter-input")
         yield Static("0 traces", id="result-count", classes="result-count")
-        yield Static("ALL", id="project-indicator", classes="toggle")
         yield Static("ERRORS", id="error-toggle", classes="toggle")
 
     def on_input_changed(self, event: Any) -> None:
@@ -176,8 +158,6 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
             self.FilterChanged(
                 filter_text=self._filter_text,
                 show_errors_only=self._show_errors_only,
-                project_id=self._project_id,
-                project_name=self._project_name,
             )
         )
 
@@ -185,11 +165,8 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
         """Clear the filter."""
         self._filter_text = ""
         self._show_errors_only = False
-        self._project_id = None
-        self._project_name = None
         self.query_one("#filter-input", Input).value = ""
         self._update_toggle_style()
-        self._update_project_indicator()
         self._emit_filter_changed()
 
     @property
@@ -206,31 +183,6 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
         """Focus the filter input."""
         self.query_one("#filter-input", Input).focus()
 
-    def set_project(self, project_id: str | None, project_name: str | None = None) -> None:
-        """Set the project filter."""
-        self._project_id = project_id
-        self._project_name = project_name
-        self._update_project_indicator()
-        self._emit_filter_changed()
-
-    def clear_project(self) -> None:
-        """Clear the project filter."""
-        self.set_project(None, None)
-
-    def _update_project_indicator(self) -> None:
-        """Update the project indicator display."""
-        indicator = self.query_one("#project-indicator", Static)
-        if self._project_name and self._project_id:
-            # Truncate long names with ellipsis (increased from 12 to 20 chars)
-            name = truncate_with_ellipsis(self._project_name.upper(), MAX_PROJECT_NAME_LENGTH)
-            indicator.update(name)
-            indicator.remove_class("toggle")
-            indicator.add_class("project-active")
-        else:
-            indicator.update("ALL")
-            indicator.remove_class("project-active")
-            indicator.add_class("toggle")
-
     def update_result_count(self, shown: int, total: int) -> None:
         """
         Update the result count display.
@@ -246,13 +198,3 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
             label.update("No matches")
         else:
             label.update(f"{shown} of {total}")
-
-    @property
-    def project_id(self) -> str | None:
-        """Get the current project ID filter."""
-        return self._project_id
-
-    @property
-    def project_name(self) -> str | None:
-        """Get the current project name filter."""
-        return self._project_name

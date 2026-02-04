@@ -46,8 +46,6 @@ class TreeViewMode(str, Enum):
     """The view modes for the run tree."""
 
     TRACES = "traces"
-    PROJECTS = "projects"
-    PROJECT_TREE = "project_tree"  # Hierarchical view of a single project
 
 
 # Additional step type color (purple for retrieval)
@@ -139,7 +137,6 @@ class RunTree(Tree if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self._selected_run_id: str | None = None
         self._selected_step_id: str | None = None
         self._view_mode: TreeViewMode = TreeViewMode.TRACES
-        self._projects: list[dict[str, Any]] = []  # Cached projects
 
     def update_runs(self, runs: list[AgentRun], *, is_filtered: bool = False) -> None:
         """
@@ -182,148 +179,10 @@ class RunTree(Tree if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         # Expand root by default so tree content is visible immediately
         self.root.expand()
 
-    def show_projects(self, projects: list[dict[str, Any]]) -> None:
-        """
-        Show projects view - list of projects that can be expanded.
-
-        Args:
-            projects: List of project dicts from SQLite store.
-        """
-        self._view_mode = TreeViewMode.PROJECTS
-        self._projects = projects
-        self._runs = []
-        self._step_cache.clear()
-        self.clear()
-
-        if not projects:
-            empty_label = Text("No projects found. Create one with Shift+P.", style=TEXT_MUTED)
-            self.root.add(empty_label, data={"type": "empty"})
-        else:
-            for project in projects:
-                self._add_project_node(project)
-
-        self.root.expand()
-
-    def show_project_tree(self, structure: dict[str, Any]) -> None:
-        """
-        Show hierarchical project tree - project with traces.
-
-        Args:
-            structure: Project structure dict from get_project_structure() containing:
-                - project: Project info dict
-                - trace_count: Number of traces
-                - traces: Optional list of trace dicts (for preview)
-        """
-        self._view_mode = TreeViewMode.PROJECT_TREE
-        self._runs = []
-        self._step_cache.clear()
-        self.clear()
-
-        project = structure.get("project", {})
-        trace_count = structure.get("trace_count", 0)
-        traces = structure.get("traces", [])
-
-        if not project:
-            empty_label = Text("No project data.", style=TEXT_MUTED)
-            self.root.add(empty_label, data={"type": "empty"})
-            self.root.expand()
-            return
-
-        # Update root label with project name
-        project_name = project.get("name", "Unknown Project")
-        self.root.set_label(Text(f"📁 {project_name}", style=f"{TEXT_PRIMARY} bold"))
-
-        # Traces folder (shows count, can expand to load traces)
-        traces_folder = self.root.add(
-            self._create_folder_label("Traces", trace_count, SUCCESS_GREEN),
-            data={"type": "folder", "folder_type": "traces", "project_id": project["id"]},
-        )
-        # Add preview traces if provided
-        for trace in traces[:10]:  # Limit preview to 10
-            self._add_trace_child_node(traces_folder, trace)
-
-        if trace_count > 10 and len(traces) >= 10:
-            traces_folder.add(
-                Text(f"... and {trace_count - 10} more", style=TEXT_MUTED),
-                data={"type": "more", "folder_type": "traces", "project_id": project["id"]},
-            )
-
-        self.root.expand()
-        traces_folder.expand()
-
-    def _create_folder_label(self, name: str, count: int, color: str) -> Text:
-        """Create a rich text label for a folder node."""
-        text = Text()
-        text.append("▸ ", style=color)
-        text.append(name, style=f"{TEXT_PRIMARY} bold")
-        text.append(f" ({count})", style=TEXT_MUTED)
-        return text
-
-    def _add_trace_child_node(self, parent: TreeNode, trace: dict[str, Any]) -> TreeNode:
-        """Add a trace node as child of a folder (from dict, not AgentRun)."""
-        text = Text()
-        # Status indicator
-        if trace.get("error"):
-            text.append("× ", style=f"{DANGER_RED} bold")
-        else:
-            text.append("› ", style=SUCCESS_GREEN)
-
-        # Trace name
-        name = truncate_with_ellipsis(trace.get("name", "unknown"), self.MAX_NAME_LENGTH)
-        text.append(name, style=TEXT_PRIMARY)
-
-        # Duration
-        if trace.get("duration_ms"):
-            duration_str = format_duration(trace["duration_ms"])
-            text.append(f" {duration_str}", style=ACCENT_AMBER)
-
-        return parent.add(
-            text,
-            data={"type": "trace", "id": trace["id"]},
-        )
-
-    def _add_project_node(self, project: dict[str, Any]) -> TreeNode:
-        """Add a project node to the tree."""
-        label = self._create_project_label(project)
-        node = self.root.add(
-            label,
-            data={"type": "project", "id": project["id"], "name": project["name"]},
-        )
-        # Projects are collapsed by default - user clicks to expand/load traces
-        return node
-
-    def _create_project_label(self, project: dict[str, Any]) -> Text:
-        """Create a rich text label for a project."""
-        text = Text()
-
-        # Project icon
-        text.append("+ ", style=INFO_BLUE)
-
-        # Project name
-        name = truncate_with_ellipsis(project["name"], self.MAX_NAME_LENGTH)
-        text.append(name, style=f"{TEXT_PRIMARY} bold")
-
-        # Description if available
-        if project.get("description"):
-            desc = truncate_with_ellipsis(project["description"], 30)
-            text.append(f" - {desc}", style=TEXT_MUTED)
-
-        return text
-
     @property
     def view_mode(self) -> TreeViewMode:
         """Get the current view mode."""
         return self._view_mode
-
-    def get_selected_project(self) -> dict[str, Any] | None:
-        """Get the currently selected project."""
-        data = self.get_selected_data()
-        if data and data.get("type") == "project":
-            project_id = data.get("id")
-            for project in self._projects:
-                if project["id"] == project_id:
-                    return project
-        return None
 
     def _cache_steps(self, steps: list[Step]) -> None:
         """Recursively cache all steps for O(1) lookup."""

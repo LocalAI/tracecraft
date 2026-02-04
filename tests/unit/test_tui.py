@@ -303,94 +303,32 @@ class TestTUIApp:
 class TestTUIScreensImport:
     """Test that TUI screens handle missing textual gracefully."""
 
-    def test_project_manager_requires_textual(self) -> None:
-        """Test ProjectManagerScreen raises ImportError without textual."""
-        try:
-            from tracecraft.tui.screens.project_manager import (
-                TEXTUAL_AVAILABLE,
-                ProjectManagerScreen,
-            )
-
-            if not TEXTUAL_AVAILABLE:
-                with pytest.raises(ImportError):
-                    ProjectManagerScreen(store=None)
-        except ImportError:
-            pass  # Expected if textual not installed
-
-    def test_confirm_screen_requires_textual(self) -> None:
-        """Test ConfirmScreen raises ImportError without textual."""
-        try:
-            from tracecraft.tui.screens.project_manager import (
-                TEXTUAL_AVAILABLE,
-                ConfirmScreen,
-            )
-
-            if not TEXTUAL_AVAILABLE:
-                with pytest.raises(ImportError):
-                    ConfirmScreen(message="Test")
-        except ImportError:
-            pass
-
-    def test_project_create_requires_textual(self) -> None:
-        """Test ProjectCreateScreen raises ImportError without textual."""
-        try:
-            from tracecraft.tui.screens.project_create import (
-                TEXTUAL_AVAILABLE,
-                ProjectCreateScreen,
-            )
-
-            if not TEXTUAL_AVAILABLE:
-                with pytest.raises(ImportError):
-                    ProjectCreateScreen(store=None)
-        except ImportError:
-            pass
-
-    def test_trace_assign_requires_textual(self) -> None:
-        """Test TraceAssignScreen raises ImportError without textual."""
-        try:
-            from tracecraft.tui.screens.trace_assign import (
-                TEXTUAL_AVAILABLE,
-                TraceAssignScreen,
-            )
-
-            if not TEXTUAL_AVAILABLE:
-                with pytest.raises(ImportError):
-                    TraceAssignScreen(trace=None, store=None)
-        except ImportError:
-            pass
-
     def test_screens_init_exports(self) -> None:
-        """Test screens __init__ exports all new screens."""
+        """Test screens __init__ exports all screens."""
         from tracecraft.tui import screens
 
         # These may be None if textual not installed, but should be importable
         assert "LLMPickerScreen" in dir(screens)
         assert "PlaygroundScreen" in dir(screens)
-        assert "ProjectManagerScreen" in dir(screens)
-        assert "ProjectCreateScreen" in dir(screens)
-        assert "TraceAssignScreen" in dir(screens)
-        assert "ConfirmScreen" in dir(screens)
+        assert "HelpScreen" in dir(screens)
+        assert "SetupWizardScreen" in dir(screens)
 
 
-class TestFilterBarProject:
-    """Tests for FilterBar project functionality."""
+class TestFilterBar:
+    """Tests for FilterBar functionality."""
 
-    def test_filter_changed_message_has_project_fields(self) -> None:
-        """Test FilterChanged message includes project fields."""
+    def test_filter_changed_message_has_fields(self) -> None:
+        """Test FilterChanged message includes expected fields."""
         try:
             from tracecraft.tui.widgets.filter_bar import TEXTUAL_AVAILABLE, FilterBar
 
             if TEXTUAL_AVAILABLE:
                 msg = FilterBar.FilterChanged(
                     filter_text="test",
-                    show_errors_only=False,
-                    project_id="proj-123",
-                    project_name="Test Project",
+                    show_errors_only=True,
                 )
                 assert msg.filter_text == "test"
-                assert msg.show_errors_only is False
-                assert msg.project_id == "proj-123"
-                assert msg.project_name == "Test Project"
+                assert msg.show_errors_only is True
         except ImportError:
             pass
 
@@ -403,8 +341,6 @@ class TestFilterBarProject:
                 msg = FilterBar.FilterChanged(filter_text="test")
                 assert msg.filter_text == "test"
                 assert msg.show_errors_only is False
-                assert msg.project_id is None
-                assert msg.project_name is None
         except ImportError:
             pass
 

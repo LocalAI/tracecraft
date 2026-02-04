@@ -95,26 +95,3 @@ class TestMigration:
 
         project = temp_db.get_project(sample_project["id"])
         assert project is not None
-
-
-class TestTUIProjectTree:
-    """Tests for TUI project tree display."""
-
-    def test_tree_view_mode_has_project_tree(self):
-        """Test that TreeViewMode includes project tree mode."""
-        try:
-            from tracecraft.tui.widgets.run_tree import TreeViewMode
-
-            # Should have PROJECT_TREE mode
-            assert hasattr(TreeViewMode, "PROJECT_TREE") or hasattr(TreeViewMode, "PROJECTS")
-        except ImportError:
-            pass  # Textual not installed
-
-    def test_run_tree_has_show_project_tree_method(self):
-        """Test that RunTree has show_project_tree method."""
-        try:
-            from tracecraft.tui.widgets.run_tree import RunTree
-
-            assert hasattr(RunTree, "show_project_tree")
-        except ImportError:
-            pass  # Textual not installed

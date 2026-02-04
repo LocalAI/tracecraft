@@ -155,13 +155,6 @@ class HelpScreen(ModalScreen if TEXTUAL_AVAILABLE else object):  # type: ignore[
                 yield Static("  ?            Show this help", classes="keybind-row")
                 yield Static("  q            Quit application", classes="keybind-row")
 
-                # Projects
-                yield Static("PROJECTS", classes="section-title")
-                yield Static("  P            Open Project Manager (Shift+P)", classes="keybind-row")
-                yield Static(
-                    "  A            Assign trace to project (Shift+A)", classes="keybind-row"
-                )
-
                 # Context-specific sections
                 if self._help_context == "Playground":
                     yield Static("PLAYGROUND", classes="section-title")
@@ -172,12 +165,6 @@ class HelpScreen(ModalScreen if TEXTUAL_AVAILABLE else object):  # type: ignore[
                     yield Static("  c            Copy output to clipboard", classes="keybind-row")
                     yield Static("  n            Add note / mark as best", classes="keybind-row")
                     yield Static("  d            Toggle diff view", classes="keybind-row")
-
-                if self._help_context == "Project Manager":
-                    yield Static("PROJECT MANAGER", classes="section-title")
-                    yield Static("  n            Create new project", classes="keybind-row")
-                    yield Static("  d            Delete selected project", classes="keybind-row")
-                    yield Static("  Enter        Filter by selected project", classes="keybind-row")
 
             # Footer
             with Vertical(id="help-footer"):
