@@ -463,6 +463,8 @@ class TestExpandedAPIKeyPatterns:
     def test_redact_slack_token(self) -> None:
         """Should redact Slack tokens (xoxb-, xoxp-, xoxa-, xoxr-)."""
         processor = RedactionProcessor()
+        # Pattern: xox[bpar]-{10+ digits}-{10+ digits}-{20+ alphanum}
+        # Use obviously fake tokens with zeros to avoid GitHub secret scanning
         tokens = [
             "REMOVED_SLACK_TOKEN",
             "REMOVED_SLACK_TOKEN",
@@ -476,6 +478,8 @@ class TestExpandedAPIKeyPatterns:
     def test_redact_stripe_key(self) -> None:
         """Should redact Stripe API keys (sk_live_, sk_test_, pk_live_, pk_test_)."""
         processor = RedactionProcessor()
+        # Pattern: [sp]k_{live|test}_{20+ alphanum}
+        # Use obviously fake keys with "FAKE" to avoid GitHub secret scanning
         keys = [
             "REMOVED_STRIPE_KEY",
             "REMOVED_STRIPE_KEY",
