@@ -478,14 +478,10 @@ class TestExpandedAPIKeyPatterns:
         """Should redact Stripe API keys (sk_live_, sk_test_, pk_live_, pk_test_)."""
         processor = RedactionProcessor()
         # Pattern: [sp]k_{live|test}_{20+ alphanum}
-        # Use obviously fake keys with "FAKE" to avoid GitHub secret scanning
-        keys = [
-            "REMOVED_STRIPE_KEY",
-            "REMOVED_STRIPE_KEY",
-            "REMOVED_STRIPE_KEY",
-            "REMOVED_STRIPE_KEY",
-        ]
-        for key in keys:
+        # Build keys programmatically to avoid GitHub secret scanning
+        suffix = "a" * 24
+        for prefix in ["sk_live_", "sk_test_", "pk_live_", "pk_test_"]:
+            key = f"{prefix}{suffix}"
             text = f"Stripe: {key}"
             result = processor.redact_text(text)
             assert key not in result, f"Failed to redact {key[:15]}..."
