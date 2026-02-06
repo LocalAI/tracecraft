@@ -1,0 +1,29 @@
+# CODEOWNERS file for TraceCraft
+# These owners will be requested for review when PRs touch these paths
+
+# Default owners for everything in the repo
+* @LocalAI/tracecraft-maintainers
+
+# Core library - requires careful review
+/src/tracecraft/core/ @LocalAI/tracecraft-maintainers
+/src/tracecraft/schema/ @LocalAI/tracecraft-maintainers
+
+# Instrumentation and adapters
+/src/tracecraft/instrumentation/ @LocalAI/tracecraft-maintainers
+/src/tracecraft/adapters/ @LocalAI/tracecraft-maintainers
+
+# Exporters and storage
+/src/tracecraft/exporters/ @LocalAI/tracecraft-maintainers
+/src/tracecraft/storage/ @LocalAI/tracecraft-maintainers
+
+# CI/CD and infrastructure
+/.github/ @LocalAI/tracecraft-maintainers
+/pyproject.toml @LocalAI/tracecraft-maintainers
+
+# Documentation
+/docs/ @LocalAI/tracecraft-maintainers
+/README.md @LocalAI/tracecraft-maintainers
+
+# Security-sensitive files
+/src/tracecraft/processors/redaction.py @LocalAI/tracecraft-maintainers
+/SECURITY.md @LocalAI/tracecraft-maintainers

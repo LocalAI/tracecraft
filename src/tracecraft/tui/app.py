@@ -1,13 +1,12 @@
 """
-Trace Craft Terminal UI - k9s-style trace explorer.
+Trace Craft Terminal UI - LangSmith-style trace explorer.
 
 A real-time, interactive terminal interface for exploring
-and debugging LLM/Agent traces.
+and debugging LLM/Agent traces with table and waterfall views.
 """
 
 from __future__ import annotations
 
-from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
 # Import theme for consistent styling
@@ -26,8 +25,8 @@ from tracecraft.tui.theme import (
 try:
     from textual.app import App, ComposeResult
     from textual.binding import Binding
-    from textual.containers import Container, Horizontal, Vertical
-    from textual.widgets import Footer, Header, Static
+    from textual.containers import Container, Vertical
+    from textual.widgets import Footer, Header
 
     TEXTUAL_AVAILABLE = True
 except ImportError:
@@ -48,11 +47,16 @@ def _get_bindings() -> list[Any]:
         Binding("q", "quit", "Quit"),
         Binding("r", "refresh", "Refresh"),
         Binding("slash", "filter", "Filter"),
-        Binding("tab", "cycle_view", "Cycle View"),  # Cycle through view modes
-        Binding("p", "playground", "Play"),  # Open playground for LLM steps
+        Binding("tab", "cycle_view", "Cycle View"),
+        Binding("i", "show_input", "Input"),
+        Binding("o", "show_output", "Output"),
+        Binding("a", "show_detail", "Detail"),
+        Binding("p", "playground", "Play"),
         Binding("question_mark", "help", "Help"),
         Binding("escape", "back", "Back"),
-        # j/k navigation is built into Textual's Tree widget
+        Binding("plus", "grow_panel", "+Panel", show=False),
+        Binding("equal", "grow_panel", "+Panel", show=False),
+        Binding("minus", "shrink_panel", "-Panel", show=False),
     ]
 
 
@@ -60,10 +64,10 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
     """
     Main Trace Craft TUI application.
 
-    Provides a k9s-style interface for exploring traces with:
-    - Real-time trace updates
-    - Hierarchical tree navigation
-    - Input/output inspection
+    Provides a LangSmith-style interface for exploring traces with:
+    - Table view showing all traces on the left
+    - Waterfall view showing step timing on the right (when expanded)
+    - Input/output inspection in detail panels below waterfall
     - Filtering and search
     - Keyboard-driven navigation
     """
@@ -88,71 +92,75 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         background: {BACKGROUND};
     }}
 
+    /* Content area - horizontal split */
     #content {{
         layout: horizontal;
         height: 1fr;
     }}
 
-    /* Tree panel - DRAMATIC: Add top padding, minimal borders */
-    #tree-panel {{
-        width: 40%;
-        min-width: 30;
+    /* Left panel - trace table (full height) */
+    #left-panel {{
+        width: 45%;
+        min-width: 35;
         background: {SURFACE};
         border: none;
         border-right: solid {BORDER};
-        padding: 1 1 0 1;
+        padding: 0;
     }}
 
-    #tree-panel .panel-title {{
-        text-style: bold;
-        color: {TEXT_MUTED};
-        padding: 1 0;
-    }}
-
-    #run-tree {{
+    #trace-table {{
         height: 1fr;
         background: {SURFACE};
     }}
 
-    /* Detail panel - DRAMATIC: Add top padding */
-    #detail-panel {{
-        width: 60%;
-        padding: 1 1 0 1;
+    /* Right panel - waterfall + detail panels */
+    #right-panel {{
+        width: 55%;
+        padding: 0;
         background: {BACKGROUND};
     }}
 
-    #metrics {{
+    /* Waterfall view - hidden by default, shown on right when expanded */
+    #waterfall-view {{
+        display: none;
         height: auto;
-        max-height: 15;
-        margin-bottom: 1;
+        min-height: 8;
+        max-height: 18;
         background: {SURFACE};
-        border: none;
-        border-bottom: solid {BORDER};
+        border: solid {BORDER};
+        margin: 1;
     }}
 
+    #waterfall-view.expanded {{
+        display: block;
+    }}
+
+    /* Detail panels container - fills remaining space */
+    #detail-panels {{
+        height: 1fr;
+        padding: 0 1 0 1;
+    }}
+
+    /* Metrics panel - compact, auto height */
+    #metrics {{
+        height: auto;
+        min-height: 5;
+        max-height: 10;
+        background: {SURFACE};
+        border: solid {BORDER};
+        margin-bottom: 1;
+    }}
+
+    /* IO Viewer - takes remaining space */
     #io-viewer {{
         height: 1fr;
+        min-height: 10;
         background: {SURFACE};
         border: solid {BORDER};
         scrollbar-gutter: stable;
     }}
 
-    /* Filter bar - Clean underline style */
-    FilterBar {{
-        height: 3;
-        background: {SURFACE};
-        padding: 0 1;
-        border-bottom: solid {BORDER};
-    }}
-
-    /* Status bar */
-    #status-bar {{
-        height: 1;
-        dock: bottom;
-        background: {SURFACE};
-        padding: 0 1;
-        color: {TEXT_MUTED};
-    }}
+    /* Filter bar styling is defined in filter_bar.py DEFAULT_CSS */
 
     /* Header styling - DRAMATIC: Amber accent with breathing room */
     Header {{
@@ -179,23 +187,25 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         color: {TEXT_MUTED};
     }}
 
-    /* Tree widget */
-    Tree {{
+    /* DataTable styling */
+    DataTable {{
         background: {SURFACE};
         color: {TEXT_PRIMARY};
     }}
 
-    Tree:focus {{
+    DataTable:focus {{
         border: solid {ACCENT_AMBER};
     }}
 
-    Tree > .tree--cursor {{
+    DataTable > .datatable--cursor {{
         background: {SURFACE_HIGHLIGHT};
         color: {ACCENT_AMBER};
     }}
 
-    Tree > .tree--highlight {{
-        background: {SURFACE_HIGHLIGHT};
+    DataTable > .datatable--header {{
+        background: {SURFACE};
+        color: {TEXT_MUTED};
+        text-style: bold;
     }}
 
     /* Button styling */
@@ -308,32 +318,38 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self.watch = watch
         self.env = env
         self._loader: TraceLoader | None = None
-        self._runs: list[AgentRun] = []  # Cached runs for display
+        self._runs: list[AgentRun] = []
         self._current_run: AgentRun | None = None
         self._current_step: Step | None = None
+        self._waterfall_expanded: bool = False
+        self._waterfall_height: int = 18  # Default max-height
+        self._left_panel_width: int = 45  # Default width percentage
 
     def compose(self) -> ComposeResult:
         """Compose the UI layout."""
         from tracecraft.tui.widgets.filter_bar import FilterBar
         from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
         from tracecraft.tui.widgets.metrics_panel import MetricsPanel
-        from tracecraft.tui.widgets.run_tree import RunTree
+        from tracecraft.tui.widgets.trace_table import TraceTable
+        from tracecraft.tui.widgets.waterfall_view import WaterfallView
 
         yield Header()
 
         with Container(id="main"):
             yield FilterBar(id="filter-bar")
 
-            with Horizontal(id="content"):
-                # Left panel: Run/Step tree
-                with Vertical(id="tree-panel"):
-                    yield RunTree(id="run-tree")
+            with Container(id="content"):
+                # Left panel: Trace table only
+                with Vertical(id="left-panel"):
+                    yield TraceTable(id="trace-table")
 
-                # Right panel: Details
-                with Vertical(id="detail-panel"):
-                    yield MetricsPanel(id="metrics")
-                    yield ModeIndicator(id="mode-indicator")
-                    yield IOViewer(id="io-viewer")
+                # Right panel: Waterfall (top) + Detail panels (bottom)
+                with Vertical(id="right-panel"):
+                    yield WaterfallView(id="waterfall-view")
+                    with Vertical(id="detail-panels"):
+                        yield MetricsPanel(id="metrics")
+                        yield ModeIndicator(id="mode-indicator")
+                        yield IOViewer(id="io-viewer")
 
         yield Footer()
 
@@ -342,22 +358,18 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         from tracecraft.tui.data.loader import TraceLoader, get_loader_for_env
 
         if self.trace_source:
-            # Use explicit source
             try:
                 self._loader = TraceLoader.from_source(self.trace_source)
             except ValueError as e:
                 self.notify(str(e), title="Load Error", severity="error")
                 return
         else:
-            # Check if setup is needed (no config or database exists)
             from tracecraft.core.init import find_existing_database, needs_setup
 
             if needs_setup():
-                # Show setup wizard for first-time users
                 self._show_setup_wizard()
                 return
             elif find_existing_database():
-                # Use existing database
                 db_path = find_existing_database()
                 try:
                     self._loader = TraceLoader.from_source(f"sqlite://{db_path}")
@@ -365,12 +377,11 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
                     self.notify(str(e), title="Load Error", severity="error")
                     return
             else:
-                # Use environment configuration as fallback
                 self._loader = get_loader_for_env(self.env)
 
-        # Load initial runs
         self._load_runs()
-        self._update_tree()
+        self._update_table()
+        self._load_projects()
 
         if self.watch:
             self.set_interval(1.0, self._poll_for_updates)
@@ -381,13 +392,10 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
 
         def on_wizard_complete(result: Any) -> None:
             if result is None or result.choice == SetupChoice.CANCEL:
-                # User cancelled - exit app
                 self.exit()
                 return
 
             if result.choice == SetupChoice.OPEN_FILE:
-                # For now, show a notification - file picker is complex
-                # In future, could integrate with a file picker dialog
                 self.notify(
                     "Use: tracecraft ui <path/to/file.db>",
                     title="Open File",
@@ -397,7 +405,6 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
                 self.exit()
                 return
 
-            # For GLOBAL, LOCAL, and DEMO - use the source from result
             if result.source:
                 self._load_source_and_start(result.source)
             else:
@@ -412,7 +419,8 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         try:
             self._loader = TraceLoader.from_source(source)
             self._load_runs()
-            self._update_tree()
+            self._update_table()
+            self._load_projects()
 
             if self.watch:
                 self.set_interval(1.0, self._poll_for_updates)
@@ -425,71 +433,147 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         if self._loader:
             self._runs = self._loader.list_traces(limit=1000)
 
+    def _load_projects(self) -> None:
+        """Load projects and update the FilterBar dropdown."""
+        from tracecraft.tui.widgets.filter_bar import FilterBar
+
+        if not self._loader or not self._loader.is_sqlite:
+            return
+
+        try:
+            projects_data = self._loader.store.list_projects()
+            if projects_data:
+                # Convert to (project_id, project_name) tuples
+                projects = [(p["id"], p.get("name", p["id"])) for p in projects_data]
+                filter_bar = self.query_one("#filter-bar", FilterBar)
+                filter_bar.set_projects(projects)
+        except Exception:  # noqa: BLE001
+            # Projects feature may not be supported by all stores
+            pass  # nosec B110
+
     async def _poll_for_updates(self) -> None:
         """Poll for new traces."""
         if self._loader:
-            # Refresh cache and reload
             self._loader.refresh()
             new_count = self._loader.count()
             if new_count != len(self._runs):
                 self._load_runs()
-                self._update_tree()
+                self._update_table()
 
-    def _update_tree(self) -> None:
-        """Update the run tree with current data."""
+    def _update_table(self) -> None:
+        """Update the trace table with current data."""
         from tracecraft.tui.widgets.filter_bar import FilterBar
-        from tracecraft.tui.widgets.run_tree import RunTree
+        from tracecraft.tui.widgets.trace_table import TraceTable
 
-        tree = self.query_one("#run-tree", RunTree)
-        tree.show_traces(self._runs)
+        table = self.query_one("#trace-table", TraceTable)
+        table.show_traces(self._runs)
 
-        # Update result count
         filter_bar = self.query_one("#filter-bar", FilterBar)
         total = self._loader.count() if self._loader else len(self._runs)
         filter_bar.update_result_count(len(self._runs), total)
 
-    def on_tree_node_selected(self, event: Any) -> None:  # noqa: ARG002
-        """Handle tree node selection (Enter key)."""
-        self._update_selection()
+    # Event handlers for TraceTable
 
-    def on_tree_node_highlighted(self, event: Any) -> None:  # noqa: ARG002
-        """Handle tree node highlight (navigation with j/k or arrows)."""
-        self._update_selection()
+    def on_trace_table_trace_highlighted(self, event: Any) -> None:
+        """Handle trace highlight in table (cursor movement)."""
+        if event.trace:
+            self._current_run = event.trace
+            self._current_step = None
+            # Auto-show waterfall for highlighted trace (without changing focus)
+            self._show_waterfall_for_trace(event.trace)
+            self._update_detail_panels()
 
-    def _update_selection(self) -> None:
-        """Update detail panels based on current tree selection."""
+    def on_trace_table_trace_selected(self, event: Any) -> None:
+        """Handle trace selection in table (Enter pressed or click)."""
+        if event.trace:
+            self._current_run = event.trace
+            # Waterfall auto-shows on highlight, so just focus it
+            if self._waterfall_expanded:
+                from tracecraft.tui.widgets.waterfall_view import WaterfallView
+
+                waterfall = self.query_one("#waterfall-view", WaterfallView)
+                waterfall.focus()
+
+    # Event handlers for WaterfallView
+
+    def on_waterfall_view_step_highlighted(self, event: Any) -> None:
+        """Handle step highlight in waterfall (cursor movement)."""
+        if event.step:
+            self._current_step = event.step
+            self._update_detail_panels()
+
+    def on_waterfall_view_step_selected(self, event: Any) -> None:
+        """Handle step selection in waterfall (Enter pressed)."""
+        if event.step:
+            self._current_step = event.step
+            self._update_detail_panels()
+
+    # Waterfall expansion
+
+    def _show_waterfall_for_trace(self, trace: AgentRun) -> None:
+        """Show waterfall for a trace without changing focus."""
+        from tracecraft.tui.widgets.waterfall_view import WaterfallView
+
+        waterfall = self.query_one("#waterfall-view", WaterfallView)
+        waterfall.show_trace(trace)
+        waterfall.add_class("expanded")
+        self._waterfall_expanded = True
+
+    def _expand_waterfall(self, trace: AgentRun) -> None:
+        """Expand the waterfall view for a trace and focus it."""
+        from tracecraft.tui.widgets.waterfall_view import WaterfallView
+
+        waterfall = self.query_one("#waterfall-view", WaterfallView)
+        waterfall.show_trace(trace)
+        waterfall.add_class("expanded")
+        waterfall.focus()
+        self._waterfall_expanded = True
+
+    def _collapse_waterfall(self) -> None:
+        """Collapse the waterfall view."""
+        from tracecraft.tui.widgets.trace_table import TraceTable
+        from tracecraft.tui.widgets.waterfall_view import WaterfallView
+
+        waterfall = self.query_one("#waterfall-view", WaterfallView)
+        waterfall.remove_class("expanded")
+        waterfall.clear()
+        self._waterfall_expanded = False
+        self._current_step = None
+
+        # Focus back on table
+        table = self.query_one("#trace-table", TraceTable)
+        table.focus()
+
+        # Update panels to show run-level info
+        self._update_detail_panels()
+
+    def _update_detail_panels(self) -> None:
+        """Update detail panels based on current selection."""
         from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
         from tracecraft.tui.widgets.metrics_panel import MetricsPanel
-        from tracecraft.tui.widgets.run_tree import RunTree
 
-        tree = self.query_one("#run-tree", RunTree)
         metrics = self.query_one("#metrics", MetricsPanel)
         io_viewer = self.query_one("#io-viewer", IOViewer)
         mode_indicator = self.query_one("#mode-indicator", ModeIndicator)
 
-        # Check what is currently highlighted/selected
-        run = tree.get_selected_run()
-        step = tree.get_selected_step()
-
-        if step:
-            self._current_step = step
-            metrics.show_step(step)
-            io_viewer.show_step(step)
-            # Update mode indicator - show error mode if step has error
-            mode_indicator.set_has_error(bool(step.error))
-        elif run:
-            self._current_run = run
-            self._current_step = None
-            metrics.show_run(run)
-            io_viewer.show_run(run)
-            # Update mode indicator - show error mode if run has error
-            mode_indicator.set_has_error(bool(run.error))
+        if self._current_step:
+            metrics.show_step(self._current_step)
+            io_viewer.show_step(self._current_step)
+            mode_indicator.set_has_error(bool(self._current_step.error))
+        elif self._current_run:
+            metrics.show_run(self._current_run)
+            io_viewer.show_run(self._current_run)
+            mode_indicator.set_has_error(bool(self._current_run.error))
+        else:
+            metrics.show_run(None)
+            io_viewer.show_run(None)
+            mode_indicator.set_has_error(False)
 
     def on_filter_bar_filter_changed(self, event: Any) -> None:
         """Handle filter changes."""
         from tracecraft.storage.base import TraceQuery
         from tracecraft.tui.widgets.filter_bar import FilterBar
-        from tracecraft.tui.widgets.run_tree import RunTree
+        from tracecraft.tui.widgets.trace_table import TraceTable
 
         if not self._loader:
             return
@@ -498,16 +582,15 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         query = TraceQuery(
             name_contains=event.filter_text if event.filter_text else None,
             has_error=True if event.show_errors_only else None,
+            project_id=event.project_id if event.project_id else None,
         )
 
-        # Query filtered runs
         filtered_runs = self._loader.query_traces(query)
 
-        tree = self.query_one("#run-tree", RunTree)
+        table = self.query_one("#trace-table", TraceTable)
         is_filtered = bool(event.filter_text or event.show_errors_only)
-        tree.update_runs(filtered_runs, is_filtered=is_filtered)
+        table.show_traces(filtered_runs, is_filtered=is_filtered)
 
-        # Update result count to show filter effect
         filter_bar = self.query_one("#filter-bar", FilterBar)
         total = self._loader.count()
         filter_bar.update_result_count(len(filtered_runs), total)
@@ -525,7 +608,7 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         if self._loader:
             self._loader.refresh()
             self._load_runs()
-            self._update_tree()
+            self._update_table()
             self.notify("Data refreshed.", title="REFRESH", timeout=2)
 
     def action_cycle_view(self) -> None:
@@ -534,16 +617,43 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
 
         io_viewer = self.query_one("#io-viewer", IOViewer)
         io_viewer.cycle_mode()
-        # Update mode indicator with the new mode
+        self.query_one("#mode-indicator", ModeIndicator).set_mode(io_viewer.mode)
+
+    def action_show_input(self) -> None:
+        """Switch to input view mode (i key)."""
+        from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
+
+        io_viewer = self.query_one("#io-viewer", IOViewer)
+        io_viewer.set_mode(IOViewer.MODE_INPUT)
+        self.query_one("#mode-indicator", ModeIndicator).set_mode(io_viewer.mode)
+
+    def action_show_output(self) -> None:
+        """Switch to output view mode (o key)."""
+        from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
+
+        io_viewer = self.query_one("#io-viewer", IOViewer)
+        io_viewer.set_mode(IOViewer.MODE_OUTPUT)
+        self.query_one("#mode-indicator", ModeIndicator).set_mode(io_viewer.mode)
+
+    def action_show_detail(self) -> None:
+        """Switch to detail/attributes view mode (a key)."""
+        from tracecraft.tui.widgets.io_viewer import IOViewer, ModeIndicator
+
+        io_viewer = self.query_one("#io-viewer", IOViewer)
+        io_viewer.set_mode(IOViewer.MODE_DETAIL)
         self.query_one("#mode-indicator", ModeIndicator).set_mode(io_viewer.mode)
 
     def action_back(self) -> None:
-        """Go back / clear selection."""
+        """Go back - collapse waterfall OR clear filter."""
         from tracecraft.tui.widgets.filter_bar import FilterBar
 
-        filter_bar = self.query_one("#filter-bar", FilterBar)
+        # If waterfall is expanded, collapse it first
+        if self._waterfall_expanded:
+            self._collapse_waterfall()
+            return
 
-        # Standard back behavior - clear filter or selection
+        # Otherwise clear filter
+        filter_bar = self.query_one("#filter-bar", FilterBar)
         if filter_bar.filter_text or filter_bar.show_errors_only:
             filter_bar.clear()
         else:
@@ -551,42 +661,22 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             self._current_step = None
             self._update_detail_panels()
 
-    def _update_detail_panels(self) -> None:
-        """Update detail panels based on current selection."""
-        from tracecraft.tui.widgets.io_viewer import IOViewer
-        from tracecraft.tui.widgets.metrics_panel import MetricsPanel
-
-        metrics = self.query_one("#metrics", MetricsPanel)
-        io_viewer = self.query_one("#io-viewer", IOViewer)
-
-        if self._current_step:
-            metrics.show_step(self._current_step)
-            io_viewer.show_step(self._current_step)
-        elif self._current_run:
-            metrics.show_run(self._current_run)
-            io_viewer.show_run(self._current_run)
-        else:
-            metrics.show_run(None)
-            io_viewer.show_run(None)
-
     def action_playground(self) -> None:
-        """Open the playground for the selected LLM step or agent's nested LLM steps."""
+        """Open the playground for the selected LLM step."""
         from tracecraft.core.models import StepType
 
         if self._current_step is None:
             self.notify(
-                "No step selected. Navigate with j/k, select with Enter.",
+                "No step selected. Expand a trace and select a step.",
                 title="NO SELECTION",
                 severity="warning",
             )
             return
 
-        # If it's an LLM step, open playground directly
         if self._current_step.type == StepType.LLM:
             self._open_playground_for_step(self._current_step)
             return
 
-        # For AGENT or other types with children, find nested LLM steps
         llm_steps = self._find_llm_steps_in_children(self._current_step)
 
         if not llm_steps:
@@ -598,10 +688,8 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             return
 
         if len(llm_steps) == 1:
-            # Only one LLM step - use it directly
             self._open_playground_for_step(llm_steps[0])
         else:
-            # Multiple LLM steps - show picker dialog
             from tracecraft.tui.screens.llm_picker import LLMPickerScreen
 
             def on_picker_result(step: Step | None) -> None:
@@ -617,15 +705,7 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             )
 
     def _find_llm_steps_in_children(self, step: Step) -> list[Step]:
-        """
-        Recursively find all LLM steps within a step's children.
-
-        Args:
-            step: The parent step to search within.
-
-        Returns:
-            List of LLM steps found in children (depth-first order).
-        """
+        """Recursively find all LLM steps within a step's children."""
         from tracecraft.core.models import StepType
 
         llm_steps: list[Step] = []
@@ -641,13 +721,7 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         return llm_steps
 
     def _open_playground_for_step(self, step: Step) -> None:
-        """
-        Open the playground screen for a specific LLM step.
-
-        Args:
-            step: The LLM step to replay in the playground.
-        """
-        # Get original output
+        """Open the playground screen for a specific LLM step."""
         original_output = ""
         outputs = step.outputs or {}
         if "result" in outputs:
@@ -657,14 +731,12 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         elif outputs:
             original_output = str(outputs)
 
-        # Check if using SQLite backend for auto-persistence
         store = None
         trace_id = None
         if self._loader and self._loader.is_sqlite and self._current_run:
             store = self._loader.store
             trace_id = str(self._current_run.id)
 
-        # Open playground screen
         from tracecraft.tui.screens.playground import PlaygroundScreen
 
         self.push_screen(
@@ -676,11 +748,50 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             )
         )
 
+    def action_grow_panel(self) -> None:
+        """Increase panel size (+/= key)."""
+        if self._waterfall_expanded:
+            # Increase waterfall height
+            self._waterfall_height = min(35, self._waterfall_height + 3)
+            waterfall = self.query_one("#waterfall-view")
+            waterfall.styles.max_height = self._waterfall_height
+            self.notify(f"Waterfall: {self._waterfall_height} lines", timeout=1)
+        else:
+            # Increase left panel width
+            self._left_panel_width = min(70, self._left_panel_width + 5)
+            left_panel = self.query_one("#left-panel")
+            left_panel.styles.width = f"{self._left_panel_width}%"
+            right_panel = self.query_one("#right-panel")
+            right_panel.styles.width = f"{100 - self._left_panel_width}%"
+            self.notify(
+                f"Left: {self._left_panel_width}% | Right: {100 - self._left_panel_width}%",
+                timeout=1,
+            )
+
+    def action_shrink_panel(self) -> None:
+        """Decrease panel size (- key)."""
+        if self._waterfall_expanded:
+            # Decrease waterfall height
+            self._waterfall_height = max(8, self._waterfall_height - 3)
+            waterfall = self.query_one("#waterfall-view")
+            waterfall.styles.max_height = self._waterfall_height
+            self.notify(f"Waterfall: {self._waterfall_height} lines", timeout=1)
+        else:
+            # Decrease left panel width
+            self._left_panel_width = max(25, self._left_panel_width - 5)
+            left_panel = self.query_one("#left-panel")
+            left_panel.styles.width = f"{self._left_panel_width}%"
+            right_panel = self.query_one("#right-panel")
+            right_panel.styles.width = f"{100 - self._left_panel_width}%"
+            self.notify(
+                f"Left: {self._left_panel_width}% | Right: {100 - self._left_panel_width}%",
+                timeout=1,
+            )
+
     def action_help(self) -> None:
         """Show help modal with all keybindings."""
         from tracecraft.tui.screens.help_screen import HelpScreen
 
-        # Don't push another HelpScreen if one is already displayed
         if any(isinstance(screen, HelpScreen) for screen in self.screen_stack):
             return
 

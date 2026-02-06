@@ -538,6 +538,101 @@ def _atexit_shutdown() -> None:
 atexit.register(_atexit_shutdown)
 
 
+def _load_and_configure_config(
+    config: TraceCraftConfig | None,
+    settings: Any,
+    redaction_enabled: bool | None,
+    sampling_rate: float | None,
+) -> TraceCraftConfig:
+    """
+    Load and configure TraceCraftConfig with overrides.
+
+    Args:
+        config: Provided config or None to load from env.
+        settings: Environment settings.
+        redaction_enabled: Override for redaction.
+        sampling_rate: Override for sampling rate.
+
+    Returns:
+        Configured TraceCraftConfig.
+    """
+    # Load processor config from env if not provided
+    if config is None:
+        from tracecraft.core.config import load_config_from_env
+
+        config = load_config_from_env()
+
+    # Apply env config processor settings
+    if settings.processors.redaction_enabled:
+        config.redaction.enabled = True
+    if settings.processors.sampling_enabled:
+        config.sampling.rate = settings.processors.sampling_rate
+
+    # Apply convenience overrides
+    if redaction_enabled is not None:
+        config.redaction.enabled = redaction_enabled
+    if sampling_rate is not None:
+        config.sampling.rate = sampling_rate
+
+    return config
+
+
+def _resolve_exporter_settings(
+    console: bool | None,
+    jsonl: bool | None,
+    jsonl_path: str | Path | None,
+    mode: str | None,
+    settings: Any,
+    detected_env: str,
+) -> tuple[bool, bool, Path]:
+    """
+    Resolve console/jsonl settings based on mode and environment.
+
+    Args:
+        console: Explicit console setting or None.
+        jsonl: Explicit jsonl setting or None.
+        jsonl_path: Explicit path or None.
+        mode: Mode override ("local", "production", or None).
+        settings: Environment settings.
+        detected_env: Detected environment name.
+
+    Returns:
+        Tuple of (use_console, use_jsonl, effective_jsonl_path).
+    """
+    from tracecraft.core.env_config import get_environment_defaults
+
+    # Determine defaults based on mode or environment
+    if mode == "local":
+        env_defaults = {"console": True, "jsonl": True}
+    elif mode == "production":
+        env_defaults = {"console": False, "jsonl": False}
+    else:
+        env_defaults = get_environment_defaults(detected_env)
+
+    # Apply settings with precedence: explicit params > mode defaults > env config
+    use_console = (
+        console
+        if console is not None
+        else (
+            settings.exporters.console
+            if settings.exporters.console != env_defaults["console"]
+            else env_defaults["console"]
+        )
+    )
+    use_jsonl = (
+        jsonl
+        if jsonl is not None
+        else (
+            settings.exporters.jsonl
+            if settings.exporters.jsonl != env_defaults["jsonl"]
+            else env_defaults["jsonl"]
+        )
+    )
+    effective_jsonl_path = jsonl_path or settings.exporters.jsonl_path or DEFAULT_JSONL_PATH
+
+    return bool(use_console), bool(use_jsonl), Path(effective_jsonl_path)
+
+
 def init(
     console: bool | None = None,
     jsonl: bool | None = None,
@@ -626,16 +721,9 @@ def init(
     with _runtime_lock:
         if _runtime is None:
             # Load environment config
-            from tracecraft.core.env_config import (
-                detect_environment,
-                get_environment_defaults,
-            )
-            from tracecraft.core.env_config import (
-                load_config as load_env_config,
-            )
-            from tracecraft.core.env_config import (
-                set_config as set_env_config,
-            )
+            from tracecraft.core.env_config import detect_environment
+            from tracecraft.core.env_config import load_config as load_env_config
+            from tracecraft.core.env_config import set_config as set_env_config
 
             # Detect or use provided environment
             detected_env = env if env is not None else detect_environment()
@@ -645,55 +733,13 @@ def init(
             set_env_config(env_config)
             settings = env_config.get_settings()
 
-            # Load processor config from env if not provided
-            if config is None:
-                from tracecraft.core.config import load_config_from_env
+            # Configure processors
+            config = _load_and_configure_config(config, settings, redaction_enabled, sampling_rate)
 
-                config = load_config_from_env()
-
-            # Apply env config processor settings
-            if settings.processors.redaction_enabled:
-                config.redaction.enabled = True
-            if settings.processors.sampling_enabled:
-                config.sampling.rate = settings.processors.sampling_rate
-
-            # Apply convenience overrides
-            if redaction_enabled is not None:
-                config.redaction.enabled = redaction_enabled
-            if sampling_rate is not None:
-                config.sampling.rate = sampling_rate
-
-            # Determine console/jsonl settings based on mode or environment
-            if mode == "local":
-                # Force local development defaults
-                env_defaults = {"console": True, "jsonl": True}
-            elif mode == "production":
-                # Force production defaults
-                env_defaults = {"console": False, "jsonl": False}
-            else:
-                # Auto mode: use environment-aware defaults
-                env_defaults = get_environment_defaults(detected_env)
-
-            # Apply settings with precedence: explicit params > mode defaults > env config
-            use_console = (
-                console
-                if console is not None
-                else (
-                    settings.exporters.console
-                    if settings.exporters.console != env_defaults["console"]
-                    else env_defaults["console"]
-                )
+            # Resolve exporter settings
+            use_console, use_jsonl, effective_jsonl_path = _resolve_exporter_settings(
+                console, jsonl, jsonl_path, mode, settings, detected_env
             )
-            use_jsonl = (
-                jsonl
-                if jsonl is not None
-                else (
-                    settings.exporters.jsonl
-                    if settings.exporters.jsonl != env_defaults["jsonl"]
-                    else env_defaults["jsonl"]
-                )
-            )
-            effective_jsonl_path = jsonl_path or settings.exporters.jsonl_path or DEFAULT_JSONL_PATH
 
             # Initialize storage backend
             storage_backend = _init_storage(storage, settings.storage)

@@ -29,6 +29,7 @@ Multi-tenant example with explicit runtime:
         ...
 """
 
+from tracecraft.core.config import TraceCraftConfig
 from tracecraft.core.context import runtime_context
 from tracecraft.core.models import AgentRun, Step, StepType
 from tracecraft.core.runtime import TALRuntime, get_runtime, init
@@ -49,6 +50,8 @@ __all__ = [
     "AgentRun",
     "Step",
     "StepType",
+    # Configuration
+    "TraceCraftConfig",
     # Runtime
     "TALRuntime",
     "TraceCraftRuntime",  # Alias

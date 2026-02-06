@@ -1,0 +1,371 @@
+# User Guide
+
+Welcome to the TraceCraft User Guide. This section covers all features and capabilities of TraceCraft in detail.
+
+## Topics
+
+### Instrumentation
+
+<div class="grid cards" markdown>
+
+- :material-code-tags:{ .lg .middle } __Decorators__
+
+    ---
+
+    Learn about all decorator types and their options
+
+    [:octicons-arrow-right-24: Decorators Guide](decorators.md)
+
+</div>
+
+### Configuration
+
+<div class="grid cards" markdown>
+
+- :material-cog:{ .lg .middle } __Configuration__
+
+    ---
+
+    Complete configuration reference for all options
+
+    [:octicons-arrow-right-24: Configuration Guide](configuration.md)
+
+</div>
+
+### Data Processing
+
+<div class="grid cards" markdown>
+
+- :material-shield-check:{ .lg .middle } __Processors__
+
+    ---
+
+    PII redaction, sampling, and enrichment
+
+    [:octicons-arrow-right-24: Processors Guide](processors.md)
+
+</div>
+
+### Export
+
+<div class="grid cards" markdown>
+
+- :material-export:{ .lg .middle } __Exporters__
+
+    ---
+
+    Send traces to console, files, OTLP, and more
+
+    [:octicons-arrow-right-24: Exporters Guide](exporters.md)
+
+</div>
+
+### Tools
+
+<div class="grid cards" markdown>
+
+- :material-console:{ .lg .middle } __Terminal UI__
+
+    ---
+
+    Interactive trace exploration in your terminal
+
+    [:octicons-arrow-right-24: TUI Guide](tui.md)
+
+</div>
+
+### Advanced
+
+<div class="grid cards" markdown>
+
+- :material-account-multiple:{ .lg .middle } __Multi-Tenancy__
+
+    ---
+
+    Handle multiple tenants with separate configurations
+
+    [:octicons-arrow-right-24: Multi-Tenancy Guide](multi-tenancy.md)
+
+</div>
+
+## Quick Reference
+
+### Common Decorators
+
+```python
+from tracecraft import trace_agent, trace_tool, trace_llm, trace_retrieval
+
+@trace_agent(name="my_agent")
+async def my_agent(input: str) -> str:
+    """Agent orchestration."""
+    ...
+
+@trace_tool(name="my_tool")
+def my_tool(input: str) -> str:
+    """Tool execution."""
+    ...
+
+@trace_llm(name="my_llm", model="gpt-4", provider="openai")
+async def my_llm(prompt: str) -> str:
+    """LLM call."""
+    ...
+
+@trace_retrieval(name="my_retrieval")
+async def my_retrieval(query: str) -> list[str]:
+    """Retrieval operation."""
+    ...
+```
+
+### Common Configurations
+
+```python
+import tracecraft
+
+# Local development
+tracecraft.init(
+    console=True,
+    jsonl=True,
+)
+
+# Production with OTLP
+tracecraft.init(
+    service_name="my-service",
+    otlp_endpoint="http://localhost:4317",
+    sampling_rate=0.1,
+    enable_pii_redaction=True,
+)
+
+# Multi-backend export
+from tracecraft.exporters import OTLPExporter, JSONLExporter
+
+tracecraft.init(
+    exporters=[
+        OTLPExporter(endpoint="http://jaeger:4317"),
+        JSONLExporter(filepath="traces.jsonl"),
+    ]
+)
+```
+
+### Common Processors
+
+```python
+from tracecraft.processors.redaction import RedactionProcessor, RedactionMode
+from tracecraft.processors.sampling import SamplingProcessor
+from tracecraft.processors.enrichment import EnrichmentProcessor
+
+# PII redaction
+redaction = RedactionProcessor(
+    mode=RedactionMode.MASK,
+    custom_patterns=[r"\b\d{3}-\d{2}-\d{4}\b"],  # SSN
+)
+
+# Sampling
+sampling = SamplingProcessor(
+    rate=0.1,
+    always_keep_errors=True,
+    always_keep_slow=True,
+)
+
+# Enrichment
+enrichment = EnrichmentProcessor(
+    static_attributes={
+        "environment": "production",
+        "version": "1.0.0",
+    }
+)
+```
+
+## Common Use Cases
+
+### Debug Agent Behavior
+
+Enable verbose console output:
+
+```python
+tracecraft.init(
+    console=True,
+    console_verbose=True,  # Show all attributes
+)
+```
+
+### Production Monitoring
+
+Minimize overhead with sampling:
+
+```python
+tracecraft.init(
+    service_name="prod-agent",
+    otlp_endpoint="https://traces.example.com",
+    sampling_rate=0.05,  # 5% sample
+    enable_pii_redaction=True,
+    console=False,  # Disable console in prod
+)
+```
+
+### Cost Tracking
+
+Track LLM costs:
+
+```python
+@trace_llm(
+    name="gpt4_call",
+    model="gpt-4",
+    provider="openai",
+    cost_per_1k_input_tokens=0.03,
+    cost_per_1k_output_tokens=0.06
+)
+async def call_gpt4(prompt: str) -> str:
+    ...
+```
+
+### Multi-Agent Systems
+
+Trace complex agent interactions:
+
+```python
+@trace_agent(name="coordinator")
+async def coordinator(task: str):
+    """Coordinates multiple specialized agents."""
+    results = await asyncio.gather(
+        research_agent(task),
+        analysis_agent(task),
+        synthesis_agent(task),
+    )
+    return combine(results)
+
+@trace_agent(name="research_agent")
+async def research_agent(task: str):
+    ...
+
+@trace_agent(name="analysis_agent")
+async def analysis_agent(task: str):
+    ...
+
+@trace_agent(name="synthesis_agent")
+async def synthesis_agent(task: str):
+    ...
+```
+
+### RAG Pipelines
+
+Track retrieval and generation:
+
+```python
+@trace_agent(name="rag_agent")
+async def rag_agent(query: str) -> str:
+    """RAG pipeline."""
+    # Trace retrieval
+    docs = await retrieve_docs(query)
+
+    # Trace generation
+    response = await generate_response(query, docs)
+
+    return response
+
+@trace_retrieval(name="vector_search")
+async def retrieve_docs(query: str) -> list[str]:
+    """Vector similarity search."""
+    embedding = await embed(query)
+    results = await vector_db.search(embedding, top_k=5)
+    return results
+
+@trace_llm(model="gpt-4", provider="openai")
+async def generate_response(query: str, context: list[str]) -> str:
+    """Generate response with context."""
+    ...
+```
+
+## Best Practices
+
+### 1. Choose the Right Decorator
+
+Use semantic decorators that match your operation type:
+
+- `@trace_agent`: For orchestration and workflows
+- `@trace_tool`: For utilities and tools
+- `@trace_llm`: For LLM API calls
+- `@trace_retrieval`: For RAG and search
+
+### 2. Name Things Descriptively
+
+```python
+# Good
+@trace_agent(name="customer_support_coordinator")
+@trace_tool(name="database_lookup")
+@trace_llm(name="classification", model="gpt-4o-mini")
+
+# Not good
+@trace_agent(name="agent1")
+@trace_tool(name="tool")
+@trace_llm(name="llm")
+```
+
+### 3. Add Metadata
+
+Enrich traces with business context:
+
+```python
+from tracecraft import step
+
+with step("processing") as s:
+    result = process(data)
+    s.attributes["customer_id"] = data.customer_id
+    s.attributes["items_count"] = len(result)
+    s.attributes["total_value"] = sum(result)
+```
+
+### 4. Use Environment Variables in Production
+
+Avoid hardcoding configuration:
+
+```python
+import os
+
+tracecraft.init(
+    service_name=os.getenv("SERVICE_NAME", "my-service"),
+    otlp_endpoint=os.getenv("OTLP_ENDPOINT"),
+    sampling_rate=float(os.getenv("SAMPLING_RATE", "0.1")),
+)
+```
+
+### 5. Enable PII Redaction by Default
+
+Protect sensitive data:
+
+```python
+tracecraft.init(
+    enable_pii_redaction=True,  # On by default
+    # Add custom patterns for your domain
+    redaction_patterns=[
+        r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b",  # Emails
+        r"\b\d{3}-\d{2}-\d{4}\b",  # SSN
+    ]
+)
+```
+
+### 6. Test Locally First
+
+Use console and JSONL exporters during development:
+
+```python
+# Development
+if os.getenv("ENV") == "dev":
+    tracecraft.init(console=True, jsonl=True)
+else:
+    # Production
+    tracecraft.init(
+        otlp_endpoint=os.getenv("OTLP_ENDPOINT"),
+        sampling_rate=0.1,
+    )
+```
+
+## Next Steps
+
+Explore each topic in detail:
+
+1. [Decorators](decorators.md) - Complete decorator reference
+2. [Configuration](configuration.md) - All configuration options
+3. [Exporters](exporters.md) - Export to different backends
+4. [Processors](processors.md) - Process and transform traces
+5. [Terminal UI](tui.md) - Interactive trace exploration
+6. [Multi-Tenancy](multi-tenancy.md) - Handle multiple tenants

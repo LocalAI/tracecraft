@@ -381,8 +381,8 @@ class PlaygroundScreen(ModalScreen if TEXTUAL_AVAILABLE else object):  # type: i
                 try:
                     diff_btn = self.query_one("#diff-btn", Button)
                     diff_btn.label = "DIFF [D]"
-                except Exception:
-                    pass
+                except Exception:  # noqa: BLE001
+                    pass  # nosec B110
 
                 # Persist to SQLite if store available (auto-save on each replay)
                 if self._store and self._trace_id:

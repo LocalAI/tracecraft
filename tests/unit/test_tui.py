@@ -232,18 +232,27 @@ class TestTraceStore:
 class TestTUIWidgetsImport:
     """Test that TUI widgets handle missing textual gracefully."""
 
-    def test_run_tree_requires_textual(self) -> None:
-        """Test RunTree raises ImportError without textual."""
-        # This test verifies the import error handling
-        # The actual behavior depends on whether textual is installed
+    def test_trace_table_requires_textual(self) -> None:
+        """Test TraceTable raises ImportError without textual."""
         try:
-            from tracecraft.tui.widgets.run_tree import TEXTUAL_AVAILABLE, RunTree
+            from tracecraft.tui.widgets.trace_table import TEXTUAL_AVAILABLE, TraceTable
 
             if not TEXTUAL_AVAILABLE:
                 with pytest.raises(ImportError):
-                    RunTree()
+                    TraceTable()
         except ImportError:
             pass  # Expected if textual not installed
+
+    def test_waterfall_view_requires_textual(self) -> None:
+        """Test WaterfallView raises ImportError without textual."""
+        try:
+            from tracecraft.tui.widgets.waterfall_view import TEXTUAL_AVAILABLE, WaterfallView
+
+            if not TEXTUAL_AVAILABLE:
+                with pytest.raises(ImportError):
+                    WaterfallView()
+        except ImportError:
+            pass
 
     def test_metrics_panel_requires_textual(self) -> None:
         """Test MetricsPanel raises ImportError without textual."""
@@ -341,6 +350,77 @@ class TestFilterBar:
                 msg = FilterBar.FilterChanged(filter_text="test")
                 assert msg.filter_text == "test"
                 assert msg.show_errors_only is False
+                assert msg.project_id is None
+        except ImportError:
+            pass
+
+
+class TestTraceTable:
+    """Tests for TraceTable widget functionality."""
+
+    def test_trace_highlighted_message(self) -> None:
+        """Test TraceHighlighted message includes trace."""
+        try:
+            from tracecraft.tui.widgets.trace_table import TEXTUAL_AVAILABLE, TraceTable
+
+            if TEXTUAL_AVAILABLE:
+                run = AgentRun(name="test", start_time=datetime.now(UTC))
+                msg = TraceTable.TraceHighlighted(trace=run)
+                assert msg.trace is not None
+                assert msg.trace.name == "test"
+        except ImportError:
+            pass
+
+    def test_trace_selected_message(self) -> None:
+        """Test TraceSelected message includes trace."""
+        try:
+            from tracecraft.tui.widgets.trace_table import TEXTUAL_AVAILABLE, TraceTable
+
+            if TEXTUAL_AVAILABLE:
+                run = AgentRun(name="test", start_time=datetime.now(UTC))
+                msg = TraceTable.TraceSelected(trace=run)
+                assert msg.trace is not None
+                assert msg.trace.name == "test"
+        except ImportError:
+            pass
+
+
+class TestWaterfallView:
+    """Tests for WaterfallView widget functionality."""
+
+    def test_step_highlighted_message(self) -> None:
+        """Test StepHighlighted message includes step."""
+        try:
+            from tracecraft.tui.widgets.waterfall_view import TEXTUAL_AVAILABLE, WaterfallView
+
+            if TEXTUAL_AVAILABLE:
+                step = Step(
+                    trace_id=uuid4(),
+                    type=StepType.LLM,
+                    name="test_step",
+                    start_time=datetime.now(UTC),
+                )
+                msg = WaterfallView.StepHighlighted(step=step)
+                assert msg.step is not None
+                assert msg.step.name == "test_step"
+        except ImportError:
+            pass
+
+    def test_step_selected_message(self) -> None:
+        """Test StepSelected message includes step."""
+        try:
+            from tracecraft.tui.widgets.waterfall_view import TEXTUAL_AVAILABLE, WaterfallView
+
+            if TEXTUAL_AVAILABLE:
+                step = Step(
+                    trace_id=uuid4(),
+                    type=StepType.LLM,
+                    name="test_step",
+                    start_time=datetime.now(UTC),
+                )
+                msg = WaterfallView.StepSelected(step=step)
+                assert msg.step is not None
+                assert msg.step.name == "test_step"
         except ImportError:
             pass
 
