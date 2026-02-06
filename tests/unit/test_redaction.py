@@ -464,12 +464,11 @@ class TestExpandedAPIKeyPatterns:
         """Should redact Slack tokens (xoxb-, xoxp-, xoxa-, xoxr-)."""
         processor = RedactionProcessor()
         # Pattern: xox[bpar]-{10+ digits}-{10+ digits}-{20+ alphanum}
-        # Use obviously fake tokens with zeros to avoid GitHub secret scanning
-        tokens = [
-            "REMOVED_SLACK_TOKEN",
-            "REMOVED_SLACK_TOKEN",
-        ]
-        for token in tokens:
+        # Build tokens programmatically to avoid GitHub secret scanning
+        digits = "0" * 10
+        suffix = "A" * 24
+        for prefix in ["xoxb", "xoxp"]:
+            token = f"{prefix}-{digits}-{digits}-{suffix}"
             text = f"Slack: {token}"
             result = processor.redact_text(text)
             assert token not in result
