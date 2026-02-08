@@ -5976,12 +5976,15 @@ all = [
     { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-anthropic" },
     { name = "opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-proto" },
     { name = "pandas" },
     { name = "pydantic-ai" },
     { name = "ragas" },
+    { name = "starlette" },
     { name = "textual" },
     { name = "tiktoken" },
     { name = "typer" },
+    { name = "uvicorn" },
 ]
 auto = [
     { name = "opentelemetry-instrumentation-anthropic" },
@@ -6084,6 +6087,11 @@ ragas = [
     { name = "datasets" },
     { name = "ragas" },
 ]
+receiver = [
+    { name = "opentelemetry-proto" },
+    { name = "starlette" },
+    { name = "uvicorn" },
+]
 tiktoken = [
     { name = "tiktoken" },
 ]
@@ -6131,6 +6139,7 @@ requires-dist = [
     { name = "opentelemetry-exporter-otlp", marker = "extra == 'otlp'", specifier = ">=1.20" },
     { name = "opentelemetry-instrumentation-anthropic", marker = "extra == 'auto'", specifier = ">=0.40" },
     { name = "opentelemetry-instrumentation-openai", marker = "extra == 'auto'", specifier = ">=0.40" },
+    { name = "opentelemetry-proto", marker = "extra == 'receiver'", specifier = ">=1.20" },
     { name = "opentelemetry-sdk", specifier = ">=1.20" },
     { name = "pandas", marker = "extra == 'mlflow'", specifier = ">=2.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.5" },
@@ -6142,16 +6151,18 @@ requires-dist = [
     { name = "ragas", marker = "extra == 'ragas'", specifier = ">=0.1" },
     { name = "rich", specifier = ">=13.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
+    { name = "starlette", marker = "extra == 'receiver'", specifier = ">=0.27" },
     { name = "textual", marker = "extra == 'tui'", specifier = ">=0.80" },
     { name = "tiktoken", marker = "extra == 'tiktoken'", specifier = ">=0.5" },
     { name = "tracecraft", extras = ["aws-agentcore", "azure-foundry", "gcp-vertex-agent"], marker = "extra == 'cloud'" },
     { name = "tracecraft", extras = ["deepeval", "ragas"], marker = "extra == 'eval'" },
     { name = "tracecraft", extras = ["deepeval", "ragas", "langfuse"], marker = "extra == 'integrations'" },
     { name = "tracecraft", extras = ["otlp", "alerting"], marker = "extra == 'production'" },
-    { name = "tracecraft", extras = ["otlp", "auto", "langchain", "llamaindex", "pydantic-ai", "tiktoken", "cli", "tui", "mlflow", "deepeval", "ragas", "langfuse", "datasets", "alerting", "claude-sdk"], marker = "extra == 'all'" },
+    { name = "tracecraft", extras = ["otlp", "auto", "langchain", "llamaindex", "pydantic-ai", "tiktoken", "cli", "tui", "mlflow", "deepeval", "ragas", "langfuse", "datasets", "alerting", "claude-sdk", "receiver"], marker = "extra == 'all'" },
     { name = "typer", marker = "extra == 'cli'", specifier = ">=0.9" },
+    { name = "uvicorn", marker = "extra == 'receiver'", specifier = ">=0.20" },
 ]
-provides-extras = ["alerting", "docs", "all", "auto", "aws", "aws-agentcore", "azure", "azure-foundry", "claude-sdk", "cli", "cloud", "datasets", "deepeval", "dev", "eval", "gcp", "gcp-vertex-agent", "integrations", "langchain", "langfuse", "llamaindex", "mlflow", "otlp", "production", "pydantic-ai", "ragas", "tiktoken", "tui"]
+provides-extras = ["alerting", "all", "auto", "aws", "aws-agentcore", "azure", "azure-foundry", "claude-sdk", "cli", "cloud", "datasets", "deepeval", "dev", "docs", "eval", "gcp", "gcp-vertex-agent", "integrations", "langchain", "langfuse", "llamaindex", "mlflow", "otlp", "production", "pydantic-ai", "ragas", "receiver", "tiktoken", "tui"]
 
 [package.metadata.requires-dev]
 dev = [

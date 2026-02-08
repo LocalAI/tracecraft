@@ -50,7 +50,7 @@ alerting = [
     "httpx>=0.25"
 ]
 all = [
-    "tracecraft[otlp,auto,langchain,llamaindex,pydantic-ai,tiktoken,cli,tui,mlflow,deepeval,ragas,langfuse,datasets,alerting,claude-sdk]"
+    "tracecraft[otlp,auto,langchain,llamaindex,pydantic-ai,tiktoken,cli,tui,mlflow,deepeval,ragas,langfuse,datasets,alerting,claude-sdk,receiver]"
 ]
 auto = [
     "opentelemetry-instrumentation-openai>=0.40",
@@ -145,6 +145,11 @@ ragas = [
     "ragas>=0.1",
     "datasets>=2.0"
 ]
+receiver = [
+    "starlette>=0.27",
+    "uvicorn>=0.20",
+    "opentelemetry-proto>=1.20"
+]
 tiktoken = [
     "tiktoken>=0.5"
 ]
@@ -216,7 +221,9 @@ module = [
     "pyperclip.*",
     "pydantic_ai.*",
     "yaml.*",
-    "rich.*"
+    "rich.*",
+    "starlette.*",
+    "uvicorn.*"
 ]
 
 # Allow untyped defs in top-level init for convenience functions
@@ -260,6 +267,9 @@ module = ["tracecraft.processors.enrichment"]
 addopts = "-v --tb=short"
 asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')"
+]
 testpaths = ["tests"]
 
 [tool.ruff]

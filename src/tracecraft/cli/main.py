@@ -335,6 +335,160 @@ def ui(
 
 
 @app.command()
+def serve(
+    port: Annotated[int, typer.Option("--port", "-p", help="Port to listen on")] = 4318,
+    host: Annotated[str, typer.Option("--host", "-H", help="Host to bind to")] = "0.0.0.0",  # nosec B104 - intentional for receiver server
+    storage: Annotated[
+        str,
+        typer.Option("--storage", "-s", help="Storage path (SQLite or JSONL)"),
+    ] = "traces/tracecraft.db",
+    tui: Annotated[
+        bool,
+        typer.Option("--tui", "-t", help="Launch TUI alongside receiver"),
+    ] = False,
+    watch: Annotated[
+        bool,
+        typer.Option("--watch", "-w", help="Watch for new traces in TUI"),
+    ] = True,
+) -> None:
+    """
+    Start OTLP receiver server, optionally with TUI.
+
+    Receives traces from OTLP-instrumented applications and saves them to storage.
+    The TUI can then display them in real-time with --watch mode.
+
+    Examples:
+        # Start receiver only
+        tracecraft serve
+
+        # Start receiver with TUI
+        tracecraft serve --tui
+
+        # Custom port and storage
+        tracecraft serve --port 4317 --storage my_traces.db
+
+        # Use JSONL storage
+        tracecraft serve --storage traces.jsonl
+    """
+    try:
+        from tracecraft.receiver import OTLPReceiverServer
+    except ImportError:
+        console.print(
+            "[red]Error: Receiver dependencies not installed.[/red]\n"
+            "Install with: pip install tracecraft[receiver]"
+        )
+        raise typer.Exit(1) from None
+
+    # Create storage based on file extension
+    storage_path = Path(storage)
+
+    if storage_path.suffix == ".db" or storage_path.suffix == ".sqlite":
+        from tracecraft.storage.sqlite import SQLiteTraceStore
+
+        store = SQLiteTraceStore(storage_path)
+        source = f"sqlite://{storage_path}"
+    else:
+        from tracecraft.storage.jsonl import JSONLTraceStore
+
+        store = JSONLTraceStore(storage_path)
+        source = str(storage_path)
+
+    # Create receiver server
+    server = OTLPReceiverServer(store=store, host=host, port=port)
+
+    console.print("[bold green]TraceCraft Receiver[/bold green]")
+    console.print(f"  Listening on: http://{host}:{port}")
+    console.print(f"  Storage: {storage_path}")
+    console.print()
+    console.print("[dim]Send traces with:[/dim]")
+    console.print(f"  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:{port}")
+    console.print()
+
+    if tui:
+        try:
+            from tracecraft.tui import run_tui
+        except ImportError:
+            console.print(
+                "[yellow]Warning: TUI dependencies not installed. Running receiver only.[/yellow]\n"
+                "Install with: pip install tracecraft[tui]"
+            )
+            server.run()
+            return
+
+        # Start receiver in background, TUI in foreground
+        console.print("[dim]Starting TUI with receiver in background...[/dim]")
+        server.start_background()
+
+        try:
+            run_tui(source=source, watch=watch)
+        finally:
+            server.stop()
+    else:
+        # Run receiver in foreground (blocking)
+        console.print("[dim]Press Ctrl+C to stop[/dim]")
+        try:
+            server.run()
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Shutting down...[/yellow]")
+
+
+@app.command()
+def receive(
+    port: Annotated[int, typer.Option("--port", "-p", help="Port to listen on")] = 4318,
+    host: Annotated[str, typer.Option("--host", "-H", help="Host to bind to")] = "0.0.0.0",  # nosec B104 - intentional for receiver server
+    storage: Annotated[
+        str,
+        typer.Option("--storage", "-s", help="Storage path (SQLite or JSONL)"),
+    ] = "traces/tracecraft.db",
+) -> None:
+    """
+    Start OTLP receiver server (headless).
+
+    Alias for 'tracecraft serve' without TUI option.
+    Use 'tracecraft serve --tui' to run receiver with interactive UI.
+
+    Examples:
+        # Start receiver
+        tracecraft receive
+
+        # Custom port
+        tracecraft receive --port 4317
+    """
+    try:
+        from tracecraft.receiver import OTLPReceiverServer
+    except ImportError:
+        console.print(
+            "[red]Error: Receiver dependencies not installed.[/red]\n"
+            "Install with: pip install tracecraft[receiver]"
+        )
+        raise typer.Exit(1) from None
+
+    storage_path = Path(storage)
+
+    if storage_path.suffix == ".db" or storage_path.suffix == ".sqlite":
+        from tracecraft.storage.sqlite import SQLiteTraceStore
+
+        store = SQLiteTraceStore(storage_path)
+    else:
+        from tracecraft.storage.jsonl import JSONLTraceStore
+
+        store = JSONLTraceStore(storage_path)
+
+    server = OTLPReceiverServer(store=store, host=host, port=port)
+
+    console.print("[bold green]TraceCraft Receiver[/bold green]")
+    console.print(f"  Listening on: http://{host}:{port}")
+    console.print(f"  Storage: {storage_path}")
+    console.print()
+    console.print("[dim]Press Ctrl+C to stop[/dim]")
+
+    try:
+        server.run()
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Shutting down...[/yellow]")
+
+
+@app.command()
 def query(
     source: Annotated[str, typer.Argument(help="Trace source (file, sqlite, mlflow)")],
     sql: Annotated[str | None, typer.Option("--sql", help="Raw SQL query (SQLite only)")] = None,
