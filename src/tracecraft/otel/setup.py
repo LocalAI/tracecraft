@@ -152,10 +152,7 @@ def setup_exporter(
 
     # Auto-instrument requested SDKs
     if instrument:
-        instrumented = instrument_sdks(instrument)
-        if instrumented:
-            # Store instrumented SDKs as resource attribute for debugging
-            pass  # Could log or store this info
+        instrument_sdks(instrument)
 
     # Return a tracer
     return trace.get_tracer(tracer_name)

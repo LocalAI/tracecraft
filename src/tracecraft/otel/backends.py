@@ -85,6 +85,9 @@ def parse_endpoint(endpoint: str | None = None) -> BackendConfig:
     Returns:
         BackendConfig with parsed URL components and the resolved HTTP endpoint.
 
+    Raises:
+        ValueError: If the endpoint URL is invalid or missing required components.
+
     Example:
         >>> config = parse_endpoint("tracecraft://localhost:4318")
         >>> config.endpoint_url
@@ -99,8 +102,24 @@ def parse_endpoint(endpoint: str | None = None) -> BackendConfig:
             os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318"),
         )
 
+    # Validate endpoint is not empty
+    if not endpoint or not endpoint.strip():
+        raise ValueError("Endpoint URL cannot be empty")
+
     # Parse the URL
     parsed = urlparse(endpoint)
+
+    # Validate that we have a valid scheme
+    valid_schemes = {"http", "https", "tracecraft", "datadog", "azure", "aws", "xray"}
+    if not parsed.scheme or parsed.scheme.lower() not in valid_schemes:
+        raise ValueError(
+            f"Invalid endpoint URL: '{endpoint}'. "
+            f"Must include valid scheme (http://, https://, tracecraft://, etc.)"
+        )
+
+    # Validate that we have a hostname
+    if not parsed.hostname:
+        raise ValueError(f"Invalid endpoint URL: '{endpoint}'. Must include hostname")
 
     # Extract scheme (default to http if none)
     scheme = parsed.scheme.lower() if parsed.scheme else "http"

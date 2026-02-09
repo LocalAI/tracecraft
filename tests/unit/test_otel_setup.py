@@ -17,7 +17,7 @@ from tracecraft.otel import (
     setup_exporter,
     shutdown,
 )
-from tracecraft.otel.instrumentors import instrument_sdk, instrument_sdks
+from tracecraft.otel.instrumentors import instrument_sdk, instrument_sdks, uninstrument_sdk
 
 
 class TestParseEndpoint:
@@ -29,6 +29,31 @@ class TestParseEndpoint:
             config = parse_endpoint(None)
             assert config.endpoint_url == "http://localhost:4318/v1/traces"
             assert config.backend_type == "generic"
+
+    def test_empty_endpoint_raises_error(self) -> None:
+        """Test empty endpoint raises ValueError."""
+        with pytest.raises(ValueError, match="cannot be empty"):
+            parse_endpoint("")
+
+    def test_whitespace_endpoint_raises_error(self) -> None:
+        """Test whitespace-only endpoint raises ValueError."""
+        with pytest.raises(ValueError, match="cannot be empty"):
+            parse_endpoint("   ")
+
+    def test_missing_scheme_raises_error(self) -> None:
+        """Test URL without valid scheme raises ValueError."""
+        with pytest.raises(ValueError, match="Must include valid scheme"):
+            parse_endpoint("localhost:4318")
+
+    def test_invalid_scheme_raises_error(self) -> None:
+        """Test URL with invalid scheme raises ValueError."""
+        with pytest.raises(ValueError, match="Must include valid scheme"):
+            parse_endpoint("ftp://localhost:4318")
+
+    def test_missing_hostname_raises_error(self) -> None:
+        """Test URL without hostname raises ValueError."""
+        with pytest.raises(ValueError, match="Must include hostname"):
+            parse_endpoint("http://")
 
     def test_http_endpoint(self) -> None:
         """Test parsing standard HTTP endpoint."""
@@ -166,6 +191,53 @@ class TestInstrumentors:
             assert "openai" in result
             assert "anthropic" not in result
 
+    def test_uninstrument_sdk_success(self) -> None:
+        """Test uninstrumenting an SDK."""
+        with patch("tracecraft.otel.instrumentors.importlib.import_module") as mock_import:
+            mock_module = MagicMock()
+            mock_instrumentor = MagicMock()
+            mock_module.OpenAIInstrumentor.return_value = mock_instrumentor
+            mock_import.return_value = mock_module
+
+            result = uninstrument_sdk("openai")
+
+            assert result is True
+            mock_instrumentor.uninstrument.assert_called_once()
+
+    def test_uninstrument_unknown_sdk(self) -> None:
+        """Test uninstrumenting unknown SDK returns False."""
+        result = uninstrument_sdk("nonexistent-sdk")
+        assert result is False
+
+    def test_uninstrument_sdk_import_error(self) -> None:
+        """Test uninstrument returns False on ImportError."""
+        with patch("tracecraft.otel.instrumentors.importlib.import_module") as mock_import:
+            mock_import.side_effect = ImportError("Not found")
+            result = uninstrument_sdk("openai")
+            assert result is False
+
+    def test_instrument_sdk_already_instrumented(self) -> None:
+        """Test instrumenting SDK that is already instrumented."""
+        with patch("tracecraft.otel.instrumentors.importlib.import_module") as mock_import:
+            mock_module = MagicMock()
+            mock_instrumentor = MagicMock()
+            mock_instrumentor.is_instrumented_by_opentelemetry = True
+            mock_module.OpenAIInstrumentor.return_value = mock_instrumentor
+            mock_import.return_value = mock_module
+
+            result = instrument_sdk("openai")
+
+            assert result is True
+            mock_instrumentor.instrument.assert_not_called()
+
+    def test_instrument_sdk_attribute_error(self) -> None:
+        """Test warning when SDK has attribute error during instrumentation."""
+        with patch("tracecraft.otel.instrumentors.importlib.import_module") as mock_import:
+            mock_import.side_effect = AttributeError("No such class")
+            with pytest.warns(UserWarning, match="Failed to instrument"):
+                result = instrument_sdk("openai")
+            assert result is False
+
 
 class TestSetupExporter:
     """Tests for setup_exporter function."""
@@ -272,6 +344,25 @@ class TestTracerUtilities:
             shutdown()
 
             mock_provider.shutdown.assert_called_once()
+
+    def test_flush_traces_no_force_flush(self) -> None:
+        """Test flush_traces returns True when provider has no force_flush."""
+        with patch("tracecraft.otel.setup.trace") as mock_trace:
+            mock_provider = MagicMock(spec=[])  # No force_flush attribute
+            mock_trace.get_tracer_provider.return_value = mock_provider
+
+            result = flush_traces()
+
+            assert result is True
+
+    def test_shutdown_no_shutdown_method(self) -> None:
+        """Test shutdown handles provider without shutdown method."""
+        with patch("tracecraft.otel.setup.trace") as mock_trace:
+            mock_provider = MagicMock(spec=[])  # No shutdown attribute
+            mock_trace.get_tracer_provider.return_value = mock_provider
+
+            # Should not raise
+            shutdown()
 
 
 class TestBackendConfig:

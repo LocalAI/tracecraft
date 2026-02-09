@@ -73,9 +73,13 @@ def instrument_sdk(sdk: str) -> bool:
         instrumentor_class: Any = getattr(module, class_name)
         instrumentor = instrumentor_class()
 
-        # Check if already instrumented
+        # Check if already instrumented (handle both property and method patterns)
         if hasattr(instrumentor, "is_instrumented_by_opentelemetry"):
-            if instrumentor.is_instrumented_by_opentelemetry:
+            is_instrumented = instrumentor.is_instrumented_by_opentelemetry
+            # Handle case where it's a method that needs to be called
+            if callable(is_instrumented):
+                is_instrumented = is_instrumented()
+            if is_instrumented:
                 return True  # Already instrumented
 
         instrumentor.instrument()
@@ -89,7 +93,12 @@ def instrument_sdk(sdk: str) -> bool:
         )
         return False
 
-    except Exception as e:
+    except AttributeError as e:
+        warnings.warn(f"Failed to instrument '{sdk}': {e}", stacklevel=2)
+        return False
+
+    except RuntimeError as e:
+        # Instrumentors may raise RuntimeError if already instrumented differently
         warnings.warn(f"Failed to instrument '{sdk}': {e}", stacklevel=2)
         return False
 
@@ -139,5 +148,5 @@ def uninstrument_sdk(sdk: str) -> bool:
         instrumentor = instrumentor_class()
         instrumentor.uninstrument()
         return True
-    except (ImportError, AttributeError, Exception):
+    except (ImportError, AttributeError, RuntimeError):
         return False
