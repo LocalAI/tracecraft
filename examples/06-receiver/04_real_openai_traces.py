@@ -101,63 +101,85 @@ def setup_telemetry() -> None:
     print("OpenTelemetry configured to send to http://127.0.0.1:4318")
 
 
+def get_tracer():
+    """Get the OpenTelemetry tracer."""
+    from opentelemetry import trace
+
+    return trace.get_tracer("openai-demo")
+
+
 def run_simple_chat() -> str:
     """Make a simple chat completion call."""
     import openai
 
+    tracer = get_tracer()
     client = openai.OpenAI()
 
     print("\n[1/3] Simple chat completion...")
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant. Be concise."},
-            {"role": "user", "content": "What is the capital of France? One word answer."},
-        ],
-        max_tokens=10,
-    )
 
-    result = response.choices[0].message.content or ""
-    print(f"  Response: {result}")
-    return result
+    # Create parent span to group the agent run
+    with tracer.start_as_current_span("SimpleQA") as span:
+        span.set_attribute("tracecraft.step.type", "AGENT")
+        span.set_attribute("input.value", '{"question": "What is the capital of France?"}')
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant. Be concise."},
+                {"role": "user", "content": "What is the capital of France? One word answer."},
+            ],
+            max_tokens=10,
+        )
+
+        result = response.choices[0].message.content or ""
+        span.set_attribute("output.value", f'{{"answer": "{result}"}}')
+        print(f"  Response: {result}")
+        return result
 
 
 def run_multi_turn_chat() -> str:
     """Make a multi-turn conversation."""
     import openai
 
+    tracer = get_tracer()
     client = openai.OpenAI()
 
     print("\n[2/3] Multi-turn conversation...")
 
-    messages = [
-        {"role": "system", "content": "You are a math tutor. Be very brief."},
-        {"role": "user", "content": "What is 2 + 2?"},
-    ]
+    # Create parent span for the multi-turn conversation
+    with tracer.start_as_current_span("MathTutor") as span:
+        span.set_attribute("tracecraft.step.type", "AGENT")
+        span.set_attribute("input.value", '{"task": "Math tutoring session"}')
 
-    # First turn
-    response1 = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages,
-        max_tokens=20,
-    )
-    answer1 = response1.choices[0].message.content or ""
-    print(f"  Turn 1: {answer1}")
+        messages = [
+            {"role": "system", "content": "You are a math tutor. Be very brief."},
+            {"role": "user", "content": "What is 2 + 2?"},
+        ]
 
-    # Add assistant response and follow-up
-    messages.append({"role": "assistant", "content": answer1})
-    messages.append({"role": "user", "content": "Now multiply that by 3"})
+        # First turn
+        response1 = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            max_tokens=20,
+        )
+        answer1 = response1.choices[0].message.content or ""
+        print(f"  Turn 1: {answer1}")
 
-    # Second turn
-    response2 = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages,
-        max_tokens=20,
-    )
-    answer2 = response2.choices[0].message.content or ""
-    print(f"  Turn 2: {answer2}")
+        # Add assistant response and follow-up
+        messages.append({"role": "assistant", "content": answer1})
+        messages.append({"role": "user", "content": "Now multiply that by 3"})
 
-    return answer2
+        # Second turn
+        response2 = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            max_tokens=20,
+        )
+        answer2 = response2.choices[0].message.content or ""
+        print(f"  Turn 2: {answer2}")
+
+        span.set_attribute("output.value", f'{{"final_answer": "{answer2}"}}')
+        return answer2
 
 
 def run_tool_use() -> str:
@@ -166,6 +188,7 @@ def run_tool_use() -> str:
 
     import openai
 
+    tracer = get_tracer()
     client = openai.OpenAI()
 
     print("\n[3/3] Function calling (tool use)...")
@@ -190,44 +213,58 @@ def run_tool_use() -> str:
         }
     ]
 
-    # First call - model decides to use tool
-    response1 = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": "What's the weather in Tokyo?"}],
-        tools=tools,
-        tool_choice="auto",
-        max_tokens=100,
-    )
+    # Create parent span for tool-use agent
+    with tracer.start_as_current_span("WeatherAgent") as agent_span:
+        agent_span.set_attribute("tracecraft.step.type", "AGENT")
+        agent_span.set_attribute("input.value", '{"query": "What is the weather in Tokyo?"}')
 
-    message = response1.choices[0].message
-    if message.tool_calls:
-        tool_call = message.tool_calls[0]
-        print(f"  Tool called: {tool_call.function.name}")
-        print(f"  Arguments: {tool_call.function.arguments}")
-
-        # Simulate tool response
-        tool_result = json.dumps({"temperature": 22, "conditions": "Sunny"})
-
-        # Second call - with tool result
-        response2 = client.chat.completions.create(
+        # First call - model decides to use tool
+        response1 = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "user", "content": "What's the weather in Tokyo?"},
-                message,
-                {
-                    "role": "tool",
-                    "tool_call_id": tool_call.id,
-                    "content": tool_result,
-                },
-            ],
+            messages=[{"role": "user", "content": "What's the weather in Tokyo?"}],
+            tools=tools,
+            tool_choice="auto",
             max_tokens=100,
         )
 
-        result = response2.choices[0].message.content or ""
-        print(f"  Final response: {result}")
-        return result
+        message = response1.choices[0].message
+        if message.tool_calls:
+            tool_call = message.tool_calls[0]
+            print(f"  Tool called: {tool_call.function.name}")
+            print(f"  Arguments: {tool_call.function.arguments}")
 
-    return message.content or ""
+            # Create a tool span for the simulated tool execution
+            with tracer.start_as_current_span("get_weather") as tool_span:
+                tool_span.set_attribute("tracecraft.step.type", "TOOL")
+                tool_span.set_attribute("tool.name", "get_weather")
+                tool_span.set_attribute("tool.parameters", tool_call.function.arguments)
+
+                # Simulate tool response
+                tool_result = {"temperature": 22, "conditions": "Sunny"}
+                tool_span.set_attribute("output.value", json.dumps(tool_result))
+                print(f"  Tool result: {tool_result}")
+
+            # Second call - with tool result
+            response2 = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "user", "content": "What's the weather in Tokyo?"},
+                    message,
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": json.dumps(tool_result),
+                    },
+                ],
+                max_tokens=100,
+            )
+
+            result = response2.choices[0].message.content or ""
+            agent_span.set_attribute("output.value", f'{{"answer": "{result}"}}')
+            print(f"  Final response: {result}")
+            return result
+
+        return message.content or ""
 
 
 def main() -> None:
