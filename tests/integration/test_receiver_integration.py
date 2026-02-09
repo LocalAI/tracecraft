@@ -242,6 +242,55 @@ class TestWatchModeSimulation:
             assert len(new_traces) == 1
             assert new_traces[0].name == "new_trace"
 
+    def test_sqlite_watch_mode_refresh(self) -> None:
+        """SQLite storage also supports watch mode refresh (default storage)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store_path = Path(tmpdir) / "traces.db"
+            store = SQLiteTraceStore(store_path)
+            server = OTLPReceiverServer(store=store, host="127.0.0.1", port=0)
+
+            from starlette.testclient import TestClient
+
+            client = TestClient(server._create_app())
+
+            # Create loader with SQLite source (like TUI would)
+            loader = TraceLoader.from_source(f"sqlite://{store_path}")
+
+            # Initially no traces
+            initial_traces = loader.list_traces()
+            assert len(initial_traces) == 0
+
+            # Send a trace
+            otlp_json = {
+                "resourceSpans": [
+                    {
+                        "resource": {"attributes": []},
+                        "scopeSpans": [
+                            {
+                                "spans": [
+                                    {
+                                        "traceId": "aabbccdd11223344aabbccdd11223344",
+                                        "spanId": "1234567890abcdef",
+                                        "name": "sqlite_watch_test",
+                                        "startTimeUnixNano": "1704067200000000000",
+                                        "endTimeUnixNano": "1704067201000000000",
+                                        "attributes": [],
+                                    }
+                                ]
+                            }
+                        ],
+                    }
+                ]
+            }
+            response = client.post("/v1/traces", json=otlp_json)
+            assert response.status_code == 200
+
+            # Refresh and check - this is the core test for SQLite watch mode
+            loader.refresh()
+            new_traces = loader.list_traces()
+            assert len(new_traces) == 1
+            assert new_traces[0].name == "sqlite_watch_test"
+
 
 @pytest.mark.integration
 class TestSchemaDetection:

@@ -103,20 +103,32 @@ class OTLPReceiverServer:
 
                 # Save to storage
                 saved_count = 0
+                failed_count = 0
                 for run in agent_runs:
                     try:
                         self.store.save(run)
                         saved_count += 1
                         logger.debug("Saved trace %s with %d steps", run.id, len(run.steps))
                     except Exception as e:
+                        failed_count += 1
                         logger.error("Failed to save trace %s: %s", run.id, e)
 
                 logger.info("Received %d traces, saved %d", len(agent_runs), saved_count)
 
-                return JSONResponse(
-                    {"status": "ok", "traces_received": len(agent_runs)},
-                    status_code=200,
-                )
+                # Build response - indicate partial failure if some saves failed
+                response_data: dict[str, Any] = {
+                    "traces_received": len(agent_runs),
+                    "traces_saved": saved_count,
+                }
+
+                if failed_count > 0:
+                    response_data["status"] = "partial"
+                    response_data["traces_failed"] = failed_count
+                    # Use 207 Multi-Status for partial success
+                    return JSONResponse(response_data, status_code=207)
+
+                response_data["status"] = "ok"
+                return JSONResponse(response_data, status_code=200)
 
             except Exception as e:
                 logger.exception("Error processing traces")

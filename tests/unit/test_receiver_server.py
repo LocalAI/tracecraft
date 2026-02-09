@@ -71,6 +71,7 @@ class TestOTLPReceiverServerBasics:
             assert response.status_code == 200
             assert response.json()["status"] == "ok"
             assert response.json()["traces_received"] == 1
+            assert response.json()["traces_saved"] == 1
 
     def test_traces_saved_to_storage(self) -> None:
         """Received traces appear in storage."""
