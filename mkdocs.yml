@@ -147,6 +147,7 @@ nav:
     - PydanticAI: integrations/pydantic-ai.md
     - Claude SDK: integrations/claude-sdk.md
     - Auto-Instrumentation: integrations/auto-instrumentation.md
+    - OpenTelemetry Receiver: integrations/otel-receiver.md
     - Cloud Platforms: integrations/cloud-platforms.md
   - Deployment:
     - deployment/index.md

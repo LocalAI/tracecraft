@@ -52,6 +52,14 @@ TraceCraft integrates with popular LLM frameworks and cloud platforms. This sect
 
     [:octicons-arrow-right-24: Auto-Instrumentation](auto-instrumentation.md)
 
+- :simple-opentelemetry:{ .lg .middle } __OpenTelemetry Receiver__
+
+    ---
+
+    Receive traces from any OTLP source with simple setup
+
+    [:octicons-arrow-right-24: OpenTelemetry Receiver](otel-receiver.md)
+
 </div>
 
 ## Cloud Platforms
@@ -117,6 +125,19 @@ from tracecraft.instrumentation.auto import auto_instrument
 auto_instrument()
 ```
 
+### OpenTelemetry Receiver
+
+```python
+from tracecraft.otel import setup_exporter
+
+# Configure OTel to send traces to TraceCraft
+tracer = setup_exporter(
+    endpoint="http://localhost:4318",
+    service_name="my-agent",
+    instrument=["openai"],
+)
+```
+
 ## Choosing an Integration
 
 | Framework | Use When | Installation |
@@ -126,6 +147,7 @@ auto_instrument()
 | PydanticAI | Type-safe agent development | `tracecraft[pydantic-ai]` |
 | Claude SDK | Claude-powered agents | `tracecraft[claude-sdk]` |
 | Auto | Using OpenAI/Anthropic directly | `tracecraft[auto]` |
+| OTel Receiver | Receiving OTLP traces | `tracecraft[receiver]` |
 | Custom | Rolling your own | Base package |
 
 ## Next Steps
@@ -137,4 +159,5 @@ Explore integration guides:
 3. [PydanticAI Integration](pydantic-ai.md)
 4. [Claude SDK Integration](claude-sdk.md)
 5. [Auto-Instrumentation](auto-instrumentation.md)
-6. [Cloud Platforms](cloud-platforms.md)
+6. [OpenTelemetry Receiver](otel-receiver.md)
+7. [Cloud Platforms](cloud-platforms.md)
