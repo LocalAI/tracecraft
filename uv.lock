@@ -5954,7 +5954,10 @@ name = "tracecraft"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "openai" },
     { name = "opentelemetry-api" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-instrumentation-openai" },
     { name = "opentelemetry-sdk" },
     { name = "pydantic" },
     { name = "rich" },
@@ -6132,12 +6135,15 @@ requires-dist = [
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=0.25" },
     { name = "mlflow", marker = "extra == 'mlflow'", specifier = ">=2.14" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "openai", specifier = ">=2.15.0" },
     { name = "opentelemetry-api", specifier = ">=1.20" },
     { name = "opentelemetry-exporter-otlp", marker = "extra == 'aws-agentcore'", specifier = ">=1.20" },
     { name = "opentelemetry-exporter-otlp", marker = "extra == 'azure-foundry'", specifier = ">=1.20" },
     { name = "opentelemetry-exporter-otlp", marker = "extra == 'gcp-vertex-agent'", specifier = ">=1.20" },
     { name = "opentelemetry-exporter-otlp", marker = "extra == 'otlp'", specifier = ">=1.20" },
+    { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.39.1" },
     { name = "opentelemetry-instrumentation-anthropic", marker = "extra == 'auto'", specifier = ">=0.40" },
+    { name = "opentelemetry-instrumentation-openai", specifier = ">=0.51.0" },
     { name = "opentelemetry-instrumentation-openai", marker = "extra == 'auto'", specifier = ">=0.40" },
     { name = "opentelemetry-proto", marker = "extra == 'receiver'", specifier = ">=1.20" },
     { name = "opentelemetry-sdk", specifier = ">=1.20" },

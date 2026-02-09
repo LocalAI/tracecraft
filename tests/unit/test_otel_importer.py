@@ -513,6 +513,70 @@ class TestIOExtraction:
         assert step.inputs == {"prompt": "Hello"}
         assert step.outputs == {"response": "Hi there!"}
 
+    def test_extract_indexed_message_format(self) -> None:
+        """Indexed message format (gen_ai.prompt.0.content) is extracted correctly."""
+        importer = OTelImporter()
+
+        otlp_json = {
+            "resourceSpans": [
+                {
+                    "resource": {"attributes": []},
+                    "scopeSpans": [
+                        {
+                            "spans": [
+                                {
+                                    "traceId": "0123456789abcdef0123456789abcdef",
+                                    "spanId": "0123456789abcdef",
+                                    "name": "openai.chat",
+                                    "startTimeUnixNano": "1704067200000000000",
+                                    "endTimeUnixNano": "1704067201000000000",
+                                    "attributes": [
+                                        {
+                                            "key": "gen_ai.request.model",
+                                            "value": {"stringValue": "gpt-4o-mini"},
+                                        },
+                                        {
+                                            "key": "gen_ai.usage.prompt_tokens",
+                                            "value": {"intValue": "100"},
+                                        },
+                                        {
+                                            "key": "gen_ai.usage.completion_tokens",
+                                            "value": {"intValue": "50"},
+                                        },
+                                        {
+                                            "key": "gen_ai.prompt.0.role",
+                                            "value": {"stringValue": "user"},
+                                        },
+                                        {
+                                            "key": "gen_ai.prompt.0.content",
+                                            "value": {"stringValue": "What is 2+2?"},
+                                        },
+                                        {
+                                            "key": "gen_ai.completion.0.role",
+                                            "value": {"stringValue": "assistant"},
+                                        },
+                                        {
+                                            "key": "gen_ai.completion.0.content",
+                                            "value": {"stringValue": "4"},
+                                        },
+                                    ],
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ]
+        }
+
+        runs = importer.import_from_json(otlp_json)
+        step = runs[0].steps[0]
+
+        # Indexed format extracts to prompt/response for single messages
+        assert step.inputs == {"prompt": "What is 2+2?"}
+        assert step.outputs == {"response": "4"}
+        assert step.input_tokens == 100
+        assert step.output_tokens == 50
+
     def test_extract_tool_parameters(self) -> None:
         """tool.parameters are extracted as inputs."""
         importer = OTelImporter()

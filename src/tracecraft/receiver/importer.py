@@ -408,10 +408,16 @@ class OTelImporter:
         model_name = attrs.get("gen_ai.request.model") or attrs.get("llm.model_name")
         model_provider = attrs.get("gen_ai.system") or attrs.get("llm.provider")
 
-        # Extract token counts
-        input_tokens = attrs.get("gen_ai.usage.input_tokens") or attrs.get("llm.token_count.prompt")
-        output_tokens = attrs.get("gen_ai.usage.output_tokens") or attrs.get(
-            "llm.token_count.completion"
+        # Extract token counts (try multiple naming conventions)
+        input_tokens = (
+            attrs.get("gen_ai.usage.input_tokens")
+            or attrs.get("gen_ai.usage.prompt_tokens")
+            or attrs.get("llm.token_count.prompt")
+        )
+        output_tokens = (
+            attrs.get("gen_ai.usage.output_tokens")
+            or attrs.get("gen_ai.usage.completion_tokens")
+            or attrs.get("llm.token_count.completion")
         )
         if input_tokens is not None:
             input_tokens = int(input_tokens)
@@ -524,7 +530,7 @@ class OTelImporter:
             else:
                 result = {"value": value}
 
-        # Check for OTel GenAI messages format
+        # Check for OTel GenAI messages format (single attribute)
         messages_key = f"gen_ai.{'request' if prefix == 'input' else 'response'}.messages"
         if messages_key in attrs:
             value = attrs[messages_key]
@@ -535,6 +541,35 @@ class OTelImporter:
                     result["messages"] = value
             else:
                 result["messages"] = value
+
+        # Check for indexed message format (gen_ai.prompt.0.content, gen_ai.completion.0.content)
+        # Used by opentelemetry-instrumentation-openai
+        indexed_prefix = "gen_ai.prompt" if prefix == "input" else "gen_ai.completion"
+        indexed_messages = []
+        idx = 0
+        while True:
+            content_key = f"{indexed_prefix}.{idx}.content"
+            role_key = f"{indexed_prefix}.{idx}.role"
+            if content_key not in attrs and role_key not in attrs:
+                break
+            msg: dict[str, Any] = {}
+            if role_key in attrs:
+                msg["role"] = attrs[role_key]
+            if content_key in attrs:
+                msg["content"] = attrs[content_key]
+            if msg:
+                indexed_messages.append(msg)
+            idx += 1
+
+        if indexed_messages:
+            # If there's only one message, extract content directly for cleaner display
+            if len(indexed_messages) == 1 and "content" in indexed_messages[0]:
+                if prefix == "input":
+                    result["prompt"] = indexed_messages[0]["content"]
+                else:
+                    result["response"] = indexed_messages[0]["content"]
+            else:
+                result["messages"] = indexed_messages
 
         # Check for tool parameters (merge with existing, don't overwrite)
         if prefix == "input" and "tool.parameters" in attrs:
