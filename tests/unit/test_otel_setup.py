@@ -95,6 +95,26 @@ class TestParseEndpoint:
         assert config.backend_type == "azure"
         assert config.endpoint_url == "https://appinsights.azure.com:443/v1/traces"
 
+    def test_aws_scheme(self) -> None:
+        """Test aws:// scheme."""
+        config = parse_endpoint("aws://xray.us-east-1.amazonaws.com")
+        assert config.scheme == "aws"
+        assert config.backend_type == "aws"
+        assert config.endpoint_url == "https://xray.us-east-1.amazonaws.com:443/v1/traces"
+
+    def test_xray_scheme(self) -> None:
+        """Test xray:// scheme alias for AWS."""
+        config = parse_endpoint("xray://xray.us-west-2.amazonaws.com")
+        assert config.scheme == "xray"
+        assert config.backend_type == "aws"
+        assert config.endpoint_url == "https://xray.us-west-2.amazonaws.com:443/v1/traces"
+
+    def test_custom_path_preserved(self) -> None:
+        """Test custom path in URL is preserved."""
+        config = parse_endpoint("http://localhost:4318/custom/traces/endpoint")
+        assert config.path == "/custom/traces/endpoint"
+        assert config.endpoint_url == "http://localhost:4318/custom/traces/endpoint"
+
     def test_env_var_tracecraft_endpoint(self) -> None:
         """Test TRACECRAFT_ENDPOINT environment variable."""
         with patch.dict(os.environ, {"TRACECRAFT_ENDPOINT": "http://custom:9999"}):
@@ -238,6 +258,57 @@ class TestInstrumentors:
                 result = instrument_sdk("openai")
             assert result is False
 
+    def test_instrument_sdk_runtime_error(self) -> None:
+        """Test warning when SDK raises RuntimeError during instrumentation."""
+        with patch("tracecraft.otel.instrumentors.importlib.import_module") as mock_import:
+            mock_module = MagicMock()
+            mock_instrumentor = MagicMock()
+            # Ensure is_instrumented_by_opentelemetry returns False so we proceed to instrument()
+            mock_instrumentor.is_instrumented_by_opentelemetry = False
+            mock_instrumentor.instrument.side_effect = RuntimeError("Already instrumented")
+            mock_module.OpenAIInstrumentor.return_value = mock_instrumentor
+            mock_import.return_value = mock_module
+
+            with pytest.warns(UserWarning, match="Failed to instrument"):
+                result = instrument_sdk("openai")
+            assert result is False
+
+    def test_instrument_sdks_with_unknown_sdk(self) -> None:
+        """Test instrument_sdks warns for unknown SDK."""
+        with pytest.warns(UserWarning, match="Unknown SDK"):
+            result = instrument_sdks(["nonexistent-sdk"])
+        assert result == []
+
+    def test_instrument_sdk_callable_is_instrumented(self) -> None:
+        """Test handling is_instrumented_by_opentelemetry as callable method."""
+        with patch("tracecraft.otel.instrumentors.importlib.import_module") as mock_import:
+            mock_module = MagicMock()
+            mock_instrumentor = MagicMock()
+            # Make is_instrumented_by_opentelemetry a callable that returns True
+            mock_instrumentor.is_instrumented_by_opentelemetry = MagicMock(return_value=True)
+            mock_module.OpenAIInstrumentor.return_value = mock_instrumentor
+            mock_import.return_value = mock_module
+
+            result = instrument_sdk("openai")
+
+            assert result is True
+            mock_instrumentor.instrument.assert_not_called()
+
+    def test_instrument_sdk_success_path(self) -> None:
+        """Test successful instrumentation when not already instrumented."""
+        with patch("tracecraft.otel.instrumentors.importlib.import_module") as mock_import:
+            mock_module = MagicMock()
+            mock_instrumentor = MagicMock()
+            # No is_instrumented_by_opentelemetry attribute
+            del mock_instrumentor.is_instrumented_by_opentelemetry
+            mock_module.OpenAIInstrumentor.return_value = mock_instrumentor
+            mock_import.return_value = mock_module
+
+            result = instrument_sdk("openai")
+
+            assert result is True
+            mock_instrumentor.instrument.assert_called_once()
+
 
 class TestSetupExporter:
     """Tests for setup_exporter function."""
@@ -307,6 +378,57 @@ class TestSetupExporter:
             setup_exporter(endpoint="http://localhost:4318", instrument=["openai"])
 
             mock_instrument.assert_called_once_with(["openai"])
+
+    def test_setup_exporter_with_tracecraft_backend(self) -> None:
+        """Test setup_exporter adds backend attribute for non-generic backends."""
+        with (
+            patch("tracecraft.otel.setup.trace"),
+            patch("tracecraft.otel.setup.Resource") as mock_resource,
+            patch("tracecraft.otel.setup.TracerProvider"),
+        ):
+            setup_exporter(endpoint="tracecraft://localhost:4318", service_name="test")
+
+            # Check that Resource.create was called with backend attribute
+            call_args = mock_resource.create.call_args[0][0]
+            assert call_args["tracecraft.backend"] == "tracecraft"
+
+    def test_setup_exporter_with_custom_tracer_name(self) -> None:
+        """Test setup_exporter uses custom tracer name."""
+        with (
+            patch("tracecraft.otel.setup.trace") as mock_trace,
+            patch("tracecraft.otel.setup.TracerProvider"),
+        ):
+            setup_exporter(endpoint="http://localhost:4318", tracer_name="custom-tracer")
+
+            mock_trace.get_tracer.assert_called_with("custom-tracer")
+
+    def test_setup_exporter_with_service_version(self) -> None:
+        """Test setup_exporter uses custom service version."""
+        with (
+            patch("tracecraft.otel.setup.trace"),
+            patch("tracecraft.otel.setup.Resource") as mock_resource,
+            patch("tracecraft.otel.setup.TracerProvider"),
+        ):
+            setup_exporter(
+                endpoint="http://localhost:4318",
+                service_name="test",
+                service_version="2.0.0",
+            )
+
+            call_args = mock_resource.create.call_args[0][0]
+            assert call_args["service.version"] == "2.0.0"
+
+    def test_setup_exporter_empty_instrument_list(self) -> None:
+        """Test setup_exporter handles empty instrument list."""
+        with (
+            patch("tracecraft.otel.setup.trace"),
+            patch("tracecraft.otel.setup.TracerProvider"),
+            patch("tracecraft.otel.setup.instrument_sdks") as mock_instrument,
+        ):
+            # Empty list should not call instrument_sdks
+            setup_exporter(endpoint="http://localhost:4318", instrument=[])
+
+            mock_instrument.assert_not_called()
 
 
 class TestTracerUtilities:
