@@ -44,8 +44,26 @@ tracecraft ui sqlite://traces/receiver_demo.db
 | File | Description |
 |------|-------------|
 | `01_receiver_demo.py` | Start OTLP receiver server |
-| `02_send_traces.py` | Send traces via HTTP (no OTel SDK needed) |
+| `02_send_traces.py` | Send simulated traces (various patterns, no API keys) |
 | `03_otel_sdk_example.py` | Send traces using standard OpenTelemetry SDK |
+| `04_real_openai_traces.py` | **Real OpenAI calls** with OTel instrumentation |
+| `05_real_anthropic_traces.py` | **Real Anthropic/Claude calls** with OTel instrumentation |
+
+## Real API Examples
+
+For testing with actual LLM calls:
+
+```bash
+# OpenAI (requires OPENAI_API_KEY)
+pip install openai opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp-proto-http opentelemetry-instrumentation-openai
+export OPENAI_API_KEY="your-key-here"
+uv run python examples/06-receiver/04_real_openai_traces.py
+
+# Anthropic (requires ANTHROPIC_API_KEY)
+pip install anthropic opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
+export ANTHROPIC_API_KEY="your-key-here"
+uv run python examples/06-receiver/05_real_anthropic_traces.py
+```
 
 ## Integration with Real Applications
 
