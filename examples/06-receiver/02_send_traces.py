@@ -22,6 +22,8 @@ Expected Output:
 
 from __future__ import annotations
 
+import json
+import random
 import time
 import uuid
 
@@ -29,6 +31,31 @@ import requests
 
 # OTLP receiver endpoint
 RECEIVER_URL = "http://127.0.0.1:4318/v1/traces"
+
+# Sample data for variety
+QUERIES = [
+    ("What is the weather in San Francisco?", "get_weather", "San Francisco"),
+    ("Search for Python async tutorials", "web_search", "Python async tutorials"),
+    ("Calculate the square root of 144", "calculator", "sqrt(144)"),
+    ("Find restaurants near Times Square", "places_search", "Times Square restaurants"),
+    ("What's the stock price of AAPL?", "stock_lookup", "AAPL"),
+]
+
+MODELS = [
+    ("gpt-4o-mini", "openai", 0.15, 0.60),  # model, provider, input_cost/1M, output_cost/1M
+    ("gpt-4o", "openai", 2.50, 10.00),
+    ("claude-3-haiku", "anthropic", 0.25, 1.25),
+    ("claude-3-sonnet", "anthropic", 3.00, 15.00),
+    ("gemini-1.5-flash", "google", 0.075, 0.30),
+]
+
+AGENT_NAMES = [
+    "ResearchAssistant",
+    "DataAnalyst",
+    "CodeHelper",
+    "TaskPlanner",
+    "ContentWriter",
+]
 
 
 def generate_trace_id() -> str:
@@ -41,25 +68,69 @@ def generate_span_id() -> str:
     return uuid.uuid4().hex[:16]
 
 
-def create_agent_trace() -> dict:
+def create_agent_trace(trace_num: int) -> dict:
     """Create an OTLP trace payload simulating an AI agent run."""
+    # Pick random variety for this trace
+    query, tool_name, tool_arg = random.choice(QUERIES)
+    model_name, provider, input_cost, output_cost = random.choice(MODELS)
+    agent_name = random.choice(AGENT_NAMES)
+
+    # Randomize token counts
+    input_tokens = random.randint(200, 2000)
+    output_tokens = random.randint(50, 500)
+    cost = (input_tokens * input_cost / 1_000_000) + (output_tokens * output_cost / 1_000_000)
+
+    # Randomize timing (1-8 seconds total)
+    total_duration_ns = random.randint(1_000_000_000, 8_000_000_000)
+    llm_duration_ns = int(total_duration_ns * random.uniform(0.3, 0.5))
+    tool_duration_ns = int(total_duration_ns * random.uniform(0.1, 0.3))
+
     trace_id = generate_trace_id()
     now_ns = int(time.time() * 1_000_000_000)
 
     # Agent span (root)
     agent_span_id = generate_span_id()
     agent_start = now_ns
-    agent_end = now_ns + 5_000_000_000  # 5 seconds
+    agent_end = now_ns + total_duration_ns
 
     # LLM call span (child of agent)
     llm_span_id = generate_span_id()
     llm_start = now_ns + 100_000_000  # 100ms after start
-    llm_end = now_ns + 2_000_000_000  # 2 seconds
+    llm_end = llm_start + llm_duration_ns
 
     # Tool call span (child of agent)
     tool_span_id = generate_span_id()
-    tool_start = now_ns + 2_500_000_000  # 2.5 seconds
-    tool_end = now_ns + 3_500_000_000  # 3.5 seconds
+    tool_start = llm_end + 100_000_000  # 100ms after LLM
+    tool_end = tool_start + tool_duration_ns
+
+    # Generate dynamic output based on tool
+    tool_outputs = {
+        "get_weather": {
+            "temperature": random.randint(45, 95),
+            "conditions": random.choice(["Sunny", "Cloudy", "Rainy", "Partly cloudy"]),
+        },
+        "web_search": {
+            "results": random.randint(5, 50),
+            "top_result": "https://example.com/result",
+        },
+        "calculator": {"result": 12.0, "expression": "sqrt(144)"},
+        "places_search": {"count": random.randint(3, 20), "nearest": "0.2 miles"},
+        "stock_lookup": {
+            "price": round(random.uniform(100, 250), 2),
+            "change": round(random.uniform(-5, 5), 2),
+        },
+    }
+    tool_output = tool_outputs.get(tool_name, {"status": "success"})
+    tool_output_json = json.dumps(tool_output)
+
+    # Pre-build JSON strings to avoid f-string quote issues
+    agent_input_json = json.dumps({"query": query})
+    agent_output_json = json.dumps(
+        {"answer": f"Completed task using {tool_name}", "tool_result": tool_output}
+    )
+    llm_input_json = json.dumps({"prompt": query})
+    llm_output_json = json.dumps({"response": f"I'll use the {tool_name} tool to help with this."})
+    tool_params_json = json.dumps({"query": tool_arg})
 
     return {
         "resourceSpans": [
@@ -78,14 +149,14 @@ def create_agent_trace() -> dict:
                             {
                                 "traceId": trace_id,
                                 "spanId": agent_span_id,
-                                "name": "research_assistant",
+                                "name": f"{agent_name.lower()}_run",
                                 "kind": 1,  # INTERNAL
                                 "startTimeUnixNano": str(agent_start),
                                 "endTimeUnixNano": str(agent_end),
                                 "attributes": [
                                     {
                                         "key": "gen_ai.agent.name",
-                                        "value": {"stringValue": "ResearchAssistant"},
+                                        "value": {"stringValue": agent_name},
                                     },
                                     {
                                         "key": "tracecraft.step.type",
@@ -93,15 +164,11 @@ def create_agent_trace() -> dict:
                                     },
                                     {
                                         "key": "input.value",
-                                        "value": {
-                                            "stringValue": '{"query": "What is the weather in San Francisco?"}'
-                                        },
+                                        "value": {"stringValue": agent_input_json},
                                     },
                                     {
                                         "key": "output.value",
-                                        "value": {
-                                            "stringValue": '{"answer": "The weather in San Francisco is 68°F and partly cloudy."}'
-                                        },
+                                        "value": {"stringValue": agent_output_json},
                                     },
                                 ],
                             },
@@ -110,42 +177,38 @@ def create_agent_trace() -> dict:
                                 "traceId": trace_id,
                                 "spanId": llm_span_id,
                                 "parentSpanId": agent_span_id,
-                                "name": "gpt-4o-mini",
+                                "name": model_name,
                                 "kind": 3,  # CLIENT
                                 "startTimeUnixNano": str(llm_start),
                                 "endTimeUnixNano": str(llm_end),
                                 "attributes": [
                                     {
                                         "key": "gen_ai.request.model",
-                                        "value": {"stringValue": "gpt-4o-mini"},
+                                        "value": {"stringValue": model_name},
                                     },
                                     {
                                         "key": "gen_ai.system",
-                                        "value": {"stringValue": "openai"},
+                                        "value": {"stringValue": provider},
                                     },
                                     {
                                         "key": "gen_ai.usage.input_tokens",
-                                        "value": {"intValue": "1250"},
+                                        "value": {"intValue": str(input_tokens)},
                                     },
                                     {
                                         "key": "gen_ai.usage.output_tokens",
-                                        "value": {"intValue": "380"},
+                                        "value": {"intValue": str(output_tokens)},
                                     },
                                     {
                                         "key": "gen_ai.usage.cost",
-                                        "value": {"doubleValue": 0.0024},
+                                        "value": {"doubleValue": round(cost, 6)},
                                     },
                                     {
                                         "key": "input.value",
-                                        "value": {
-                                            "stringValue": '{"prompt": "What is the weather in San Francisco?"}'
-                                        },
+                                        "value": {"stringValue": llm_input_json},
                                     },
                                     {
                                         "key": "output.value",
-                                        "value": {
-                                            "stringValue": '{"response": "I\'ll check the weather for you using the weather tool."}'
-                                        },
+                                        "value": {"stringValue": llm_output_json},
                                     },
                                 ],
                             },
@@ -154,14 +217,14 @@ def create_agent_trace() -> dict:
                                 "traceId": trace_id,
                                 "spanId": tool_span_id,
                                 "parentSpanId": agent_span_id,
-                                "name": "get_weather",
+                                "name": tool_name,
                                 "kind": 1,  # INTERNAL
                                 "startTimeUnixNano": str(tool_start),
                                 "endTimeUnixNano": str(tool_end),
                                 "attributes": [
                                     {
                                         "key": "tool.name",
-                                        "value": {"stringValue": "get_weather"},
+                                        "value": {"stringValue": tool_name},
                                     },
                                     {
                                         "key": "tracecraft.step.type",
@@ -169,15 +232,11 @@ def create_agent_trace() -> dict:
                                     },
                                     {
                                         "key": "tool.parameters",
-                                        "value": {
-                                            "stringValue": '{"city": "San Francisco", "units": "fahrenheit"}'
-                                        },
+                                        "value": {"stringValue": tool_params_json},
                                     },
                                     {
                                         "key": "output.value",
-                                        "value": {
-                                            "stringValue": '{"temperature": 68, "conditions": "Partly cloudy"}'
-                                        },
+                                        "value": {"stringValue": tool_output_json},
                                     },
                                 ],
                             },
@@ -210,10 +269,32 @@ def main() -> None:
     print("\nReceiver is healthy!")
     print("-" * 60)
 
-    # Send traces
-    for i in range(3):
-        print(f"\nSending trace {i + 1}/3...")
-        payload = create_agent_trace()
+    # Send traces with variety
+    num_traces = 5
+    for i in range(num_traces):
+        print(f"\nSending trace {i + 1}/{num_traces}...")
+        payload = create_agent_trace(i)
+
+        # Extract some info for display
+        spans = payload["resourceSpans"][0]["scopeSpans"][0]["spans"]
+        agent_span = spans[0]
+        llm_span = spans[1]
+        agent_name = next(
+            (
+                a["value"]["stringValue"]
+                for a in agent_span["attributes"]
+                if a["key"] == "gen_ai.agent.name"
+            ),
+            "Unknown",
+        )
+        model = next(
+            (
+                a["value"]["stringValue"]
+                for a in llm_span["attributes"]
+                if a["key"] == "gen_ai.request.model"
+            ),
+            "Unknown",
+        )
 
         response = requests.post(
             RECEIVER_URL,
@@ -224,18 +305,17 @@ def main() -> None:
 
         if response.status_code == 200:
             data = response.json()
-            print(f"  Status: {data['status']}")
-            print(f"  Traces received: {data['traces_received']}")
-            print(f"  Traces saved: {data['traces_saved']}")
+            print(f"  Agent: {agent_name} | Model: {model}")
+            print(f"  Status: {data['status']} | Saved: {data['traces_saved']}")
         else:
             print(f"  Error: {response.status_code}")
             print(f"  {response.text}")
 
-        time.sleep(0.5)  # Small delay between traces
+        time.sleep(0.3)  # Small delay between traces
 
     print("\n" + "=" * 60)
-    print("Done! View traces with:")
-    print("  tracecraft ui sqlite://traces/receiver_demo.db")
+    print(f"Done! Sent {num_traces} unique traces.")
+    print("View with: tracecraft ui sqlite://traces/receiver_demo.db")
     print("=" * 60)
 
 
