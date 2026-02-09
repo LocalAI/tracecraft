@@ -354,6 +354,22 @@ class OTelImporter:
             if agent_name:
                 break
 
+        # Extract run-level input/output from root step (if available)
+        run_input = None
+        run_output = None
+        run_error = None
+        run_error_type = None
+        if steps:
+            root_step = steps[0]
+            # Use root step's inputs/outputs for run-level data
+            if root_step.inputs:
+                run_input = root_step.inputs
+            if root_step.outputs:
+                run_output = root_step.outputs
+            if root_step.error:
+                run_error = root_step.error
+                run_error_type = root_step.error_type
+
         return AgentRun(
             id=_hex_to_uuid(trace_id),
             name=run_name,
@@ -368,6 +384,10 @@ class OTelImporter:
             agent_id=agent_id,
             environment=resource_attrs.get("deployment.environment", "development"),
             attributes={"imported_from": "otlp"},
+            input=run_input,
+            output=run_output,
+            error=run_error,
+            error_type=run_error_type,
         )
 
     def _span_to_step(self, span_data: dict[str, Any], trace_id: str) -> Step:

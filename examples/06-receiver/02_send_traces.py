@@ -91,6 +91,18 @@ def create_agent_trace() -> dict:
                                         "key": "tracecraft.step.type",
                                         "value": {"stringValue": "AGENT"},
                                     },
+                                    {
+                                        "key": "input.value",
+                                        "value": {
+                                            "stringValue": '{"query": "What is the weather in San Francisco?"}'
+                                        },
+                                    },
+                                    {
+                                        "key": "output.value",
+                                        "value": {
+                                            "stringValue": '{"answer": "The weather in San Francisco is 68°F and partly cloudy."}'
+                                        },
+                                    },
                                 ],
                             },
                             # LLM call span

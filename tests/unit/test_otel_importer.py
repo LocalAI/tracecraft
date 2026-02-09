@@ -812,3 +812,47 @@ class TestEdgeCases:
         assert len(runs) == 1
         # Should get a valid Step with a UUID
         assert runs[0].steps[0].id is not None
+
+    def test_agent_run_gets_input_output_from_root_step(self) -> None:
+        """AgentRun.input and AgentRun.output are populated from root step."""
+        importer = OTelImporter()
+
+        otlp_json = {
+            "resourceSpans": [
+                {
+                    "resource": {"attributes": []},
+                    "scopeSpans": [
+                        {
+                            "spans": [
+                                {
+                                    "traceId": "0123456789abcdef0123456789abcdef",
+                                    "spanId": "1111111111111111",
+                                    "name": "agent_run",
+                                    "startTimeUnixNano": "1704067200000000000",
+                                    "endTimeUnixNano": "1704067205000000000",
+                                    "attributes": [
+                                        {
+                                            "key": "input.value",
+                                            "value": {
+                                                "stringValue": '{"query": "What is the weather?"}'
+                                            },
+                                        },
+                                        {
+                                            "key": "output.value",
+                                            "value": {"stringValue": '{"answer": "It is sunny."}'},
+                                        },
+                                    ],
+                                },
+                            ]
+                        }
+                    ],
+                }
+            ]
+        }
+
+        runs = importer.import_from_json(otlp_json)
+        run = runs[0]
+
+        # AgentRun should have input/output from root step
+        assert run.input == {"query": "What is the weather?"}
+        assert run.output == {"answer": "It is sunny."}
