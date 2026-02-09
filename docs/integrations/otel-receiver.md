@@ -1055,7 +1055,50 @@ signal.signal(signal.SIGINT, graceful_shutdown)
 
 ---
 
+## Advanced Usage
+
+### Dynamic Instrumentation
+
+For advanced scenarios, you can dynamically instrument or uninstrument SDKs:
+
+```python
+from tracecraft.otel import instrument_sdk, uninstrument_sdk, get_available_instrumentors
+
+# See what SDKs are available
+print(get_available_instrumentors())
+# ['openai', 'anthropic', 'langchain', 'llamaindex', ...]
+
+# Instrument a specific SDK
+success = instrument_sdk("openai")
+if success:
+    print("OpenAI instrumented!")
+
+# Later, remove instrumentation (useful for testing)
+uninstrument_sdk("openai")
+```
+
+### Parsing Backend URLs
+
+Use `parse_endpoint` to understand how URLs are interpreted:
+
+```python
+from tracecraft.otel import parse_endpoint
+
+# Parse a TraceCraft URL
+config = parse_endpoint("tracecraft://myhost:4318/custom/path")
+print(f"Scheme: {config.scheme}")          # tracecraft
+print(f"Host: {config.host}")              # myhost
+print(f"Port: {config.port}")              # 4318
+print(f"Path: {config.path}")              # /custom/path
+print(f"Endpoint URL: {config.endpoint_url}")  # http://myhost:4318/custom/path
+print(f"Backend Type: {config.backend_type}")  # tracecraft
+```
+
+---
+
 ## API Reference
+
+### Core Functions
 
 ::: tracecraft.otel.setup_exporter
     options:
@@ -1077,12 +1120,41 @@ signal.signal(signal.SIGINT, graceful_shutdown)
       show_root_heading: true
       show_source: false
 
-::: tracecraft.otel.parse_endpoint
+### Instrumentation Functions
+
+::: tracecraft.otel.instrument_sdk
+    options:
+      show_root_heading: true
+      show_source: false
+
+::: tracecraft.otel.instrument_sdks
+    options:
+      show_root_heading: true
+      show_source: false
+
+::: tracecraft.otel.uninstrument_sdk
     options:
       show_root_heading: true
       show_source: false
 
 ::: tracecraft.otel.get_available_instrumentors
+    options:
+      show_root_heading: true
+      show_source: false
+
+### Configuration Types
+
+::: tracecraft.otel.parse_endpoint
+    options:
+      show_root_heading: true
+      show_source: false
+
+::: tracecraft.otel.get_service_name
+    options:
+      show_root_heading: true
+      show_source: false
+
+::: tracecraft.otel.BackendConfig
     options:
       show_root_heading: true
       show_source: false
