@@ -13,6 +13,8 @@ import threading
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from tracecraft.core.models import AgentRun
+    from tracecraft.receiver.importer import OTelImporter
     from tracecraft.storage.base import BaseTraceStore
 
 logger = logging.getLogger(__name__)
@@ -64,9 +66,13 @@ class OTLPReceiverServer:
         self._thread: threading.Thread | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
         self._stop_event = threading.Event()
+        self._lock = threading.Lock()  # Thread safety for state
 
         # Lazy import to avoid dependency issues
         self._app: Any = None
+
+        # Cached importer instance (avoid creating on every request)
+        self._importer: OTelImporter | None = None
 
     def _create_app(self) -> Any:
         """Create the Starlette application."""
@@ -130,10 +136,16 @@ class OTLPReceiverServer:
 
         return Starlette(routes=routes)
 
-    def _parse_protobuf(self, body: bytes) -> list[Any]:
-        """Parse OTLP protobuf format."""
-        from tracecraft.receiver.importer import OTelImporter
+    def _get_importer(self) -> OTelImporter:
+        """Get or create the cached importer instance."""
+        if self._importer is None:
+            from tracecraft.receiver.importer import OTelImporter
 
+            self._importer = OTelImporter()
+        return self._importer
+
+    def _parse_protobuf(self, body: bytes) -> list[AgentRun]:
+        """Parse OTLP protobuf format."""
         try:
             from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
                 ExportTraceServiceRequest,
@@ -147,15 +159,11 @@ class OTLPReceiverServer:
         request = ExportTraceServiceRequest()
         request.ParseFromString(body)
 
-        importer = OTelImporter()
-        return importer.import_resource_spans(list(request.resource_spans))
+        return self._get_importer().import_resource_spans(list(request.resource_spans))
 
-    def _parse_json(self, data: dict[str, Any]) -> list[Any]:
+    def _parse_json(self, data: dict[str, Any]) -> list[AgentRun]:
         """Parse OTLP JSON format."""
-        from tracecraft.receiver.importer import OTelImporter
-
-        importer = OTelImporter()
-        return importer.import_from_json(data)
+        return self._get_importer().import_from_json(data)
 
     def run(self) -> None:
         """
@@ -177,71 +185,94 @@ class OTLPReceiverServer:
             log_level="info",
         )
 
-    def start_background(self) -> None:
+    def start_background(self, timeout: float = 5.0) -> None:
         """
         Start the server in a background thread.
 
-        Use stop() to stop the server.
+        Args:
+            timeout: Maximum time to wait for server startup in seconds.
+
+        Raises:
+            RuntimeError: If server is already running or fails to start.
         """
         import uvicorn
 
-        if self._thread is not None and self._thread.is_alive():
-            raise RuntimeError("Server is already running")
+        with self._lock:
+            if self._thread is not None and self._thread.is_alive():
+                raise RuntimeError("Server is already running")
 
-        if self._app is None:
-            self._app = self._create_app()
+            if self._app is None:
+                self._app = self._create_app()
 
-        self._stop_event.clear()
+            self._stop_event.clear()
 
-        def run_server() -> None:
-            self._loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self._loop)
+            def run_server() -> None:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                with self._lock:
+                    self._loop = loop
 
-            config = uvicorn.Config(
-                self._app,
-                host=self.host,
-                port=self.port,
-                log_level="warning",
-            )
-            self._server = uvicorn.Server(config)
+                config = uvicorn.Config(
+                    self._app,
+                    host=self.host,
+                    port=self.port,
+                    log_level="warning",
+                )
+                server = uvicorn.Server(config)
+                with self._lock:
+                    self._server = server
 
-            self._loop.run_until_complete(self._server.serve())
+                try:
+                    loop.run_until_complete(server.serve())
+                finally:
+                    loop.close()
 
-        self._thread = threading.Thread(target=run_server, daemon=True)
-        self._thread.start()
+            self._thread = threading.Thread(target=run_server, daemon=True)
+            self._thread.start()
 
-        # Wait for server to start
+        # Wait for server to start (outside lock to avoid deadlock)
         import time
 
-        for _ in range(50):  # 5 seconds timeout
-            if self._server is not None and self._server.started:
-                break
+        start_wait = time.monotonic()
+        while time.monotonic() - start_wait < timeout:
+            with self._lock:
+                if self._server is not None and self._server.started:
+                    logger.info("OTLP receiver started on %s:%d", self.host, self.port)
+                    return
             time.sleep(0.1)
 
-        logger.info("OTLP receiver started on %s:%d", self.host, self.port)
+        # Timeout reached - cleanup and raise
+        self.stop()
+        raise RuntimeError(f"Server failed to start within {timeout} seconds")
 
     def stop(self) -> None:
         """Stop the background server."""
-        if self._server is not None:
-            self._server.should_exit = True
+        with self._lock:
+            if self._server is not None:
+                self._server.should_exit = True
+            thread = self._thread
 
-        if self._thread is not None:
-            self._thread.join(timeout=5.0)
+        # Join thread outside lock to avoid deadlock
+        if thread is not None:
+            thread.join(timeout=5.0)
+
+        with self._lock:
+            self._server = None
             self._thread = None
+            self._loop = None
 
-        self._server = None
-        self._loop = None
         logger.info("OTLP receiver stopped")
 
     @property
     def is_running(self) -> bool:
         """Check if the server is running."""
-        return (
-            self._thread is not None
-            and self._thread.is_alive()
-            and self._server is not None
-            and self._server.started
-        )
+        with self._lock:
+            return (
+                self._thread is not None
+                and self._thread.is_alive()
+                and self._server is not None
+                and self._server.started
+            )
 
     @property
     def url(self) -> str:

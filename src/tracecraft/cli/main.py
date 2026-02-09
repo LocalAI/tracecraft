@@ -382,6 +382,9 @@ def serve(
     # Create storage based on file extension
     storage_path = Path(storage)
 
+    # Ensure parent directory exists
+    storage_path.parent.mkdir(parents=True, exist_ok=True)
+
     if storage_path.suffix == ".db" or storage_path.suffix == ".sqlite":
         from tracecraft.storage.sqlite import SQLiteTraceStore
 
@@ -464,6 +467,9 @@ def receive(
         raise typer.Exit(1) from None
 
     storage_path = Path(storage)
+
+    # Ensure parent directory exists
+    storage_path.parent.mkdir(parents=True, exist_ok=True)
 
     if storage_path.suffix == ".db" or storage_path.suffix == ".sqlite":
         from tracecraft.storage.sqlite import SQLiteTraceStore

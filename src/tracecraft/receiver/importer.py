@@ -33,6 +33,11 @@ def _ns_to_datetime(ns: int) -> datetime:
 
 def _hex_to_uuid(hex_str: str) -> UUID:
     """Convert hex string to UUID, padding if needed."""
+    # Handle empty or None values
+    if not hex_str:
+        # Generate a deterministic UUID for empty/missing IDs
+        hex_str = "0" * 32
+
     # OTel trace IDs are 32 hex chars (16 bytes), span IDs are 16 hex chars (8 bytes)
     # We need to pad span IDs to make valid UUIDs
     if len(hex_str) == 16:
@@ -40,7 +45,15 @@ def _hex_to_uuid(hex_str: str) -> UUID:
         hex_str = hex_str + "0" * 16
     elif len(hex_str) < 32:
         hex_str = hex_str.ljust(32, "0")
-    return UUID(hex_str[:32])
+
+    try:
+        return UUID(hex_str[:32])
+    except ValueError:
+        # Invalid hex characters - hash the string to get a valid UUID
+        import hashlib
+
+        hash_hex = hashlib.md5(hex_str.encode(), usedforsecurity=False).hexdigest()  # nosec B324
+        return UUID(hash_hex)
 
 
 def _bytes_to_hex(b: bytes) -> str:
@@ -169,15 +182,34 @@ class OTelImporter:
 
     def _get_attr_value(self, value: Any) -> Any:
         """Extract value from OTLP AnyValue protobuf."""
-        if hasattr(value, "string_value") and value.string_value:
+        # Use WhichOneof to determine which value field is set
+        # This is the correct way to check protobuf oneof fields
+        if hasattr(value, "WhichOneof"):
+            field = value.WhichOneof("value")
+            if field == "string_value":
+                return value.string_value
+            if field == "int_value":
+                return value.int_value
+            if field == "double_value":
+                return value.double_value
+            if field == "bool_value":
+                return value.bool_value
+            if field == "array_value":
+                return [self._get_attr_value(v) for v in value.array_value.values]
+            if field == "kvlist_value":
+                return {kv.key: self._get_attr_value(kv.value) for kv in value.kvlist_value.values}
+            if field == "bytes_value":
+                return value.bytes_value.hex()
+        # Fallback for non-protobuf or older versions
+        elif hasattr(value, "string_value") and value.string_value:
             return value.string_value
-        if hasattr(value, "int_value"):
+        elif hasattr(value, "int_value") and value.int_value != 0:
             return value.int_value
-        if hasattr(value, "double_value"):
+        elif hasattr(value, "double_value") and value.double_value != 0.0:
             return value.double_value
-        if hasattr(value, "bool_value"):
+        elif hasattr(value, "bool_value"):
             return value.bool_value
-        if hasattr(value, "array_value"):
+        elif hasattr(value, "array_value") and value.array_value.values:
             return [self._get_attr_value(v) for v in value.array_value.values]
         return None
 
@@ -302,7 +334,9 @@ class OTelImporter:
 
         start_time = _ns_to_datetime(first_span["start_time_ns"])
         end_time = _ns_to_datetime(last_span["end_time_ns"])
-        duration_ms = (last_span["end_time_ns"] - first_span["start_time_ns"]) / 1_000_000
+        # Ensure non-negative duration (handle malformed data)
+        duration_ns = max(0, last_span["end_time_ns"] - first_span["start_time_ns"])
+        duration_ms = duration_ns / 1_000_000
 
         # Extract run name from first root span or resource
         run_name = first_span.get("name", "imported_trace")
@@ -346,7 +380,9 @@ class OTelImporter:
         # Extract timing
         start_time = _ns_to_datetime(span_data["start_time_ns"])
         end_time = _ns_to_datetime(span_data["end_time_ns"])
-        duration_ms = (span_data["end_time_ns"] - span_data["start_time_ns"]) / 1_000_000
+        # Ensure non-negative duration (handle malformed data)
+        duration_ns = max(0, span_data["end_time_ns"] - span_data["start_time_ns"])
+        duration_ms = duration_ns / 1_000_000
 
         # Extract model info (try OTel GenAI first, then OpenInference)
         model_name = attrs.get("gen_ai.request.model") or attrs.get("llm.model_name")
@@ -480,16 +516,20 @@ class OTelImporter:
             else:
                 result["messages"] = value
 
-        # Check for tool parameters
+        # Check for tool parameters (merge with existing, don't overwrite)
         if prefix == "input" and "tool.parameters" in attrs:
             value = attrs["tool.parameters"]
             if isinstance(value, str):
                 try:
-                    result = json.loads(value)
+                    parsed = json.loads(value)
+                    if isinstance(parsed, dict):
+                        result.update(parsed)
+                    else:
+                        result["parameters"] = parsed
                 except json.JSONDecodeError:
-                    result = {"parameters": value}
+                    result["parameters"] = value
             else:
-                result = {"parameters": value}
+                result["parameters"] = value
 
         # Check for retrieval query
         if prefix == "input" and "retrieval.query" in attrs:

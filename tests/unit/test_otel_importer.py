@@ -634,3 +634,181 @@ class TestAggregation:
         assert run.total_tokens == 450
         # Total cost: 0.01 + 0.02 = 0.03
         assert run.total_cost_usd == pytest.approx(0.03)
+
+
+class TestEdgeCases:
+    """Test edge cases and malformed data handling."""
+
+    def test_empty_trace_id_handled(self) -> None:
+        """Empty trace_id is handled gracefully."""
+        importer = OTelImporter()
+
+        otlp_json = {
+            "resourceSpans": [
+                {
+                    "resource": {"attributes": []},
+                    "scopeSpans": [
+                        {
+                            "spans": [
+                                {
+                                    "traceId": "",  # Empty!
+                                    "spanId": "1111111111111111",
+                                    "name": "test_span",
+                                    "startTimeUnixNano": "1704067200000000000",
+                                    "endTimeUnixNano": "1704067201000000000",
+                                    "attributes": [],
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ]
+        }
+
+        runs = importer.import_from_json(otlp_json)
+        assert len(runs) == 1
+        # Should get a valid UUID (all zeros for empty)
+        assert runs[0].id is not None
+
+    def test_invalid_hex_trace_id_handled(self) -> None:
+        """Invalid hex characters in trace_id are handled."""
+        importer = OTelImporter()
+
+        otlp_json = {
+            "resourceSpans": [
+                {
+                    "resource": {"attributes": []},
+                    "scopeSpans": [
+                        {
+                            "spans": [
+                                {
+                                    "traceId": "invalid-hex-xyz!!!",  # Invalid!
+                                    "spanId": "also-invalid!!!",
+                                    "name": "test_span",
+                                    "startTimeUnixNano": "1704067200000000000",
+                                    "endTimeUnixNano": "1704067201000000000",
+                                    "attributes": [],
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ]
+        }
+
+        runs = importer.import_from_json(otlp_json)
+        assert len(runs) == 1
+        # Should get a valid UUID (hashed)
+        assert runs[0].id is not None
+
+    def test_negative_duration_clamped_to_zero(self) -> None:
+        """Malformed data with end < start has duration clamped to 0."""
+        importer = OTelImporter()
+
+        otlp_json = {
+            "resourceSpans": [
+                {
+                    "resource": {"attributes": []},
+                    "scopeSpans": [
+                        {
+                            "spans": [
+                                {
+                                    "traceId": "0123456789abcdef0123456789abcdef",
+                                    "spanId": "1111111111111111",
+                                    "name": "test_span",
+                                    # end_time < start_time (malformed)
+                                    "startTimeUnixNano": "1704067205000000000",
+                                    "endTimeUnixNano": "1704067200000000000",
+                                    "attributes": [],
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ]
+        }
+
+        runs = importer.import_from_json(otlp_json)
+        run = runs[0]
+        step = run.steps[0]
+
+        # Duration should be 0, not negative
+        assert step.duration_ms >= 0
+        assert run.duration_ms >= 0
+
+    def test_tool_parameters_merged_with_input_value(self) -> None:
+        """Tool parameters are merged with input.value, not overwritten."""
+        importer = OTelImporter()
+
+        otlp_json = {
+            "resourceSpans": [
+                {
+                    "resource": {"attributes": []},
+                    "scopeSpans": [
+                        {
+                            "spans": [
+                                {
+                                    "traceId": "0123456789abcdef0123456789abcdef",
+                                    "spanId": "1111111111111111",
+                                    "name": "tool_call",
+                                    "startTimeUnixNano": "1704067200000000000",
+                                    "endTimeUnixNano": "1704067201000000000",
+                                    "attributes": [
+                                        {
+                                            "key": "input.value",
+                                            "value": {"stringValue": '{"context": "some context"}'},
+                                        },
+                                        {
+                                            "key": "tool.parameters",
+                                            "value": {"stringValue": '{"query": "search term"}'},
+                                        },
+                                        {
+                                            "key": "tool.name",
+                                            "value": {"stringValue": "search"},
+                                        },
+                                    ],
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ]
+        }
+
+        runs = importer.import_from_json(otlp_json)
+        step = runs[0].steps[0]
+
+        # Both should be present
+        assert "context" in step.inputs
+        assert "query" in step.inputs
+
+    def test_missing_span_id_handled(self) -> None:
+        """Missing spanId is handled gracefully."""
+        importer = OTelImporter()
+
+        otlp_json = {
+            "resourceSpans": [
+                {
+                    "resource": {"attributes": []},
+                    "scopeSpans": [
+                        {
+                            "spans": [
+                                {
+                                    "traceId": "0123456789abcdef0123456789abcdef",
+                                    # spanId missing
+                                    "name": "test_span",
+                                    "startTimeUnixNano": "1704067200000000000",
+                                    "endTimeUnixNano": "1704067201000000000",
+                                    "attributes": [],
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ]
+        }
+
+        runs = importer.import_from_json(otlp_json)
+        assert len(runs) == 1
+        # Should get a valid Step with a UUID
+        assert runs[0].steps[0].id is not None
