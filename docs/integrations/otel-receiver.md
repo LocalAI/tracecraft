@@ -300,6 +300,7 @@ To ensure your traces display correctly in TraceCraft's TUI, set these attribute
 | `RETRIEVAL` | Document/data retrieval | 📚 |
 | `MEMORY` | Memory read/write operations | 🧠 |
 | `GUARDRAIL` | Safety/validation checks | 🛡️ |
+| `EVALUATION` | LLM output evaluation | 📊 |
 | `WORKFLOW` | Sub-workflow or chain | ⚙️ |
 | `ERROR` | Error handling | ❌ |
 
