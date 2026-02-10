@@ -53,21 +53,29 @@ Get up and running in 4 simple steps:
 === "Python"
 
     ```python
-    from tracecraft.receiver import OTLPReceiver
+    from pathlib import Path
+    from tracecraft.receiver import OTLPReceiverServer
+    from tracecraft.storage.sqlite import SQLiteTraceStore
 
-    receiver = OTLPReceiver(
-        storage="sqlite://traces/my_traces.db",
+    # Create storage
+    storage_path = Path("traces/my_traces.db")
+    storage_path.parent.mkdir(parents=True, exist_ok=True)
+    store = SQLiteTraceStore(storage_path)
+
+    # Create and start receiver
+    server = OTLPReceiverServer(
+        store=store,
         host="0.0.0.0",
         port=4318,
     )
-    receiver.start()
+    server.run()  # Blocking - or use server.start_background() for non-blocking
     ```
 
 === "CLI"
 
     ```bash
     # Coming soon
-    tracecraft receiver --storage sqlite://traces/my_traces.db --port 4318
+    tracecraft receiver --storage traces/my_traces.db --port 4318
     ```
 
 ### Step 2: Configure Your Application
