@@ -300,12 +300,30 @@ def main() -> None:
     run_multi_turn_chat()
     run_tool_use()
 
-    # Flush traces
+    # Flush traces - this is critical to ensure traces are sent
     from opentelemetry import trace
 
+    print("\nFlushing traces to receiver...")
     provider = trace.get_tracer_provider()
     if hasattr(provider, "force_flush"):
-        provider.force_flush()
+        success = provider.force_flush(timeout_millis=10000)
+        if success:
+            print("Traces flushed successfully!")
+        else:
+            print("Warning: Trace flush timed out - some traces may not be sent")
+    else:
+        print("Warning: Could not flush traces - provider does not support force_flush")
+
+    # Verify traces were received by checking the database directly
+    try:
+        from tracecraft.storage.sqlite import SQLiteTraceStore
+
+        store = SQLiteTraceStore("traces/receiver_demo.db")
+        count = store.count()
+        store.close()
+        print(f"\nTraces in database: {count}")
+    except Exception as e:
+        print(f"\nCould not verify traces in database: {e}")
 
     print("\n" + "=" * 60)
     print("Done! Traces sent to receiver.")

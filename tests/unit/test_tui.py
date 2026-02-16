@@ -384,6 +384,158 @@ class TestTraceTable:
         except ImportError:
             pass
 
+    def test_sort_changed_message(self) -> None:
+        """Test SortChanged message includes column and direction."""
+        try:
+            from tracecraft.tui.widgets.trace_table import TEXTUAL_AVAILABLE, TraceTable
+
+            if TEXTUAL_AVAILABLE:
+                msg = TraceTable.SortChanged(column="name", ascending=True)
+                assert msg.column == "name"
+                assert msg.ascending is True
+        except ImportError:
+            pass
+
+    def test_columns_reordered_message(self) -> None:
+        """Test ColumnsReordered message includes column order."""
+        try:
+            from tracecraft.tui.widgets.trace_table import TEXTUAL_AVAILABLE, TraceTable
+
+            if TEXTUAL_AVAILABLE:
+                msg = TraceTable.ColumnsReordered(column_order=["name", "time", "duration"])
+                assert msg.column_order == ["name", "time", "duration"]
+        except ImportError:
+            pass
+
+    def test_column_def_dataclass(self) -> None:
+        """Test ColumnDef dataclass initialization."""
+        try:
+            from tracecraft.tui.widgets.trace_table import ColumnDef
+
+            col = ColumnDef(key="test", label="TEST", width=10)
+            assert col.key == "test"
+            assert col.label == "TEST"
+            assert col.width == 10
+            assert col.sortable is True  # Default
+
+            col_non_sortable = ColumnDef(key="status", label="", width=3, sortable=False)
+            assert col_non_sortable.sortable is False
+        except ImportError:
+            pass
+
+    def test_default_columns_defined(self) -> None:
+        """Test DEFAULT_COLUMNS class variable is properly defined."""
+        try:
+            from tracecraft.tui.widgets.trace_table import TEXTUAL_AVAILABLE, TraceTable
+
+            if TEXTUAL_AVAILABLE:
+                assert len(TraceTable.DEFAULT_COLUMNS) == 9
+                column_keys = [col.key for col in TraceTable.DEFAULT_COLUMNS]
+                assert "status" in column_keys
+                assert "name" in column_keys
+                assert "project" in column_keys
+                assert "session" in column_keys
+                assert "time" in column_keys
+                assert "duration" in column_keys
+                assert "tokens" in column_keys
+                assert "cost" in column_keys
+                assert "steps" in column_keys
+        except ImportError:
+            pass
+
+
+class TestTraceTableSorting:
+    """Tests for TraceTable sorting functionality.
+
+    Note: Most widget tests require Textual app context, so we test
+    only the parts that don't require instantiation here.
+    """
+
+    def test_default_columns_sortable(self) -> None:
+        """Test that DEFAULT_COLUMNS are properly configured for sorting."""
+        try:
+            from tracecraft.tui.widgets.trace_table import TEXTUAL_AVAILABLE, TraceTable
+
+            if TEXTUAL_AVAILABLE:
+                sortable_columns = [col for col in TraceTable.DEFAULT_COLUMNS if col.sortable]
+                # All columns should be sortable
+                assert len(sortable_columns) == 9
+
+                # Verify sort_key is defined for most columns
+                columns_with_sort_key = [col for col in sortable_columns if col.sort_key]
+                assert len(columns_with_sort_key) >= 8  # steps uses special handling
+        except ImportError:
+            pass
+
+    def test_column_key_bindings_defined(self) -> None:
+        """Test that sorting key bindings are defined."""
+        try:
+            from tracecraft.tui.widgets.trace_table import TEXTUAL_AVAILABLE, TraceTable
+
+            if TEXTUAL_AVAILABLE:
+                bindings = TraceTable.BINDINGS
+                binding_actions = [b.action for b in bindings]
+
+                # Sorting actions
+                assert "cycle_sort_forward" in binding_actions
+                assert "cycle_sort_backward" in binding_actions
+                assert "reverse_sort" in binding_actions
+
+                # Column sort by number
+                for i in range(1, 10):
+                    assert f"sort_column_{i}" in binding_actions
+
+                # Column reordering
+                assert "move_column_left" in binding_actions
+                assert "move_column_right" in binding_actions
+        except ImportError:
+            pass
+
+    def test_column_def_with_sort_key(self) -> None:
+        """Test ColumnDef with custom sort key function."""
+        try:
+            from tracecraft.tui.widgets.trace_table import ColumnDef
+
+            def custom_sort(t: AgentRun, p: dict, s: dict) -> str:
+                return t.name.lower()
+
+            col = ColumnDef(
+                key="name",
+                label="NAME",
+                width=25,
+                sortable=True,
+                sort_key=custom_sort,
+            )
+            assert col.sort_key is not None
+            # Test the sort key function works
+            run = AgentRun(name="TestRun", start_time=datetime.now(UTC))
+            result = col.sort_key(run, {}, {})
+            assert result == "testrun"
+        except ImportError:
+            pass
+
+    def test_default_column_order(self) -> None:
+        """Test DEFAULT_COLUMNS order is correct."""
+        try:
+            from tracecraft.tui.widgets.trace_table import TEXTUAL_AVAILABLE, TraceTable
+
+            if TEXTUAL_AVAILABLE:
+                keys = [col.key for col in TraceTable.DEFAULT_COLUMNS]
+                expected = [
+                    "status",
+                    "name",
+                    "project",
+                    "session",
+                    "time",
+                    "duration",
+                    "tokens",
+                    "cost",
+                    "steps",
+                ]
+                assert keys == expected
+        except ImportError:
+            pass
+
 
 class TestWaterfallView:
     """Tests for WaterfallView widget functionality."""

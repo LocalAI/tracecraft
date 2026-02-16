@@ -75,6 +75,10 @@ class TALRuntime:
         self._export_lock = threading.Lock()
         self._config = config
 
+        # Session/Project context
+        self._current_session_id: str | None = None
+        self._current_project_id: str | None = None
+
         # Setup processors from config
         if config is not None:
             self._setup_processors(config)
@@ -252,7 +256,7 @@ class TALRuntime:
         Args:
             name: Name of the agent/run.
             description: Optional description.
-            session_id: Optional session identifier.
+            session_id: Optional session identifier. If None, uses current session context.
             user_id: Optional user identifier.
             tags: Optional list of tags.
             input: Input to the agent.
@@ -260,6 +264,9 @@ class TALRuntime:
         Returns:
             The created AgentRun.
         """
+        # Use provided session_id or fall back to current session context
+        effective_session_id = session_id if session_id is not None else self._current_session_id
+
         # Capture source file from call stack (skip internals and stdlib)
         source_file = None
         skip_patterns = (
@@ -277,15 +284,22 @@ class TALRuntime:
                 source_file = filename
                 break
 
+        # Build attributes
+        attributes: dict[str, Any] = {}
+        if source_file:
+            attributes["source_file"] = source_file
+        if self._current_project_id:
+            attributes["project_id"] = self._current_project_id
+
         run = AgentRun(
             name=name,
             description=description,
             start_time=datetime.now(UTC),
-            session_id=session_id,
+            session_id=effective_session_id,
             user_id=user_id,
             tags=tags or [],
             input=input,
-            attributes={"source_file": source_file} if source_file else {},
+            attributes=attributes,
         )
         set_current_run(run)
         return run
@@ -478,6 +492,175 @@ class TALRuntime:
             # Capture all exceptions including GeneratorExit, KeyboardInterrupt
             self.end_run(run, error=str(e), error_type=type(e).__name__)
             raise
+
+    # =========================================================================
+    # Session and Project Context Management
+    # =========================================================================
+
+    def set_session(self, session_id: str | None) -> None:
+        """
+        Set the current session context for all subsequent runs.
+
+        All runs started without an explicit session_id will use this session.
+
+        Args:
+            session_id: Session ID to use, or None to clear.
+        """
+        self._current_session_id = session_id
+
+    def set_project(self, project_id: str | None) -> None:
+        """
+        Set the current project context.
+
+        This project_id will be added to run attributes for storage.
+
+        Args:
+            project_id: Project ID to use, or None to clear.
+        """
+        self._current_project_id = project_id
+
+    @property
+    def current_session_id(self) -> str | None:
+        """Get the current session ID."""
+        return self._current_session_id
+
+    @property
+    def current_project_id(self) -> str | None:
+        """Get the current project ID."""
+        return self._current_project_id
+
+    def get_or_create_project(self, name: str, description: str = "") -> str:
+        """
+        Get existing project by name or create new one.
+
+        Args:
+            name: Project name.
+            description: Description (only used if creating).
+
+        Returns:
+            Project ID.
+
+        Raises:
+            RuntimeError: If storage is not configured.
+        """
+        if self._storage is None:
+            raise RuntimeError("Storage not configured - cannot manage projects")
+
+        existing = self._storage.get_project_by_name(name)
+        if existing:
+            return str(existing["id"])
+
+        return self._storage.create_project(name=name, description=description)
+
+    def create_session(
+        self,
+        name: str,
+        project_id: str | None = None,
+        description: str = "",
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """
+        Create a new session in storage.
+
+        Args:
+            name: Session name.
+            project_id: Optional project ID (uses current project if None).
+            description: Optional description.
+            metadata: Optional metadata dict.
+
+        Returns:
+            The new session ID.
+
+        Raises:
+            RuntimeError: If storage is not configured.
+        """
+        if self._storage is None:
+            raise RuntimeError("Storage not configured - cannot create session")
+
+        effective_project = project_id if project_id is not None else self._current_project_id
+        return self._storage.create_session(
+            name=name,
+            project_id=effective_project,
+            description=description,
+            metadata=metadata,
+        )
+
+    def get_or_create_session(
+        self,
+        name: str,
+        project_id: str | None = None,
+        description: str = "",
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """
+        Get existing session or create new one.
+
+        Args:
+            name: Session name.
+            project_id: Optional project ID (uses current project if None).
+            description: Description (only used if creating).
+            metadata: Metadata (only used if creating).
+
+        Returns:
+            Session ID.
+
+        Raises:
+            RuntimeError: If storage is not configured.
+        """
+        if self._storage is None:
+            raise RuntimeError("Storage not configured - cannot manage sessions")
+
+        effective_project = project_id if project_id is not None else self._current_project_id
+        session_id, _ = self._storage.get_or_create_session(
+            name=name,
+            project_id=effective_project,
+            description=description,
+            metadata=metadata,
+        )
+        return session_id
+
+    @contextmanager
+    def session_context(
+        self,
+        name: str,
+        project_id: str | None = None,
+        description: str = "",
+        metadata: dict[str, Any] | None = None,
+    ) -> Generator[str, None, None]:
+        """
+        Context manager for scoping runs to a session.
+
+        All runs created within this context will automatically
+        use the session ID.
+
+        Args:
+            name: Session name.
+            project_id: Optional project ID (uses current project if None).
+            description: Optional description.
+            metadata: Optional metadata dict.
+
+        Yields:
+            The session ID.
+
+        Example:
+            with runtime.session_context("batch-run-001") as session_id:
+                with runtime.run("task1"):
+                    pass
+                with runtime.run("task2"):
+                    pass
+        """
+        session_id = self.get_or_create_session(
+            name=name,
+            project_id=project_id,
+            description=description,
+            metadata=metadata,
+        )
+        previous_session = self._current_session_id
+        self._current_session_id = session_id
+        try:
+            yield session_id
+        finally:
+            self._current_session_id = previous_session
 
     def shutdown(self) -> None:
         """

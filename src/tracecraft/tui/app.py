@@ -57,6 +57,10 @@ def _get_bindings() -> list[Any]:
         Binding("plus", "grow_panel", "+Panel", show=False),
         Binding("equal", "grow_panel", "+Panel", show=False),
         Binding("minus", "shrink_panel", "-Panel", show=False),
+        Binding("bracketleft", "shrink_left_panel", "←Div", show=False),
+        Binding("bracketright", "grow_left_panel", "Div→", show=False),
+        Binding("H", "shrink_left_panel", "←Div", show=True),
+        Binding("L", "grow_left_panel", "Div→", show=True),
     ]
 
 
@@ -382,6 +386,7 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self._load_runs()
         self._update_table()
         self._load_projects()
+        self._load_sessions()
 
         if self.watch:
             self.set_interval(1.0, self._poll_for_updates)
@@ -421,6 +426,7 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             self._load_runs()
             self._update_table()
             self._load_projects()
+            self._load_sessions()
 
             if self.watch:
                 self.set_interval(1.0, self._poll_for_updates)
@@ -451,6 +457,27 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             # Projects feature may not be supported by all stores
             pass  # nosec B110
 
+    def _load_sessions(self, project_id: str | None = None) -> None:
+        """Load sessions and update the FilterBar dropdown."""
+        from tracecraft.tui.widgets.filter_bar import FilterBar
+
+        if not self._loader or not self._loader.is_sqlite:
+            return
+
+        try:
+            sessions_data = self._loader.store.list_sessions(project_id=project_id)
+            # Convert to (session_id, session_name) tuples
+            sessions = [(s["id"], s.get("name", s["id"])) for s in sessions_data]
+            filter_bar = self.query_one("#filter-bar", FilterBar)
+            filter_bar.set_sessions(sessions)
+        except Exception:  # noqa: BLE001
+            # Sessions feature may not be supported by all stores
+            pass  # nosec B110
+
+    def on_filter_bar_project_changed(self, event: Any) -> None:
+        """Handle project selection change - reload sessions for that project."""
+        self._load_sessions(project_id=event.project_id)
+
     async def _poll_for_updates(self) -> None:
         """Poll for new traces."""
         if self._loader:
@@ -460,12 +487,38 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
                 self._load_runs()
                 self._update_table()
 
+    def _build_name_mappings(self) -> tuple[dict[str, str], dict[str, str]]:
+        """
+        Build project_id -> name and session_id -> name mappings.
+
+        Returns:
+            Tuple of (project_names, session_names) dicts.
+        """
+        project_names: dict[str, str] = {}
+        session_names: dict[str, str] = {}
+
+        if self._loader and self._loader.is_sqlite:
+            try:
+                for p in self._loader.store.list_projects():
+                    project_names[p["id"]] = p.get("name", p["id"])
+                for s in self._loader.store.list_sessions():
+                    session_names[s["id"]] = s.get("name", s["id"])
+            except Exception:  # noqa: BLE001
+                pass  # nosec B110
+
+        return project_names, session_names
+
     def _update_table(self) -> None:
         """Update the trace table with current data."""
         from tracecraft.tui.widgets.filter_bar import FilterBar
         from tracecraft.tui.widgets.trace_table import TraceTable
 
         table = self.query_one("#trace-table", TraceTable)
+
+        # Set name mappings for project/session columns
+        project_names, session_names = self._build_name_mappings()
+        table.set_name_mappings(project_names, session_names)
+
         table.show_traces(self._runs)
 
         filter_bar = self.query_one("#filter-bar", FilterBar)
@@ -583,12 +636,15 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             name_contains=event.filter_text if event.filter_text else None,
             has_error=True if event.show_errors_only else None,
             project_id=event.project_id if event.project_id else None,
+            session_id=event.session_id if event.session_id else None,
         )
 
         filtered_runs = self._loader.query_traces(query)
 
         table = self.query_one("#trace-table", TraceTable)
-        is_filtered = bool(event.filter_text or event.show_errors_only)
+        is_filtered = bool(
+            event.filter_text or event.show_errors_only or event.project_id or event.session_id
+        )
         table.show_traces(filtered_runs, is_filtered=is_filtered)
 
         filter_bar = self.query_one("#filter-bar", FilterBar)
@@ -787,6 +843,30 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
                 f"Left: {self._left_panel_width}% | Right: {100 - self._left_panel_width}%",
                 timeout=1,
             )
+
+    def action_shrink_left_panel(self) -> None:
+        """Shrink the left panel (move divider left)."""
+        self._left_panel_width = max(25, self._left_panel_width - 5)
+        left_panel = self.query_one("#left-panel")
+        left_panel.styles.width = f"{self._left_panel_width}%"
+        right_panel = self.query_one("#right-panel")
+        right_panel.styles.width = f"{100 - self._left_panel_width}%"
+        self.notify(
+            f"Left: {self._left_panel_width}% | Right: {100 - self._left_panel_width}%",
+            timeout=1,
+        )
+
+    def action_grow_left_panel(self) -> None:
+        """Grow the left panel (move divider right)."""
+        self._left_panel_width = min(70, self._left_panel_width + 5)
+        left_panel = self.query_one("#left-panel")
+        left_panel.styles.width = f"{self._left_panel_width}%"
+        right_panel = self.query_one("#right-panel")
+        right_panel.styles.width = f"{100 - self._left_panel_width}%"
+        self.notify(
+            f"Left: {self._left_panel_width}% | Right: {100 - self._left_panel_width}%",
+            timeout=1,
+        )
 
     def action_help(self) -> None:
         """Show help modal with all keybindings."""

@@ -15,6 +15,12 @@ from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from tracecraft.core.models import AgentRun, Step, StepType
+from tracecraft.processors.enrichment import (
+    DEFAULT_PRICING,
+    ModelPricing,
+    estimate_cost,
+    normalize_model_name,
+)
 
 if TYPE_CHECKING:
     from opentelemetry.proto.trace.v1.trace_pb2 import (
@@ -424,10 +430,13 @@ class OTelImporter:
         if output_tokens is not None:
             output_tokens = int(output_tokens)
 
-        # Extract cost
+        # Extract cost (from OTel attributes or calculate from tokens)
         cost_usd = attrs.get("gen_ai.usage.cost")
         if cost_usd is not None:
             cost_usd = float(cost_usd)
+        elif model_name and (input_tokens or output_tokens):
+            # Calculate cost from token counts if not provided
+            cost_usd = self._calculate_cost(model_name, input_tokens or 0, output_tokens or 0)
 
         # Extract inputs/outputs
         inputs = self._extract_io(attrs, "input")
@@ -493,7 +502,8 @@ class OTelImporter:
         if "tracecraft.step.type" in attrs:
             type_str = attrs["tracecraft.step.type"]
             try:
-                return StepType(type_str)
+                # Normalize to lowercase to match enum values
+                return StepType(type_str.lower())
             except ValueError:
                 logger.warning("Unknown step type: %s", type_str)
 
@@ -602,3 +612,52 @@ class OTelImporter:
                 result["documents"] = value
 
         return result
+
+    def _calculate_cost(
+        self, model_name: str, input_tokens: int, output_tokens: int
+    ) -> float | None:
+        """
+        Calculate cost based on model and token counts.
+
+        Uses default pricing data for common models.
+
+        Args:
+            model_name: The model name (e.g., "gpt-4o-mini").
+            input_tokens: Number of input tokens.
+            output_tokens: Number of output tokens.
+
+        Returns:
+            Estimated cost in USD, or None if model not found.
+        """
+        if not model_name:
+            return None
+
+        # Build pricing map if not already done
+        if not hasattr(self, "_pricing_map"):
+            self._pricing_map: dict[str, ModelPricing] = {}
+            for p in DEFAULT_PRICING:
+                self._pricing_map[p.model] = p
+                normalized = normalize_model_name(p.model)
+                if normalized != p.model:
+                    self._pricing_map[normalized] = p
+
+        # Normalize model name for lookup
+        normalized = normalize_model_name(model_name)
+
+        # Try exact match first
+        pricing: ModelPricing | None = self._pricing_map.get(normalized) or self._pricing_map.get(
+            model_name
+        )
+
+        # Try prefix matching if exact match fails
+        if pricing is None:
+            for known_model in sorted(self._pricing_map.keys(), key=len, reverse=True):
+                if normalized.startswith(known_model):
+                    pricing = self._pricing_map[known_model]
+                    break
+
+        if pricing:
+            cost = estimate_cost(input_tokens, output_tokens, pricing)
+            return cost if cost > 0 else None
+
+        return None

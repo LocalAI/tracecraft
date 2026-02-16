@@ -82,11 +82,12 @@ class MLflowTraceStore(BaseTraceStore):
             if experiment:
                 self.experiment_ids = [experiment.experiment_id]
 
-    def save(self, run: AgentRun) -> None:
+    def save(self, run: AgentRun, project_id: str | None = None) -> None:  # noqa: ARG002
         """
         Save trace to MLflow.
 
         Creates an MLflow run with metrics, tags, and the full trace as an artifact.
+        Note: project_id is ignored for MLflow storage.
         """
         # Set experiment if specified
         if self.experiment_name:

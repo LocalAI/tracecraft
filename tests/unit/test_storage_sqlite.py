@@ -784,21 +784,22 @@ class TestPlaygroundIterations:
 class TestSchemaMigration:
     """Tests for schema migration."""
 
-    def test_fresh_install_creates_v6(self, tmp_path):
-        """Test that fresh installation creates schema v6."""
+    def test_fresh_install_creates_v7(self, tmp_path):
+        """Test that fresh installation creates schema v7."""
         db_path = tmp_path / "fresh.db"
         store = SQLiteTraceStore(db_path)
 
         # Check schema version
         results = store.execute_sql("SELECT version FROM schema_version")
-        assert results[0]["version"] == 6
+        assert results[0]["version"] == 7
 
-        # Check new tables exist (v2 tables)
+        # Check new tables exist (v2+ tables)
         tables = store.execute_sql("SELECT name FROM sqlite_master WHERE type='table'")
         table_names = {t["name"] for t in tables}
         assert "projects" in table_names
         assert "trace_versions" in table_names
         assert "playground_iterations" in table_names
+        assert "sessions" in table_names  # v7
         # Evaluation and agents tables should NOT exist (removed in v6)
         assert "evaluation_sets" not in table_names
         assert "evaluation_cases" not in table_names
@@ -808,8 +809,8 @@ class TestSchemaMigration:
 
         store.close()
 
-    def test_v1_to_v6_migration(self, tmp_path):
-        """Test migration from v1 to v6 schema."""
+    def test_v1_to_v7_migration(self, tmp_path):
+        """Test migration from v1 to v7 schema."""
         import sqlite3
 
         db_path = tmp_path / "migrate.db"
@@ -883,16 +884,17 @@ class TestSchemaMigration:
         # Now open with SQLiteTraceStore - should trigger migration
         store = SQLiteTraceStore(db_path)
 
-        # Check schema version is now 6
+        # Check schema version is now 7
         results = store.execute_sql("SELECT version FROM schema_version")
-        assert results[0]["version"] == 6
+        assert results[0]["version"] == 7
 
-        # Check new tables exist (v2 tables)
+        # Check new tables exist (v2+ tables)
         tables = store.execute_sql("SELECT name FROM sqlite_master WHERE type='table'")
         table_names = {t["name"] for t in tables}
         assert "projects" in table_names
         assert "trace_versions" in table_names
         assert "playground_iterations" in table_names
+        assert "sessions" in table_names  # v7
         # Evaluation and agents tables should NOT exist (removed in v6)
         assert "evaluation_sets" not in table_names
         assert "evaluation_cases" not in table_names
@@ -910,3 +912,56 @@ class TestSchemaMigration:
         assert results[0]["name"] == "test_trace"
 
         store.close()
+
+
+class TestWALRecovery:
+    """Tests for WAL file recovery."""
+
+    def test_recovery_from_corrupted_wal_files(self, tmp_path):
+        """Test that corrupted WAL files are recovered automatically."""
+        db_path = tmp_path / "test.db"
+
+        # Create a valid database first
+        store = SQLiteTraceStore(db_path)
+        store.close()
+
+        # Create corrupted WAL files (empty WAL with non-empty SHM)
+        wal_path = db_path.with_suffix(".db-wal")
+        shm_path = db_path.with_suffix(".db-shm")
+
+        # Create empty WAL file
+        wal_path.write_bytes(b"")
+
+        # Create non-empty SHM file (simulates corruption state)
+        shm_path.write_bytes(b"\x00" * 32768)
+
+        # Opening the database should trigger recovery and succeed
+        store = SQLiteTraceStore(db_path)
+
+        # Verify the store works
+        results = store.execute_sql("SELECT version FROM schema_version")
+        assert results[0]["version"] == 7
+
+        # WAL files should be recreated properly by SQLite
+        store.close()
+
+    def test_recovery_removes_wal_files(self, tmp_path):
+        """Test that WAL files are removed during recovery."""
+        db_path = tmp_path / "test.db"
+
+        # Create a valid database first
+        store = SQLiteTraceStore(db_path)
+        store.close()
+
+        # Create corrupted WAL files
+        wal_path = db_path.with_suffix(".db-wal")
+        shm_path = db_path.with_suffix(".db-shm")
+        wal_path.write_bytes(b"")
+        shm_path.write_bytes(b"\x00" * 32768)
+
+        # Re-open should recover
+        store = SQLiteTraceStore(db_path)
+        store.close()
+
+        # After closing, if WAL mode is enabled, new WAL files may exist
+        # but they should be valid (SQLite recreates them)

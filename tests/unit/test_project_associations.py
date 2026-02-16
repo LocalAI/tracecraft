@@ -54,9 +54,9 @@ def sample_trace():
 class TestSchemaVersion:
     """Tests for schema version."""
 
-    def test_schema_version_is_6(self, temp_db):
-        """Test that fresh install creates schema v6."""
-        assert temp_db._get_schema_version() == 6
+    def test_schema_version_is_7(self, temp_db):
+        """Test that fresh install creates schema v7."""
+        assert temp_db._get_schema_version() == 7
 
 
 class TestProjectStructure:

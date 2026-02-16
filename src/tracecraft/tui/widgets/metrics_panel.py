@@ -111,7 +111,7 @@ class MetricsPanel(Static if TEXTUAL_AVAILABLE else object):  # type: ignore[mis
 
         # Resource usage
         table.add_row("TOKENS", f"{run.total_tokens:,}")
-        table.add_row("COST", f"${run.total_cost_usd:.4f}")
+        table.add_row("COST", f"${run.total_cost_usd:.5f}")
 
         # Errors only if present
         if run.error_count > 0:

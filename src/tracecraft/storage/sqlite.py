@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Schema version for migrations
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 SCHEMA_SQL = """
 -- Traces table (run-level metadata)
@@ -107,6 +107,24 @@ CREATE TABLE IF NOT EXISTS projects (
 );
 
 CREATE INDEX IF NOT EXISTS idx_projects_name ON projects(name);
+
+-- Sessions table for organizing traces within projects
+CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    project_id TEXT,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    metadata TEXT,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_name ON sessions(name);
+CREATE INDEX IF NOT EXISTS idx_sessions_created ON sessions(created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_project_name
+    ON sessions(COALESCE(project_id, ''), name);
 
 -- Trace versions table for versioning
 CREATE TABLE IF NOT EXISTS trace_versions (
@@ -209,7 +227,58 @@ class SQLiteTraceStore(BaseTraceStore):
         self._wal_mode = wal_mode
         self._busy_timeout_ms = busy_timeout_ms
 
-        self._init_db()
+        try:
+            self._init_db()
+        except sqlite3.OperationalError as e:
+            if "disk I/O error" in str(e):
+                # Attempt to recover from corrupted WAL files
+                if self._try_recover_wal():
+                    self._init_db()  # Retry after recovery
+                else:
+                    raise ValueError(
+                        f"Database '{self.path}' has corrupted WAL files. "
+                        f"Try removing '{self.path}-shm' and '{self.path}-wal' files."
+                    ) from e
+            else:
+                raise
+
+    def _try_recover_wal(self) -> bool:
+        """
+        Attempt to recover from corrupted WAL files.
+
+        Returns:
+            True if recovery was attempted, False if no WAL files exist.
+        """
+        wal_path = self.path.with_suffix(self.path.suffix + "-wal")
+        shm_path = self.path.with_suffix(self.path.suffix + "-shm")
+
+        if not wal_path.exists() and not shm_path.exists():
+            return False
+
+        logger.warning(
+            "Detected corrupted WAL files for database '%s'. Attempting recovery...",
+            self.path,
+        )
+
+        # Close any existing connection
+        if self._conn is not None:
+            with suppress(Exception):
+                self._conn.close()
+            self._conn = None
+
+        # Remove corrupted WAL files
+        removed = False
+        for wal_file in [wal_path, shm_path]:
+            if wal_file.exists():
+                try:
+                    wal_file.unlink()
+                    logger.info("Removed corrupted WAL file: %s", wal_file)
+                    removed = True
+                except OSError as e:
+                    logger.error("Failed to remove WAL file %s: %s", wal_file, e)
+                    return False
+
+        return removed
 
     def _get_conn(self) -> sqlite3.Connection:
         """Get or create database connection."""
@@ -367,6 +436,64 @@ class SQLiteTraceStore(BaseTraceStore):
         with suppress(Exception):
             cursor.execute("DROP INDEX IF EXISTS idx_traces_agent")
 
+    def _migrate_to_v7(self, cursor: sqlite3.Cursor) -> None:
+        """Migrate to v7: add sessions table and migrate existing session_id data."""
+        from datetime import UTC, datetime
+
+        logger.info("Migrating schema to v7: adding sessions table")
+
+        # Step 1: Create sessions table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS sessions (
+                id TEXT PRIMARY KEY,
+                project_id TEXT,
+                name TEXT NOT NULL,
+                description TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                metadata TEXT,
+                FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
+            )
+        """)
+
+        # Step 2: Create indexes
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_project ON sessions(project_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_name ON sessions(name)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_sessions_created ON sessions(created_at DESC)"
+        )
+        cursor.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_project_name
+            ON sessions(COALESCE(project_id, ''), name)
+        """)
+
+        # Step 3: Migrate existing session_id strings to sessions table
+        # Get all distinct session_ids and their associated project_ids
+        cursor.execute("""
+            SELECT DISTINCT session_id, project_id
+            FROM traces
+            WHERE session_id IS NOT NULL
+        """)
+        existing_sessions = cursor.fetchall()
+
+        now = datetime.now(UTC).isoformat()
+        for row in existing_sessions:
+            session_id_str = row["session_id"]
+            project_id = row["project_id"]
+            # Create session record with the existing session_id as both id and name
+            # Use INSERT OR IGNORE to handle duplicates gracefully
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO sessions (id, project_id, name, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?)
+            """,
+                (session_id_str, project_id, session_id_str, now, now),
+            )
+
+        logger.info(
+            f"Migrated {len(existing_sessions)} existing session_id values to sessions table"
+        )
+
     def _migrate_schema(self, cursor: sqlite3.Cursor, from_version: int) -> None:
         """Run schema migrations."""
         logger.info(f"Migrating schema from v{from_version} to v{SCHEMA_VERSION}")
@@ -376,6 +503,9 @@ class SQLiteTraceStore(BaseTraceStore):
 
         if from_version < 6:
             self._migrate_to_v6(cursor)
+
+        if from_version < 7:
+            self._migrate_to_v7(cursor)
 
         cursor.execute(
             "UPDATE schema_version SET version = ?",
@@ -971,6 +1101,325 @@ class SQLiteTraceStore(BaseTraceStore):
                 "total_cost_usd": row["total_cost_usd"],
                 "error_count": row["error_count"],
             }
+
+    # =========================================================================
+    # Session Management Methods
+    # =========================================================================
+
+    def create_session(
+        self,
+        name: str,
+        project_id: str | None = None,
+        description: str = "",
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        """
+        Create a new session.
+
+        Args:
+            name: Session name (unique within a project).
+            project_id: Optional project to associate with.
+            description: Optional session description.
+            metadata: Optional JSON-serializable metadata dict.
+
+        Returns:
+            The new session ID.
+
+        Raises:
+            sqlite3.IntegrityError: If session name already exists in the project.
+        """
+        import uuid
+        from datetime import UTC, datetime
+
+        session_id = str(uuid.uuid4())
+        now = datetime.now(UTC).isoformat()
+
+        with self._transaction() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO sessions (id, project_id, name, description, created_at, updated_at, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    session_id,
+                    project_id,
+                    name,
+                    description,
+                    now,
+                    now,
+                    json.dumps(metadata) if metadata else None,
+                ),
+            )
+
+        return session_id
+
+    def get_session(self, session_id: str) -> dict[str, Any] | None:
+        """Get a session by ID."""
+        with self._transaction() as cursor:
+            cursor.execute(
+                """
+                SELECT id, project_id, name, description, created_at, updated_at, metadata
+                FROM sessions WHERE id = ?
+                """,
+                (session_id,),
+            )
+            row = cursor.fetchone()
+
+            if row is None:
+                return None
+
+            return {
+                "id": row["id"],
+                "project_id": row["project_id"],
+                "name": row["name"],
+                "description": row["description"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+                "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
+            }
+
+    def get_session_by_name(
+        self,
+        name: str,
+        project_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Get a session by name within a project."""
+        with self._transaction() as cursor:
+            if project_id is None:
+                cursor.execute(
+                    """
+                    SELECT id, project_id, name, description, created_at, updated_at, metadata
+                    FROM sessions WHERE name = ? AND project_id IS NULL
+                    """,
+                    (name,),
+                )
+            else:
+                cursor.execute(
+                    """
+                    SELECT id, project_id, name, description, created_at, updated_at, metadata
+                    FROM sessions WHERE name = ? AND project_id = ?
+                    """,
+                    (name, project_id),
+                )
+            row = cursor.fetchone()
+
+            if row is None:
+                return None
+
+            return {
+                "id": row["id"],
+                "project_id": row["project_id"],
+                "name": row["name"],
+                "description": row["description"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+                "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
+            }
+
+    def list_sessions(self, project_id: str | None = None) -> list[dict[str, Any]]:
+        """
+        List sessions, optionally filtered by project.
+
+        Args:
+            project_id: If provided, only return sessions for this project.
+                        If None, return all sessions.
+
+        Returns:
+            List of session dicts sorted by created_at descending.
+        """
+        with self._transaction() as cursor:
+            if project_id is None:
+                cursor.execute(
+                    """
+                    SELECT id, project_id, name, description, created_at, updated_at, metadata
+                    FROM sessions ORDER BY created_at DESC
+                    """
+                )
+            else:
+                cursor.execute(
+                    """
+                    SELECT id, project_id, name, description, created_at, updated_at, metadata
+                    FROM sessions WHERE project_id = ? ORDER BY created_at DESC
+                    """,
+                    (project_id,),
+                )
+            return [
+                {
+                    "id": row["id"],
+                    "project_id": row["project_id"],
+                    "name": row["name"],
+                    "description": row["description"],
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
+                    "metadata": json.loads(row["metadata"]) if row["metadata"] else None,
+                }
+                for row in cursor.fetchall()
+            ]
+
+    def update_session(
+        self,
+        session_id: str,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        """
+        Update a session.
+
+        Args:
+            session_id: Session ID to update.
+            name: New name (optional).
+            description: New description (optional).
+            metadata: New metadata (optional).
+
+        Returns:
+            True if session was updated, False if not found.
+        """
+        from datetime import UTC, datetime
+
+        updates = []
+        params: list[Any] = []
+
+        if name is not None:
+            updates.append("name = ?")
+            params.append(name)
+        if description is not None:
+            updates.append("description = ?")
+            params.append(description)
+        if metadata is not None:
+            updates.append("metadata = ?")
+            params.append(json.dumps(metadata))
+
+        if not updates:
+            return False
+
+        updates.append("updated_at = ?")
+        params.append(datetime.now(UTC).isoformat())
+        params.append(session_id)
+
+        with self._transaction() as cursor:
+            cursor.execute(
+                f"UPDATE sessions SET {', '.join(updates)} WHERE id = ?",  # nosec B608
+                params,
+            )
+            return cursor.rowcount > 0
+
+    def delete_session(self, session_id: str) -> bool:
+        """
+        Delete a session.
+
+        Note: Traces with this session_id will retain their session_id value
+        (no foreign key constraint on traces.session_id).
+
+        Returns:
+            True if deleted, False if not found.
+        """
+        with self._transaction() as cursor:
+            cursor.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+            return cursor.rowcount > 0
+
+    def get_or_create_session(
+        self,
+        name: str,
+        project_id: str | None = None,
+        description: str = "",
+        metadata: dict[str, Any] | None = None,
+    ) -> tuple[str, bool]:
+        """
+        Get an existing session by name or create a new one.
+
+        Thread-safe: handles concurrent creation attempts by catching
+        IntegrityError from the unique constraint and returning the
+        existing session.
+
+        Args:
+            name: Session name.
+            project_id: Optional project ID.
+            description: Description (only used if creating).
+            metadata: Metadata (only used if creating).
+
+        Returns:
+            Tuple of (session_id, created) where created is True if new session was made.
+        """
+        import sqlite3
+
+        existing = self.get_session_by_name(name, project_id)
+        if existing:
+            return existing["id"], False
+
+        try:
+            session_id = self.create_session(
+                name=name,
+                project_id=project_id,
+                description=description,
+                metadata=metadata,
+            )
+            return session_id, True
+        except sqlite3.IntegrityError:
+            # Race condition: another process created the session between
+            # our check and insert. Retrieve the existing session.
+            existing = self.get_session_by_name(name, project_id)
+            if existing:
+                return existing["id"], False
+            # If still not found, something else is wrong - re-raise
+            raise
+
+    def get_session_stats(self, session_id: str) -> dict[str, Any]:
+        """Get statistics for a session."""
+        with self._transaction() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                    COUNT(*) as trace_count,
+                    COALESCE(SUM(total_tokens), 0) as total_tokens,
+                    COALESCE(SUM(total_cost_usd), 0.0) as total_cost_usd,
+                    COALESCE(SUM(error_count), 0) as error_count,
+                    MIN(start_time) as first_trace,
+                    MAX(start_time) as last_trace
+                FROM traces
+                WHERE session_id = ?
+                """,
+                (session_id,),
+            )
+            row = cursor.fetchone()
+
+            return {
+                "trace_count": row["trace_count"],
+                "total_tokens": row["total_tokens"],
+                "total_cost_usd": row["total_cost_usd"],
+                "error_count": row["error_count"],
+                "first_trace": row["first_trace"],
+                "last_trace": row["last_trace"],
+            }
+
+    def assign_trace_to_session(self, trace_id: str, session_id: str | None) -> bool:
+        """
+        Assign a trace to a session (or unassign if session_id is None).
+
+        Updates both the session_id column and the JSON data field.
+
+        Returns:
+            True if trace was updated, False if trace not found.
+        """
+        with self._transaction() as cursor:
+            # First get the trace to update its JSON data
+            cursor.execute("SELECT data FROM traces WHERE id = ?", (trace_id,))
+            row = cursor.fetchone()
+            if row is None:
+                return False
+
+            # Update the JSON data with the new session_id
+            data = json.loads(row["data"])
+            data["session_id"] = session_id
+            updated_data = json.dumps(data)
+
+            # Update both the column and the data
+            cursor.execute(
+                "UPDATE traces SET session_id = ?, data = ? WHERE id = ?",
+                (session_id, updated_data, trace_id),
+            )
+            return cursor.rowcount > 0
 
     # =========================================================================
     # Version Management Methods

@@ -50,6 +50,8 @@ class OTLPReceiverServer:
         store: BaseTraceStore,
         host: str = "0.0.0.0",  # nosec B104 - intentional for receiver server
         port: int = 4318,
+        project_id: str | None = None,
+        session_id: str | None = None,
     ) -> None:
         """
         Initialize the receiver server.
@@ -58,10 +60,14 @@ class OTLPReceiverServer:
             store: Storage backend to save traces to.
             host: Host to bind to.
             port: Port to listen on.
+            project_id: Optional project ID to assign to all incoming traces.
+            session_id: Optional session ID to assign to all incoming traces.
         """
         self.store = store
         self.host = host
         self.port = port
+        self.project_id = project_id
+        self.session_id = session_id
         self._server: Any = None
         self._thread: threading.Thread | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -106,7 +112,17 @@ class OTLPReceiverServer:
                 failed_count = 0
                 for run in agent_runs:
                     try:
-                        self.store.save(run)
+                        # Assign session_id if configured
+                        if self.session_id:
+                            run.session_id = self.session_id
+
+                        # Assign project_id if configured (via attributes for storage)
+                        if self.project_id:
+                            if run.attributes is None:
+                                run.attributes = {}
+                            run.attributes["project_id"] = self.project_id
+
+                        self.store.save(run, project_id=self.project_id)
                         saved_count += 1
                         logger.debug("Saved trace %s with %d steps", run.id, len(run.steps))
                     except Exception as e:

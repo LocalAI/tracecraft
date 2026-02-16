@@ -94,8 +94,9 @@ class JSONLTraceStore(BaseTraceStore):
         self._cache = None
         self._file_mtime = None
 
-    def save(self, run: AgentRun) -> None:
+    def save(self, run: AgentRun, project_id: str | None = None) -> None:  # noqa: ARG002
         """Append trace to JSONL file."""
+        # Note: project_id is ignored for JSONL storage
         self.invalidate_cache()
 
         with open(self.path, "a", encoding="utf-8") as f:

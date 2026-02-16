@@ -54,12 +54,23 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
             filter_text: str,
             show_errors_only: bool = False,
             project_id: str | None = None,
+            session_id: str | None = None,
         ) -> None:
             """Initialize the message."""
             if TEXTUAL_AVAILABLE:
                 super().__init__()
             self.filter_text = filter_text
             self.show_errors_only = show_errors_only
+            self.project_id = project_id
+            self.session_id = session_id
+
+    class ProjectChanged(Message if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
+        """Message sent when the project selection changes (to reload sessions)."""
+
+        def __init__(self, project_id: str | None) -> None:
+            """Initialize the message."""
+            if TEXTUAL_AVAILABLE:
+                super().__init__()
             self.project_id = project_id
 
     DEFAULT_CSS = f"""
@@ -113,6 +124,51 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
     }}
 
     FilterBar > #project-select > SelectOverlay > .option-list--option-highlighted {{
+        background: {SURFACE_HIGHLIGHT};
+        color: {ACCENT_AMBER};
+    }}
+
+    /* Session dropdown - same styling as project dropdown */
+    FilterBar > #session-select {{
+        width: 22;
+        height: 3;
+        margin-right: 1;
+        background: {SURFACE};
+        border: none;
+        color: {TEXT_PRIMARY};
+    }}
+
+    FilterBar > #session-select:focus {{
+        border: none;
+    }}
+
+    FilterBar > #session-select.-has-focus > SelectCurrent {{
+        border: round {ACCENT_AMBER};
+    }}
+
+    FilterBar > #session-select > SelectCurrent {{
+        background: {BACKGROUND};
+        color: {TEXT_PRIMARY};
+        padding: 0 1;
+        height: 3;
+        border: round {BORDER};
+    }}
+
+    FilterBar > #session-select > SelectOverlay {{
+        background: {SURFACE};
+        border: solid {BORDER};
+    }}
+
+    FilterBar > #session-select > SelectOverlay:focus {{
+        border: solid {ACCENT_AMBER};
+    }}
+
+    FilterBar > #session-select > SelectOverlay > .option-list--option {{
+        color: {TEXT_PRIMARY};
+        padding: 0 1;
+    }}
+
+    FilterBar > #session-select > SelectOverlay > .option-list--option-highlighted {{
         background: {SURFACE_HIGHLIGHT};
         color: {ACCENT_AMBER};
     }}
@@ -178,18 +234,27 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
         self._filter_text: str = ""
         self._show_errors_only: bool = False
         self._project_id: str | None = None
+        self._session_id: str | None = None
         self._has_projects: bool = False
+        self._has_sessions: bool = False
 
     def compose(self) -> Any:
         """Compose the filter bar layout."""
         # Project dropdown - starts with just "All Projects"
-        # Use compact=True for borderless style matching the Input
         yield Select[str | None](
             options=[("All Projects", None)],
             value=None,
             id="project-select",
             allow_blank=False,
             prompt="Project",
+        )
+        # Session dropdown - starts with just "All Sessions"
+        yield Select[str | None](
+            options=[("All Sessions", None)],
+            value=None,
+            id="session-select",
+            allow_blank=False,
+            prompt="Session",
         )
         yield Input(placeholder="filter traces...", id="filter-input")
         yield Static("0 traces", id="result-count", classes="result-count")
@@ -201,9 +266,17 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
         self._emit_filter_changed()
 
     def on_select_changed(self, event: Any) -> None:
-        """Handle project selection changes."""
+        """Handle project or session selection changes."""
         if event.select.id == "project-select":
             self._project_id = event.value
+            # Reset session when project changes
+            self._session_id = None
+            self.query_one("#session-select", Select).value = None
+            # Emit ProjectChanged so app can reload sessions for this project
+            self.post_message(self.ProjectChanged(self._project_id))
+            self._emit_filter_changed()
+        elif event.select.id == "session-select":
+            self._session_id = event.value
             self._emit_filter_changed()
 
     def toggle_errors_only(self) -> None:
@@ -231,6 +304,7 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
                 filter_text=self._filter_text,
                 show_errors_only=self._show_errors_only,
                 project_id=self._project_id,
+                session_id=self._session_id,
             )
         )
 
@@ -239,8 +313,10 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
         self._filter_text = ""
         self._show_errors_only = False
         self._project_id = None
+        self._session_id = None
         self.query_one("#filter-input", Input).value = ""
         self.query_one("#project-select", Select).value = None
+        self.query_one("#session-select", Select).value = None
         self._update_toggle_style()
         self._emit_filter_changed()
 
@@ -258,6 +334,11 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
     def project_id(self) -> str | None:
         """Get the currently selected project ID."""
         return self._project_id
+
+    @property
+    def session_id(self) -> str | None:
+        """Get the currently selected session ID."""
+        return self._session_id
 
     def focus_input(self) -> None:
         """Focus the filter input."""
@@ -305,4 +386,29 @@ class FilterBar(Horizontal if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
             project_ids = [p[1] for p in options]
             if self._project_id not in project_ids:
                 self._project_id = None
+                select.value = None
+
+    def set_sessions(self, sessions: list[tuple[str, str]]) -> None:
+        """
+        Set the available sessions for the dropdown.
+
+        Args:
+            sessions: List of (session_id, session_name) tuples.
+        """
+        # Build options list: "All Sessions" first, then sorted sessions
+        options: list[tuple[str, str | None]] = [("All Sessions", None)]
+        for session_id, session_name in sorted(sessions, key=lambda s: s[1].lower()):
+            options.append((session_name, session_id))
+
+        self._has_sessions = len(sessions) > 0
+
+        # Update the Select widget
+        select = self.query_one("#session-select", Select)
+        select.set_options(options)
+
+        # Reset to "All Sessions" if current selection is no longer valid
+        if self._session_id is not None:
+            session_ids = [s[1] for s in options]
+            if self._session_id not in session_ids:
+                self._session_id = None
                 select.value = None
