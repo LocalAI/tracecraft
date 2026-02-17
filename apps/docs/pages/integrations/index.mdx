@@ -1,0 +1,153 @@
+import { Card, Cards } from '@/components'
+
+# Integrations
+
+TraceCraft integrates with popular LLM frameworks and cloud platforms. This section covers all available integrations.
+
+## Framework Integrations
+
+- __LangChain__
+
+    ---
+
+    Automatic tracing for LangChain chains, agents, and tools
+
+    (/langchain)
+
+- __LlamaIndex__
+
+    ---
+
+    Seamless integration with LlamaIndex query engines and agents
+
+    (/llamaindex)
+
+- __PydanticAI__
+
+    ---
+
+    Native support for PydanticAI agents and tools
+
+    (/pydantic-ai)
+
+- __Claude SDK__
+
+    ---
+
+    Wrapper for Claude Agent SDK with automatic tracing
+
+    (/claude-sdk)
+
+## Auto-Instrumentation
+
+- __Auto-Instrumentation__
+
+    ---
+
+    Automatic tracing for OpenAI and Anthropic SDKs
+
+    (/auto-instrumentation)
+
+- __OpenTelemetry Receiver__
+
+    ---
+
+    Receive traces from any OTLP source with simple setup
+
+    (/otel-receiver)
+
+## Cloud Platforms
+
+- __Cloud Platforms__
+
+    ---
+
+    AWS AgentCore, Azure AI Foundry, GCP Vertex Agent Builder
+
+    (/cloud-platforms)
+
+## Quick Reference
+
+### LangChain
+
+```python
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+
+handler = TraceCraftCallbackHandler()
+chain.invoke(input, config={"callbacks": [handler]})
+```
+
+### LlamaIndex
+
+```python
+from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+
+import llama_index.core
+llama_index.core.global_handler = TraceCraftSpanHandler()
+```
+
+### PydanticAI
+
+```python
+from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+from opentelemetry.sdk.trace import TracerProvider
+
+processor = TraceCraftSpanProcessor()
+provider = TracerProvider()
+provider.add_span_processor(processor)
+```
+
+### Claude SDK
+
+```python
+from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
+
+tracer = ClaudeTraceCraftr(runtime=runtime)
+options = tracer.get_options(allowed_tools=["Read", "Grep"])
+```
+
+### Auto-Instrumentation
+
+```python
+from tracecraft.instrumentation.auto import auto_instrument
+
+# Automatically instrument OpenAI and Anthropic SDKs
+auto_instrument()
+```
+
+### OpenTelemetry Receiver
+
+```python
+from tracecraft.otel import setup_exporter
+
+# Configure OTel to send traces to TraceCraft
+tracer = setup_exporter(
+    endpoint="http://localhost:4318",
+    service_name="my-agent",
+    instrument=["openai"],
+)
+```
+
+## Choosing an Integration
+
+| Framework | Use When | Installation |
+|-----------|----------|--------------|
+| LangChain | Building with LCEL chains | `tracecraft[langchain]` |
+| LlamaIndex | Using query engines or RAG | `tracecraft[llamaindex]` |
+| PydanticAI | Type-safe agent development | `tracecraft[pydantic-ai]` |
+| Claude SDK | Claude-powered agents | `tracecraft[claude-sdk]` |
+| Auto | Using OpenAI/Anthropic directly | `tracecraft[auto]` |
+| OTel Receiver | Receiving OTLP traces | `tracecraft[receiver]` |
+| Custom | Rolling your own | Base package |
+
+## Next Steps
+
+Explore integration guides:
+
+1. [LangChain Integration](/langchain)
+2. [LlamaIndex Integration](/llamaindex)
+3. [PydanticAI Integration](/pydantic-ai)
+4. [Claude SDK Integration](/claude-sdk)
+5. [Auto-Instrumentation](/auto-instrumentation)
+6. [OpenTelemetry Receiver](/otel-receiver)
+7. [Cloud Platforms](/cloud-platforms)

@@ -414,6 +414,7 @@ def sync_docs(
     dry_run: bool = False,
     verbose: bool = False,
     single_file: Path | None = None,
+    force: bool = False,
 ) -> list[ConversionResult]:
     """Sync documentation from MkDocs to Nextra format.
 
@@ -423,6 +424,7 @@ def sync_docs(
         dry_run: If True, don't write files, just show what would be done
         verbose: If True, print detailed progress
         single_file: If provided, only sync this specific file
+        force: If True, overwrite existing files; otherwise skip them
 
     Returns:
         List of ConversionResult objects describing what was done
@@ -431,7 +433,9 @@ def sync_docs(
     converter = MkDocsToNextraConverter(verbose=verbose)
 
     # Directories to skip (they may have different structure in Nextra)
-    skip_dirs = {"overrides", "stylesheets", "javascripts"}
+    # Note: 'api' is skipped because it maps to 'api-reference' in Nextra
+    # (Next.js reserves pages/api for API routes)
+    skip_dirs = {"overrides", "stylesheets", "javascripts", "api"}
 
     # Files to skip
     skip_files = {"CNAME"}
@@ -459,6 +463,12 @@ def sync_docs(
             continue
 
         dest = get_destination_path(source, docs_root, pages_root)
+
+        # Skip existing files unless force is True
+        if dest.exists() and not force:
+            if verbose:
+                print(f"Skipping (exists): {source.relative_to(docs_root)}")
+            continue
 
         if verbose:
             print(f"Processing: {source.relative_to(docs_root)}")
@@ -555,6 +565,11 @@ def main() -> None:
         default=None,
         help="Path to Nextra pages/ directory (default: auto-detect)",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing files (default: skip existing files)",
+    )
 
     args = parser.parse_args()
 
@@ -588,6 +603,7 @@ def main() -> None:
         dry_run=args.dry_run,
         verbose=args.verbose,
         single_file=args.file,
+        force=args.force,
     )
 
     # Print summary

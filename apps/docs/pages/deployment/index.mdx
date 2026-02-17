@@ -1,0 +1,78 @@
+import { Cards, Card } from '@/components'
+
+# Deployment
+
+TraceCraft is designed to run everywhere - from a developer laptop to high-throughput production
+clusters on managed cloud platforms. This section covers how to configure, deploy, and operate
+TraceCraft in each environment.
+
+## Deployment Options
+
+<Cards>
+  <Card title="Production Configuration" href="/deployment/production">
+    Baseline settings for production: sampling, PII redaction, async export, health checks,
+    and Docker/Compose recipes.
+  </Card>
+  <Card title="AWS AgentCore" href="/deployment/aws-agentcore">
+    Deploy TraceCraft alongside AWS Bedrock AgentCore. Covers IAM roles, CloudWatch
+    integration, and ECS task definitions.
+  </Card>
+  <Card title="Azure AI Foundry" href="/deployment/azure-foundry">
+    Integrate with Azure AI Foundry agents. Includes managed identity setup, Azure Monitor
+    export, and Container Apps deployment.
+  </Card>
+  <Card title="GCP Vertex Agent" href="/deployment/gcp-vertex-agent">
+    Run TraceCraft with Vertex AI Agent Builder. Covers Workload Identity, Cloud Trace
+    export, and Cloud Run deployment.
+  </Card>
+  <Card title="Kubernetes" href="/deployment/kubernetes">
+    Complete Kubernetes deployment guide: Helm values, ConfigMaps, Secrets, sidecar
+    collectors, and HPA configuration.
+  </Card>
+  <Card title="High Throughput" href="/deployment/high-throughput">
+    Optimize for millions of traces per day. Covers async batching, aggressive sampling,
+    queue tuning, and benchmarks.
+  </Card>
+</Cards>
+
+## Choosing a Deployment Model
+
+| Scenario | Recommended Guide |
+|----------|------------------|
+| First production deployment | [Production Configuration](/deployment/production) |
+| Running on AWS Bedrock | [AWS AgentCore](/deployment/aws-agentcore) |
+| Running on Azure AI Foundry | [Azure AI Foundry](/deployment/azure-foundry) |
+| Running on GCP Vertex AI | [GCP Vertex Agent](/deployment/gcp-vertex-agent) |
+| Kubernetes cluster | [Kubernetes](/deployment/kubernetes) |
+| Very high trace volume | [High Throughput](/deployment/high-throughput) |
+
+## Quick Start: Production-Ready Config
+
+The following configuration is a safe starting point for any production deployment. Adjust
+`sampling_rate` and exporter settings to match your environment.
+
+```python filename="app.py"
+import os
+import tracecraft
+
+tracecraft.init(
+    service_name=os.getenv("SERVICE_NAME", "my-agent"),
+    environment="production",
+    console=False,
+    otlp_endpoint=os.getenv("OTLP_ENDPOINT"),
+    sampling_rate=float(os.getenv("TRACECRAFT_SAMPLING_RATE", "0.1")),
+    always_keep_errors=True,
+    enable_pii_redaction=True,
+)
+```
+
+```bash filename=".env.production"
+SERVICE_NAME=my-agent
+OTLP_ENDPOINT=https://otlp.example.com:4317
+TRACECRAFT_SAMPLING_RATE=0.1
+```
+
+## Next Steps
+
+Start with [Production Configuration](/deployment/production) for the foundational settings, then move to
+the platform-specific guide that matches your infrastructure.

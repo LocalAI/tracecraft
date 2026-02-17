@@ -1,0 +1,113 @@
+# Configuration API
+
+Configuration classes for TraceCraft.
+
+## TraceCraftConfig
+
+Main configuration class.
+
+```python
+from tracecraft.core.config import TraceCraftConfig
+
+config = TraceCraftConfig(
+    service_name="my-service",
+    environment="production",
+    console_enabled=True,
+    jsonl_enabled=True,
+    jsonl_path="./traces/",
+    sampling_rate=0.1,
+    enable_pii_redaction=True,
+    tags=["version:1.0.0"],
+)
+```
+
+## RedactionConfig
+
+PII redaction configuration.
+
+```python
+from tracecraft.core.config import RedactionConfig, RedactionMode
+
+redaction = RedactionConfig(
+    enabled=True,
+    mode=RedactionMode.MASK,
+    custom_patterns=[
+        (r"\b\d{3}-\d{2}-\d{4}\b", "[SSN]"),
+    ],
+)
+```
+
+## SamplingConfig
+
+Sampling configuration.
+
+```python
+from tracecraft.core.config import SamplingConfig
+
+sampling = SamplingConfig(
+    rate=0.1,
+    always_keep_errors=True,
+    always_keep_slow=True,
+    slow_threshold_ms=5000,
+)
+```
+
+## ProcessorOrder
+
+Processing pipeline order.
+
+```python
+from tracecraft.core.config import ProcessorOrder
+
+# SAFETY: Enrich -> Redact -> Sample
+# EFFICIENCY: Sample -> Redact -> Enrich
+
+config = TraceCraftConfig(
+    processor_order=ProcessorOrder.SAFETY,
+)
+```
+
+## Cloud Configurations
+
+### AWSAgentCoreConfig
+
+```python
+from tracecraft.core.config import AWSAgentCoreConfig
+
+aws_config = AWSAgentCoreConfig(
+    enabled=True,
+    use_xray_propagation=True,
+    session_id="session-123",
+)
+```
+
+### AzureFoundryConfig
+
+```python
+from tracecraft.core.config import AzureFoundryConfig
+
+azure_config = AzureFoundryConfig(
+    enabled=True,
+    connection_string="InstrumentationKey=...",
+    enable_content_recording=False,
+    agent_name="my-agent",
+)
+```
+
+### GCPVertexAgentConfig
+
+```python
+from tracecraft.core.config import GCPVertexAgentConfig
+
+gcp_config = GCPVertexAgentConfig(
+    enabled=True,
+    project_id="my-project",
+    session_id="session-123",
+    agent_name="my-agent",
+)
+```
+
+## Next Steps
+
+- [Configuration Guide](/user-guide/configuration)
+- [Core API](/api-reference/core)

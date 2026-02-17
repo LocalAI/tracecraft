@@ -1,0 +1,327 @@
+# AWS Bedrock AgentCore Deployment Guide
+
+Deploy TraceCraft-instrumented applications to AWS with X-Ray and Bedrock AgentCore observability.
+
+## Architecture
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                        AWS Cloud                             │
+│                                                              │
+│  ┌─────────────────┐      ┌──────────────────────────────┐  │
+│  │   Your Agent    │─────▶│    ADOT Collector            │  │
+│  │  (TraceCraft    │      │   (Sidecar/DaemonSet)        │  │
+│  │   enabled)      │      └──────────────────────────────┘  │
+│  └─────────────────┘                     │                  │
+│                                          ▼                  │
+│                          ┌──────────────────────────────┐   │
+│                          │       AWS X-Ray               │   │
+│                          │  (CloudWatch Transaction)     │   │
+│                          └──────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Prerequisites
+
+- AWS account with X-Ray enabled
+- ADOT (AWS Distro for OpenTelemetry) collector
+- Python 3.11+
+
+## Quick Start
+
+### 1. Install TraceCraft
+
+```bash
+pip install tracecraft[aws-agentcore]
+```
+
+### 2. Configure Exporter
+
+```python
+import tracecraft
+from tracecraft.contrib.aws import create_agentcore_exporter
+
+# Create exporter with AgentCore features
+exporter = create_agentcore_exporter(
+    # ADOT collector endpoint
+    endpoint="http://localhost:4317",
+
+    # Service name appears in X-Ray traces
+    service_name="my-bedrock-agent",
+
+    # Session ID for multi-turn conversation tracking
+    session_id="session-12345",
+
+    # Use X-Ray header format for propagation
+    use_xray_propagation=True,
+)
+
+# Initialize TraceCraft
+tracecraft.init(
+    exporters=[exporter],
+    console=False,  # Disable console in production
+    jsonl=False,    # Disable local JSONL
+)
+```
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `AWS_REGION` | AWS region | us-east-1 |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | ADOT endpoint | `http://localhost:4317` |
+| `TRACECRAFT_AWS_AGENTCORE_ENABLED` | Enable AgentCore export | false |
+| `TRACECRAFT_AWS_XRAY_PROPAGATION` | Use X-Ray headers | true |
+| `TRACECRAFT_AWS_SESSION_ID` | Session ID | None |
+
+## AWS Lambda Deployment
+
+### 1. Add ADOT Layer
+
+```yaml
+# template.yaml (SAM)
+Resources:
+  AgentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Runtime: python3.11
+      Layers:
+        - !Sub arn:aws:lambda:${AWS::Region}:901920570463:layer:aws-otel-python-amd64-ver-1-24-0:1
+      Environment:
+        Variables:
+          AWS_LAMBDA_EXEC_WRAPPER: /opt/otel-instrument
+```
+
+### 2. Function Code
+
+```python
+# app.py
+import tracecraft
+from tracecraft.contrib.aws import configure_for_lambda
+
+# Configure at cold start
+exporter = configure_for_lambda(service_name="my-lambda-agent")
+runtime = tracecraft.init(exporters=[exporter], console=False, jsonl=False)
+
+def handler(event, context):
+    # Your traced agent code
+    pass
+```
+
+## Amazon ECS Deployment
+
+### 1. Task Definition with ADOT Sidecar
+
+```json
+{
+  "family": "agent-task",
+  "containerDefinitions": [
+    {
+      "name": "agent",
+      "image": "my-agent:latest",
+      "environment": [
+        {"name": "OTEL_EXPORTER_OTLP_ENDPOINT", "value": "http://localhost:4317"}
+      ]
+    },
+    {
+      "name": "adot-collector",
+      "image": "public.ecr.aws/aws-observability/aws-otel-collector:latest",
+      "portMappings": [
+        {"containerPort": 4317, "protocol": "tcp"}
+      ],
+      "environment": [
+        {"name": "AWS_REGION", "value": "us-east-1"}
+      ]
+    }
+  ]
+}
+```
+
+### 2. Application Code
+
+```python
+from tracecraft.contrib.aws import configure_for_ecs
+
+exporter = configure_for_ecs(service_name="my-ecs-agent")
+tracecraft.init(exporters=[exporter])
+```
+
+## Amazon EKS Deployment
+
+### 1. Deploy ADOT Collector
+
+```bash
+# Install ADOT collector as DaemonSet
+kubectl apply -f https://raw.githubusercontent.com/aws-observability/aws-otel-collector/main/deployment-template/eks/otel-collector-daemonset.yaml
+```
+
+### 2. ConfigMap for ADOT
+
+```yaml
+# adot-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adot-collector-config
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+    exporters:
+      awsxray:
+        region: us-east-1
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          exporters: [awsxray]
+```
+
+### 3. Application Deployment
+
+```yaml
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-agent
+spec:
+  template:
+    spec:
+      containers:
+      - name: agent
+        image: my-agent:latest
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://adot-collector:4317"
+        - name: TRACECRAFT_AWS_SESSION_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+```
+
+### 4. Application Code
+
+```python
+from tracecraft.contrib.aws import configure_for_eks
+
+exporter = configure_for_eks(
+    service_name="my-eks-agent",
+    collector_endpoint="http://adot-collector:4317"
+)
+tracecraft.init(exporters=[exporter])
+```
+
+## X-Ray Trace Context Propagation
+
+Propagate trace context to downstream services:
+
+```python
+from tracecraft.contrib.aws import inject_xray_context, extract_xray_context
+from tracecraft import get_current_run
+import requests
+
+# Inject context into outgoing request
+headers = {}
+inject_xray_context(headers, get_current_run(), session_id="session-123")
+response = requests.post(downstream_url, headers=headers, json=payload)
+
+# Extract context from incoming request (in downstream service)
+result = extract_xray_context(request.headers)
+if result:
+    trace_id, span_id, sampled, session_id = result
+    # Continue the trace
+```
+
+## X-Ray Header Format
+
+The X-Amzn-Trace-Id header format:
+
+```text
+X-Amzn-Trace-Id: Root=1-{hex-epoch}-{24-hex};Parent={16-hex};Sampled={0|1}
+```
+
+Example:
+
+```text
+X-Amzn-Trace-Id: Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1
+```
+
+## Session Tracking for Multi-Turn
+
+Use session IDs to correlate multi-turn conversations:
+
+```python
+from tracecraft.core.models import AgentRun
+
+# Create run with session ID
+run = AgentRun(
+    name="conversation",
+    start_time=datetime.now(UTC),
+    session_id="user-session-abc123",  # Links all turns
+)
+
+# Each turn in the conversation uses the same session_id
+# Traces will be correlated in X-Ray
+```
+
+## Viewing Traces
+
+1. Go to AWS Console > CloudWatch
+2. Click **X-Ray traces** > **Traces**
+3. Filter by:
+   - Service name
+   - Time range
+   - Annotations
+4. Click a trace to see the service map and timeline
+
+## Best Practices
+
+1. **Use ADOT collector** as sidecar or DaemonSet for efficient export
+2. **Set meaningful session IDs** for conversation tracking
+3. **Propagate X-Ray context** to downstream services
+4. **Use IAM roles** instead of credentials where possible
+5. **Monitor X-Ray costs** - sampling may be needed for high-volume
+
+## Troubleshooting
+
+### Traces Not Appearing
+
+1. Verify ADOT collector is running
+2. Check IAM permissions for X-Ray
+3. Verify network connectivity (port 4317)
+4. Check CloudWatch Logs for ADOT errors
+
+### Missing Session Correlation
+
+1. Verify session_id is set on AgentRun
+2. Check X-Amzn-Bedrock-AgentCore-Runtime-Session-Id header
+3. Ensure same session_id across turns
+
+### X-Ray Permissions
+
+Required IAM permissions:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "xray:PutTraceSegments",
+    "xray:PutTelemetryRecords",
+    "xray:GetSamplingRules",
+    "xray:GetSamplingTargets"
+  ],
+  "Resource": "*"
+}
+```
+
+## References
+
+- [AWS X-Ray Documentation](https://docs.aws.amazon.com/xray/latest/devguide/)
+- [AWS Bedrock AgentCore Observability](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/observability.html)
+- [ADOT Collector](https://aws-otel.github.io/docs/getting-started/collector)
+- [X-Ray with AgentCore](https://docs.aws.amazon.com/xray/latest/devguide/xray-services-agentcore.html)

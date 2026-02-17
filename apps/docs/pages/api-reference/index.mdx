@@ -1,0 +1,162 @@
+import { Cards, Card } from '@/components'
+
+# API Reference
+
+Complete API documentation for TraceCraft.
+
+## Modules
+
+<Cards>
+  <Card title="Core" href="/api-reference/core">
+    Core models, runtime, and configuration
+  </Card>
+  <Card title="Decorators" href="/api-reference/decorators">
+    Instrumentation decorators and context managers
+  </Card>
+  <Card title="Exporters" href="/api-reference/exporters">
+    Export traces to different backends
+  </Card>
+  <Card title="Processors" href="/api-reference/processors">
+    Data processing and transformation
+  </Card>
+  <Card title="Adapters" href="/api-reference/adapters">
+    Framework integration adapters
+  </Card>
+  <Card title="Configuration" href="/api-reference/configuration">
+    Configuration classes and options
+  </Card>
+</Cards>
+
+## Quick Reference
+
+### Core Classes
+
+```python
+from tracecraft import (
+    TraceCraftRuntime,
+    TraceCraftConfig,
+    AgentRun,
+    Step,
+    StepType,
+)
+
+# Create runtime
+runtime = TraceCraftRuntime(config=TraceCraftConfig())
+
+# Create run
+with runtime.run("my_run"):
+    # Your code here
+    pass
+```
+
+### Decorators
+
+```python
+from tracecraft import (
+    trace_agent,
+    trace_tool,
+    trace_llm,
+    trace_retrieval,
+    step,
+)
+
+@trace_agent(name="agent")
+async def agent(input: str) -> str:
+    pass
+
+@trace_tool(name="tool")
+def tool(input: str) -> str:
+    pass
+
+@trace_llm(name="llm", model="gpt-4", provider="openai")
+async def llm(prompt: str) -> str:
+    pass
+
+@trace_retrieval(name="retrieval")
+async def retrieval(query: str) -> list[str]:
+    pass
+```
+
+### Exporters
+
+```python
+from tracecraft.exporters import (
+    ConsoleExporter,
+    JSONLExporter,
+    OTLPExporter,
+    MLflowExporter,
+    HTMLExporter,
+)
+
+# Use with init
+tracecraft.init(
+    exporters=[
+        ConsoleExporter(),
+        JSONLExporter(filepath="traces.jsonl"),
+        OTLPExporter(endpoint="http://localhost:4317"),
+    ]
+)
+```
+
+### Processors
+
+```python
+from tracecraft.processors.redaction import RedactionProcessor, RedactionMode
+from tracecraft.processors.sampling import SamplingProcessor
+from tracecraft.processors.enrichment import EnrichmentProcessor
+
+# PII redaction
+redaction = RedactionProcessor(mode=RedactionMode.MASK)
+
+# Sampling
+sampling = SamplingProcessor(rate=0.1)
+
+# Enrichment
+enrichment = EnrichmentProcessor(
+    static_attributes={"version": "1.0.0"}
+)
+```
+
+### Adapters
+
+```python
+# LangChain
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+handler = TraceCraftCallbackHandler()
+
+# LlamaIndex
+from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+handler = TraceCraftSpanHandler()
+
+# PydanticAI
+from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+processor = TraceCraftSpanProcessor()
+
+# Claude SDK
+from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
+tracer = ClaudeTraceCraftr(runtime=runtime)
+```
+
+## Type Hints
+
+TraceCraft is fully typed. Import types for static analysis:
+
+```python
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from tracecraft.core.runtime import TALRuntime
+    from tracecraft.core.models import AgentRun, Step
+    from tracecraft.core.config import TraceCraftConfig
+```
+
+## Next Steps
+
+Explore specific API modules:
+
+1. [Core API](/api-reference/core)
+2. [Decorators API](/api-reference/decorators)
+3. [Exporters API](/api-reference/exporters)
+4. [Processors API](/api-reference/processors)
+5. [Adapters API](/api-reference/adapters)
+6. [Configuration API](/api-reference/configuration)

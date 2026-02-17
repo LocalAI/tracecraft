@@ -1,0 +1,48 @@
+# Adapters API
+
+Framework integration adapters for TraceCraft.
+
+## LangChain Adapter
+
+```python
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+
+handler = TraceCraftCallbackHandler()
+chain.invoke(input, config={"callbacks": [handler]})
+```
+
+## LlamaIndex Adapter
+
+```python
+from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+
+import llama_index.core
+llama_index.core.global_handler = TraceCraftSpanHandler()
+```
+
+## PydanticAI Adapter
+
+```python
+from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
+from opentelemetry.sdk.trace import TracerProvider
+
+processor = TraceCraftSpanProcessor()
+provider = TracerProvider()
+provider.add_span_processor(processor)
+```
+
+## Claude SDK Adapter
+
+```python
+from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
+
+tracer = ClaudeTraceCraftr(runtime=runtime)
+options = tracer.get_options(allowed_tools=["Read", "Grep"])
+```
+
+## Next Steps
+
+- [LangChain Integration](/integrations/langchain)
+- [LlamaIndex Integration](/integrations/llamaindex)
+- [PydanticAI Integration](/integrations/pydantic-ai)
+- [Claude SDK Integration](/integrations/claude-sdk)
