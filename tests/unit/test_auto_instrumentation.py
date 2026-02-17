@@ -485,3 +485,190 @@ class TestLlamaIndexInstrumentation:
 
         assert instrumentor._llamaindex_handler is None
         assert instrumentor._instrumented["llamaindex"] is False
+
+
+class TestThreadSafety:
+    """Tests for thread safety of auto-instrumentation."""
+
+    def test_get_instrumentor_thread_safe(self):
+        """Test that get_instrumentor is thread-safe."""
+        import threading
+
+        from tracecraft.instrumentation import auto
+
+        # Reset global state
+        auto._auto_instrumentor = None
+
+        results: list[auto.AutoInstrumentor] = []
+        errors: list[Exception] = []
+
+        def get_inst() -> None:
+            try:
+                inst = auto.get_instrumentor()
+                results.append(inst)
+            except Exception as e:
+                errors.append(e)
+
+        # Create multiple threads that all try to get the instrumentor
+        threads = [threading.Thread(target=get_inst) for _ in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        # All should have succeeded
+        assert len(errors) == 0
+        assert len(results) == 10
+
+        # All should return the same instance
+        first = results[0]
+        for inst in results[1:]:
+            assert inst is first
+
+
+class TestUnpatcherCalls:
+    """Tests for proper unpatcher invocation during uninstrumentation."""
+
+    def test_langchain_unpatcher_called_on_uninstrument(self):
+        """Test that LangChain unpatcher is called on uninstrument."""
+        from tracecraft.instrumentation.auto import AutoInstrumentor
+
+        instrumentor = AutoInstrumentor()
+        instrumentor._instrumented["langchain"] = True
+        instrumentor._langchain_handler = MagicMock()
+
+        # Create a mock unpatcher
+        mock_unpatcher = MagicMock()
+        instrumentor._langchain_unpatcher = mock_unpatcher
+        instrumentor._patchers.append(mock_unpatcher)
+
+        instrumentor.uninstrument_langchain()
+
+        # Unpatcher should have been called
+        mock_unpatcher.assert_called_once()
+        # And removed from patchers list
+        assert mock_unpatcher not in instrumentor._patchers
+        # And cleared
+        assert instrumentor._langchain_unpatcher is None
+
+    def test_llamaindex_unpatcher_called_on_uninstrument(self):
+        """Test that LlamaIndex unpatcher is called on uninstrument."""
+        from tracecraft.instrumentation.auto import AutoInstrumentor
+
+        instrumentor = AutoInstrumentor()
+        instrumentor._instrumented["llamaindex"] = True
+        instrumentor._llamaindex_handler = MagicMock()
+
+        # Create a mock unpatcher
+        mock_unpatcher = MagicMock()
+        instrumentor._llamaindex_unpatcher = mock_unpatcher
+        instrumentor._patchers.append(mock_unpatcher)
+
+        instrumentor.uninstrument_llamaindex()
+
+        # Unpatcher should have been called
+        mock_unpatcher.assert_called_once()
+        # And removed from patchers list
+        assert mock_unpatcher not in instrumentor._patchers
+        # And cleared
+        assert instrumentor._llamaindex_unpatcher is None
+
+    def test_uninstrument_all_calls_framework_uninstrument_methods(self):
+        """Test that uninstrument_all calls framework-specific uninstrument methods."""
+        from tracecraft.instrumentation.auto import AutoInstrumentor
+
+        instrumentor = AutoInstrumentor()
+        instrumentor._instrumented["langchain"] = True
+        instrumentor._instrumented["llamaindex"] = True
+        instrumentor._langchain_handler = MagicMock()
+        instrumentor._llamaindex_handler = MagicMock()
+
+        # Create mock unpatchers
+        langchain_unpatcher = MagicMock()
+        llamaindex_unpatcher = MagicMock()
+        instrumentor._langchain_unpatcher = langchain_unpatcher
+        instrumentor._llamaindex_unpatcher = llamaindex_unpatcher
+        instrumentor._patchers.append(langchain_unpatcher)
+        instrumentor._patchers.append(llamaindex_unpatcher)
+
+        instrumentor.uninstrument_all()
+
+        # Both unpatchers should have been called
+        langchain_unpatcher.assert_called_once()
+        llamaindex_unpatcher.assert_called_once()
+
+        # All state should be cleared
+        assert instrumentor._langchain_handler is None
+        assert instrumentor._llamaindex_handler is None
+        assert instrumentor._langchain_unpatcher is None
+        assert instrumentor._llamaindex_unpatcher is None
+        assert instrumentor._instrumented["langchain"] is False
+        assert instrumentor._instrumented["llamaindex"] is False
+
+    def test_uninstrument_langchain_handles_unpatcher_exception(self):
+        """Test that uninstrument_langchain handles unpatcher exceptions gracefully."""
+        from tracecraft.instrumentation.auto import AutoInstrumentor
+
+        instrumentor = AutoInstrumentor()
+        instrumentor._instrumented["langchain"] = True
+        instrumentor._langchain_handler = MagicMock()
+
+        # Create an unpatcher that raises
+        mock_unpatcher = MagicMock(side_effect=RuntimeError("Test error"))
+        instrumentor._langchain_unpatcher = mock_unpatcher
+        instrumentor._patchers.append(mock_unpatcher)
+
+        # Should not raise
+        instrumentor.uninstrument_langchain()
+
+        # State should still be cleared
+        assert instrumentor._langchain_handler is None
+        assert instrumentor._langchain_unpatcher is None
+        assert instrumentor._instrumented["langchain"] is False
+
+    def test_uninstrument_llamaindex_handles_unpatcher_exception(self):
+        """Test that uninstrument_llamaindex handles unpatcher exceptions gracefully."""
+        from tracecraft.instrumentation.auto import AutoInstrumentor
+
+        instrumentor = AutoInstrumentor()
+        instrumentor._instrumented["llamaindex"] = True
+        instrumentor._llamaindex_handler = MagicMock()
+
+        # Create an unpatcher that raises
+        mock_unpatcher = MagicMock(side_effect=RuntimeError("Test error"))
+        instrumentor._llamaindex_unpatcher = mock_unpatcher
+        instrumentor._patchers.append(mock_unpatcher)
+
+        # Should not raise
+        instrumentor.uninstrument_llamaindex()
+
+        # State should still be cleared
+        assert instrumentor._llamaindex_handler is None
+        assert instrumentor._llamaindex_unpatcher is None
+        assert instrumentor._instrumented["llamaindex"] is False
+
+    def test_uninstrument_langchain_noop_when_not_instrumented(self):
+        """Test that uninstrument_langchain does nothing when not instrumented."""
+        from tracecraft.instrumentation.auto import AutoInstrumentor
+
+        instrumentor = AutoInstrumentor()
+
+        # Should not raise when called on uninstrumented provider
+        instrumentor.uninstrument_langchain()
+
+        # State should remain unchanged
+        assert instrumentor._langchain_handler is None
+        assert instrumentor._instrumented["langchain"] is False
+
+    def test_uninstrument_llamaindex_noop_when_not_instrumented(self):
+        """Test that uninstrument_llamaindex does nothing when not instrumented."""
+        from tracecraft.instrumentation.auto import AutoInstrumentor
+
+        instrumentor = AutoInstrumentor()
+
+        # Should not raise when called on uninstrumented provider
+        instrumentor.uninstrument_llamaindex()
+
+        # State should remain unchanged
+        assert instrumentor._llamaindex_handler is None
+        assert instrumentor._instrumented["llamaindex"] is False

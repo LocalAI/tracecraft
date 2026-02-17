@@ -12,11 +12,15 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# Lock for thread-safe singleton access
+_instrumentor_lock = threading.Lock()
 
 
 @dataclass
@@ -144,9 +148,11 @@ class AutoInstrumentor:
             "langchain": False,
             "llamaindex": False,
         }
-        # Store framework handlers for cleanup
+        # Store framework handlers and unpatchers for cleanup
         self._langchain_handler: Any = None
         self._llamaindex_handler: Any = None
+        self._langchain_unpatcher: Callable[[], None] | None = None
+        self._llamaindex_unpatcher: Callable[[], None] | None = None
 
     @property
     def is_enabled(self) -> bool:
@@ -339,13 +345,14 @@ class AutoInstrumentor:
 
             CallbackManager.__init__ = patched_init
 
-            # Store unpatcher
+            # Store unpatcher for specific cleanup
             def unpatch(
                 cm_class: type = CallbackManager,
                 orig_init: Any = original_init,
             ) -> None:
                 cm_class.__init__ = orig_init
 
+            self._langchain_unpatcher = unpatch
             self._patchers.append(unpatch)
             self._instrumented["langchain"] = True
             logger.info("LangChain auto-instrumentation enabled")
@@ -395,7 +402,7 @@ class AutoInstrumentor:
             dispatcher = get_dispatcher()
             dispatcher.add_span_handler(handler)
 
-            # Store unpatcher
+            # Store unpatcher for specific cleanup
             def unpatch(
                 disp: Any = dispatcher,
                 h: Any = handler,
@@ -405,6 +412,7 @@ class AutoInstrumentor:
                     with contextlib.suppress(ValueError, AttributeError):
                         disp.span_handlers.remove(h)
 
+            self._llamaindex_unpatcher = unpatch
             self._patchers.append(unpatch)
             self._instrumented["llamaindex"] = True
             logger.info("LlamaIndex auto-instrumentation enabled")
@@ -479,10 +487,22 @@ class AutoInstrumentor:
         if not self._instrumented.get("langchain", False):
             return
 
-        # Clear handler and mark as uninstrumented
+        # Call unpatcher to restore original __init__
+        if self._langchain_unpatcher is not None:
+            try:
+                self._langchain_unpatcher()
+                # Remove from patchers list to avoid double-calling
+                if self._langchain_unpatcher in self._patchers:
+                    self._patchers.remove(self._langchain_unpatcher)
+            except Exception:
+                logger.exception("Failed to unpatch LangChain")
+            self._langchain_unpatcher = None
+
+        # Clear handler
         if self._langchain_handler is not None:
             self._langchain_handler.clear()
             self._langchain_handler = None
+
         self._instrumented["langchain"] = False
         logger.debug("LangChain auto-instrumentation disabled")
 
@@ -491,15 +511,31 @@ class AutoInstrumentor:
         if not self._instrumented.get("llamaindex", False):
             return
 
-        # Clear handler and mark as uninstrumented
+        # Call unpatcher to remove handler from dispatcher
+        if self._llamaindex_unpatcher is not None:
+            try:
+                self._llamaindex_unpatcher()
+                # Remove from patchers list to avoid double-calling
+                if self._llamaindex_unpatcher in self._patchers:
+                    self._patchers.remove(self._llamaindex_unpatcher)
+            except Exception:
+                logger.exception("Failed to unpatch LlamaIndex")
+            self._llamaindex_unpatcher = None
+
+        # Clear handler
         if self._llamaindex_handler is not None:
             self._llamaindex_handler.clear()
             self._llamaindex_handler = None
+
         self._instrumented["llamaindex"] = False
         logger.debug("LlamaIndex auto-instrumentation disabled")
 
     def uninstrument_all(self) -> None:
         """Disable all auto-instrumentation."""
+        # Uninstrument framework-specific handlers first (clears their unpatchers)
+        self.uninstrument_langchain()
+        self.uninstrument_llamaindex()
+
         # Uninstrument OTel instrumentors
         for instrumentor in self._instrumentors:
             try:
@@ -507,7 +543,7 @@ class AutoInstrumentor:
             except Exception:
                 logger.exception("Failed to uninstrument %s", type(instrumentor))
 
-        # Call unpatchers
+        # Call remaining unpatchers (OpenAI/Anthropic manual patches)
         for unpatch in self._patchers:
             try:
                 unpatch()
@@ -534,7 +570,10 @@ def get_instrumentor() -> AutoInstrumentor:
     global _auto_instrumentor
 
     if _auto_instrumentor is None:
-        _auto_instrumentor = AutoInstrumentor()
+        with _instrumentor_lock:
+            # Double-check locking pattern
+            if _auto_instrumentor is None:
+                _auto_instrumentor = AutoInstrumentor()
 
     return _auto_instrumentor
 
