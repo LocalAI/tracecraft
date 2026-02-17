@@ -1,15 +1,16 @@
 """
-Auto-instrumentation for LLM provider clients.
+Auto-instrumentation for LLM provider clients and frameworks.
 
-Automatically instruments OpenAI, Anthropic, and other LLM clients
-to capture traces without manual decoration.
+Automatically instruments OpenAI, Anthropic, LangChain, LlamaIndex, and other
+LLM clients/frameworks to capture traces without manual decoration.
 
-This module leverages OpenTelemetry instrumentation libraries to
-automatically trace LLM API calls.
+This module leverages OpenTelemetry instrumentation libraries and framework-specific
+hooks to automatically trace LLM API calls and agent workflows.
 """
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -140,7 +141,12 @@ class AutoInstrumentor:
         self._instrumented: dict[str, bool] = {
             "openai": False,
             "anthropic": False,
+            "langchain": False,
+            "llamaindex": False,
         }
+        # Store framework handlers for cleanup
+        self._langchain_handler: Any = None
+        self._llamaindex_handler: Any = None
 
     @property
     def is_enabled(self) -> bool:
@@ -268,23 +274,169 @@ class AutoInstrumentor:
         """Enable auto-instrumentation for Anthropic."""
         return self._instrument_provider("anthropic")
 
+    def instrument_langchain(self) -> bool:
+        """
+        Enable auto-instrumentation for LangChain.
+
+        Patches LangChain's CallbackManager to automatically inject
+        TraceCraft's callback handler into all chains, agents, and tools.
+
+        Returns:
+            True if instrumentation was successful.
+
+        Example:
+            ```python
+            instrumentor = AutoInstrumentor()
+            instrumentor.instrument_langchain()
+
+            # Now all LangChain operations are traced automatically
+            from langchain_openai import ChatOpenAI
+            llm = ChatOpenAI()
+            llm.invoke("Hello!")  # Automatically traced!
+            ```
+        """
+        if self._instrumented.get("langchain", False):
+            logger.debug("LangChain already instrumented")
+            return True
+
+        try:
+            from langchain_core.callbacks.manager import CallbackManager
+
+            from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+
+            # Create a single handler instance for all callbacks
+            handler = TraceCraftCallbackHandler()
+            self._langchain_handler = handler
+
+            # Store original __init__
+            original_init = CallbackManager.__init__
+
+            def patched_init(
+                self_cm: Any,
+                handlers: list[Any] | None = None,
+                inheritable_handlers: list[Any] | None = None,
+                parent_run_id: Any = None,
+                *,
+                tags: list[str] | None = None,
+                inheritable_tags: list[str] | None = None,
+                metadata: dict[str, Any] | None = None,
+                inheritable_metadata: dict[str, Any] | None = None,
+            ) -> None:
+                # Ensure our handler is always included
+                handlers = list(handlers) if handlers else []
+                if handler not in handlers:
+                    handlers.append(handler)
+                original_init(
+                    self_cm,
+                    handlers=handlers,
+                    inheritable_handlers=inheritable_handlers,
+                    parent_run_id=parent_run_id,
+                    tags=tags,
+                    inheritable_tags=inheritable_tags,
+                    metadata=metadata,
+                    inheritable_metadata=inheritable_metadata,
+                )
+
+            CallbackManager.__init__ = patched_init
+
+            # Store unpatcher
+            def unpatch(
+                cm_class: type = CallbackManager,
+                orig_init: Any = original_init,
+            ) -> None:
+                cm_class.__init__ = orig_init
+
+            self._patchers.append(unpatch)
+            self._instrumented["langchain"] = True
+            logger.info("LangChain auto-instrumentation enabled")
+            return True
+
+        except ImportError:
+            logger.debug("LangChain not installed, skipping instrumentation")
+            return False
+        except Exception:
+            logger.exception("Failed to instrument LangChain")
+            return False
+
+    def instrument_llamaindex(self) -> bool:
+        """
+        Enable auto-instrumentation for LlamaIndex.
+
+        Registers TraceCraft's span handler with the global LlamaIndex
+        instrumentation dispatcher.
+
+        Returns:
+            True if instrumentation was successful.
+
+        Example:
+            ```python
+            instrumentor = AutoInstrumentor()
+            instrumentor.instrument_llamaindex()
+
+            # Now all LlamaIndex operations are traced automatically
+            from llama_index.core import VectorStoreIndex
+            index = VectorStoreIndex.from_documents(docs)
+            index.as_query_engine().query("What is the answer?")  # Automatically traced!
+            ```
+        """
+        if self._instrumented.get("llamaindex", False):
+            logger.debug("LlamaIndex already instrumented")
+            return True
+
+        try:
+            from llama_index.core.instrumentation import get_dispatcher
+
+            from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+
+            # Create handler and register with dispatcher
+            handler = TraceCraftSpanHandler()
+            self._llamaindex_handler = handler
+
+            dispatcher = get_dispatcher()
+            dispatcher.add_span_handler(handler)
+
+            # Store unpatcher
+            def unpatch(
+                disp: Any = dispatcher,
+                h: Any = handler,
+            ) -> None:
+                # Remove our handler from the dispatcher's span handlers
+                if hasattr(disp, "span_handlers"):
+                    with contextlib.suppress(ValueError, AttributeError):
+                        disp.span_handlers.remove(h)
+
+            self._patchers.append(unpatch)
+            self._instrumented["llamaindex"] = True
+            logger.info("LlamaIndex auto-instrumentation enabled")
+            return True
+
+        except ImportError:
+            logger.debug("LlamaIndex not installed, skipping instrumentation")
+            return False
+        except Exception:
+            logger.exception("Failed to instrument LlamaIndex")
+            return False
+
     def instrument_all(self) -> dict[str, bool]:
         """
         Enable all available auto-instrumentation.
 
         Returns:
-            Dictionary mapping provider name to success status.
+            Dictionary mapping provider/framework name to success status.
 
         Example:
             ```python
             instrumentor = AutoInstrumentor()
             results = instrumentor.instrument_all()
-            print(results)  # {'openai': True, 'anthropic': True}
+            print(results)
+            # {'openai': True, 'anthropic': True, 'langchain': True, 'llamaindex': False}
             ```
         """
         results = {
             "openai": self.instrument_openai(),
             "anthropic": self.instrument_anthropic(),
+            "langchain": self.instrument_langchain(),
+            "llamaindex": self.instrument_llamaindex(),
         }
         self._enabled = any(results.values())
         return results
@@ -322,6 +474,30 @@ class AutoInstrumentor:
         """Disable Anthropic auto-instrumentation."""
         self._uninstrument_provider("anthropic")
 
+    def uninstrument_langchain(self) -> None:
+        """Disable LangChain auto-instrumentation."""
+        if not self._instrumented.get("langchain", False):
+            return
+
+        # Clear handler and mark as uninstrumented
+        if self._langchain_handler is not None:
+            self._langchain_handler.clear()
+            self._langchain_handler = None
+        self._instrumented["langchain"] = False
+        logger.debug("LangChain auto-instrumentation disabled")
+
+    def uninstrument_llamaindex(self) -> None:
+        """Disable LlamaIndex auto-instrumentation."""
+        if not self._instrumented.get("llamaindex", False):
+            return
+
+        # Clear handler and mark as uninstrumented
+        if self._llamaindex_handler is not None:
+            self._llamaindex_handler.clear()
+            self._llamaindex_handler = None
+        self._instrumented["llamaindex"] = False
+        logger.debug("LlamaIndex auto-instrumentation disabled")
+
     def uninstrument_all(self) -> None:
         """Disable all auto-instrumentation."""
         # Uninstrument OTel instrumentors
@@ -341,7 +517,7 @@ class AutoInstrumentor:
         self._instrumentors.clear()
         self._patchers.clear()
         self._enabled = False
-        self._instrumented = {k: False for k in self._instrumented}
+        self._instrumented = dict.fromkeys(self._instrumented, False)
 
 
 # Global instrumentor instance
@@ -367,14 +543,14 @@ def enable_auto_instrumentation(
     providers: list[str] | None = None,
 ) -> dict[str, bool]:
     """
-    Enable auto-instrumentation for LLM providers.
+    Enable auto-instrumentation for LLM providers and frameworks.
 
     Args:
-        providers: List of providers to instrument. If None, instruments all.
-            Valid providers: "openai", "anthropic"
+        providers: List of providers/frameworks to instrument. If None, instruments all.
+            Valid options: "openai", "anthropic", "langchain", "llamaindex"
 
     Returns:
-        Dictionary mapping provider name to success status.
+        Dictionary mapping provider/framework name to success status.
 
     Example:
         ```python
@@ -384,9 +560,10 @@ def enable_auto_instrumentation(
         tracecraft.init()
         results = enable_auto_instrumentation()
 
-        # Now OpenAI/Anthropic calls are automatically traced
-        client = openai.OpenAI()
-        response = client.chat.completions.create(...)  # Automatically traced!
+        # Now all LLM/framework calls are automatically traced
+        from langchain_openai import ChatOpenAI
+        llm = ChatOpenAI()
+        llm.invoke("Hello!")  # Automatically traced!
         ```
     """
     instrumentor = get_instrumentor()
@@ -401,6 +578,10 @@ def enable_auto_instrumentation(
             results["openai"] = instrumentor.instrument_openai()
         elif provider_lower == "anthropic":
             results["anthropic"] = instrumentor.instrument_anthropic()
+        elif provider_lower == "langchain":
+            results["langchain"] = instrumentor.instrument_langchain()
+        elif provider_lower in ("llamaindex", "llama_index", "llama-index"):
+            results["llamaindex"] = instrumentor.instrument_llamaindex()
         else:
             logger.warning("Unknown provider: %s", provider)
             results[provider] = False
@@ -415,14 +596,15 @@ def disable_auto_instrumentation(
     Disable auto-instrumentation.
 
     Args:
-        providers: List of providers to uninstrument. If None, uninstruments all.
+        providers: List of providers/frameworks to uninstrument. If None, uninstruments all.
+            Valid options: "openai", "anthropic", "langchain", "llamaindex"
 
     Example:
         ```python
         from tracecraft.instrumentation.auto import disable_auto_instrumentation
 
         disable_auto_instrumentation()  # Disable all
-        disable_auto_instrumentation(["openai"])  # Disable only OpenAI
+        disable_auto_instrumentation(["openai", "langchain"])  # Disable specific
         ```
     """
     instrumentor = get_instrumentor()
@@ -437,6 +619,10 @@ def disable_auto_instrumentation(
             instrumentor.uninstrument_openai()
         elif provider_lower == "anthropic":
             instrumentor.uninstrument_anthropic()
+        elif provider_lower == "langchain":
+            instrumentor.uninstrument_langchain()
+        elif provider_lower in ("llamaindex", "llama_index", "llama-index"):
+            instrumentor.uninstrument_llamaindex()
 
 
 def is_instrumentation_enabled() -> bool:

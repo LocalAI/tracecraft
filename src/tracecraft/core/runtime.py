@@ -834,6 +834,8 @@ def init(
     # Convenience parameters that override config
     redaction_enabled: bool | None = None,
     sampling_rate: float | None = None,
+    # Auto-instrumentation
+    auto_instrument: bool | list[str] | None = None,
 ) -> TALRuntime:
     """
     Initialize the TraceCraft runtime.
@@ -873,6 +875,12 @@ def init(
             - BaseTraceStore: Custom storage instance
         redaction_enabled: Enable PII redaction (overrides config).
         sampling_rate: Sampling rate 0.0-1.0 (overrides config).
+        auto_instrument: Enable auto-instrumentation for LLM providers and frameworks.
+            Options:
+            - True: Instrument all available (openai, anthropic, langchain, llamaindex)
+            - False: Disable auto-instrumentation
+            - None: Check TRACECRAFT_AUTO_INSTRUMENT env var (default)
+            - ["openai", "langchain"]: Instrument specific providers/frameworks
 
     Returns:
         The TALRuntime instance.
@@ -886,11 +894,11 @@ def init(
         # Force local development mode
         tracecraft.init(mode="local")
 
-        # Force production mode (disables console/jsonl)
-        tracecraft.init(mode="production")
+        # Enable auto-instrumentation for all providers
+        tracecraft.init(auto_instrument=True)
 
-        # Explicit environment
-        tracecraft.init(env="production")
+        # Enable auto-instrumentation for specific providers
+        tracecraft.init(auto_instrument=["openai", "langchain"])
 
         # With SQLite storage
         tracecraft.init(storage="sqlite:///traces.db")
@@ -937,6 +945,10 @@ def init(
                 config=config,
                 storage=storage_backend,
             )
+
+            # Handle auto-instrumentation
+            _handle_auto_instrumentation(auto_instrument)
+
         # Return inside lock to prevent race condition
         return _runtime
 
@@ -1026,6 +1038,52 @@ def _parse_storage_string(storage: str) -> BaseTraceStore | None:
         from tracecraft.storage.jsonl import JSONLTraceStore
 
         return JSONLTraceStore(storage)
+
+
+def _handle_auto_instrumentation(auto_instrument: bool | list[str] | None) -> None:
+    """
+    Handle auto-instrumentation based on parameter or environment variable.
+
+    Args:
+        auto_instrument: Auto-instrumentation setting from init().
+    """
+    import os
+
+    from tracecraft.instrumentation.auto import enable_auto_instrumentation
+
+    # Determine what to instrument
+    providers: list[str] | None = None
+    should_instrument = False
+
+    if auto_instrument is True:
+        # Instrument all
+        should_instrument = True
+        providers = None
+    elif auto_instrument is False:
+        # Explicitly disabled
+        should_instrument = False
+    elif isinstance(auto_instrument, list):
+        # Specific providers
+        should_instrument = True
+        providers = auto_instrument
+    else:
+        # Check environment variable
+        env_value = os.environ.get("TRACECRAFT_AUTO_INSTRUMENT", "").lower()
+        if env_value in ("true", "1", "all", "yes"):
+            should_instrument = True
+            providers = None
+        elif env_value in ("false", "0", "no", ""):
+            should_instrument = False
+        elif env_value:
+            # Comma-separated list of providers
+            should_instrument = True
+            providers = [p.strip() for p in env_value.split(",") if p.strip()]
+
+    if should_instrument:
+        results = enable_auto_instrumentation(providers)
+        enabled = [k for k, v in results.items() if v]
+        if enabled:
+            logger.info("Auto-instrumentation enabled for: %s", ", ".join(enabled))
 
 
 def get_runtime() -> TALRuntime | None:

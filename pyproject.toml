@@ -235,6 +235,8 @@ disable_error_code = ["misc", "no-any-return", "attr-defined", "assignment", "op
 module = [
     "tracecraft.adapters.*",
     "tracecraft.integrations.*",
+    "tracecraft.instrumentation.auto",
+    "tracecraft.instrumentation.decorators",
     "tracecraft.contrib.evaluation",
     "tracecraft.tui.*",
     "tracecraft.playground.*",

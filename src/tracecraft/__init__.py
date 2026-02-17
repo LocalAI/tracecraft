@@ -12,6 +12,16 @@ Example:
         results = await search(query)
         return synthesize(results)
 
+Zero-code auto-instrumentation example:
+    import tracecraft
+    tracecraft.init(auto_instrument=True)
+
+    # Now all LLM calls (OpenAI, Anthropic) and frameworks
+    # (LangChain, LlamaIndex) are automatically traced!
+    from langchain_openai import ChatOpenAI
+    llm = ChatOpenAI()
+    llm.invoke("Hello!")  # Automatically traced!
+
 Multi-tenant example with explicit runtime:
     from tracecraft import TraceCraftRuntime, TraceCraftConfig
 
@@ -29,6 +39,8 @@ Multi-tenant example with explicit runtime:
         ...
 """
 
+from typing import Any
+
 from tracecraft.core.config import TraceCraftConfig
 from tracecraft.core.context import runtime_context
 from tracecraft.core.models import AgentRun, Step, StepType
@@ -40,6 +52,44 @@ from tracecraft.instrumentation.decorators import (
     trace_retrieval,
     trace_tool,
 )
+
+
+def init_and_auto_instrument(
+    providers: list[str] | None = None,
+    **init_kwargs: Any,
+) -> TALRuntime:
+    """
+    Initialize TraceCraft with auto-instrumentation enabled.
+
+    This is a convenience function that combines `init()` with automatic
+    instrumentation of LLM providers and frameworks.
+
+    Args:
+        providers: List of providers/frameworks to instrument. If None, instruments all.
+            Valid options: "openai", "anthropic", "langchain", "llamaindex"
+        **init_kwargs: Additional arguments passed to `init()`.
+
+    Returns:
+        The TALRuntime instance.
+
+    Example:
+        ```python
+        import tracecraft
+
+        # Initialize with all auto-instrumentation
+        tracecraft.init_and_auto_instrument()
+
+        # Initialize with specific providers only
+        tracecraft.init_and_auto_instrument(["openai", "langchain"])
+
+        # Now all calls are automatically traced!
+        from langchain_openai import ChatOpenAI
+        llm = ChatOpenAI()
+        llm.invoke("Hello!")  # Automatically traced!
+        ```
+    """
+    return init(auto_instrument=providers if providers else True, **init_kwargs)
+
 
 # Alias for more descriptive naming
 TraceCraftRuntime = TALRuntime
@@ -56,6 +106,7 @@ __all__ = [
     "TALRuntime",
     "TraceCraftRuntime",  # Alias
     "init",
+    "init_and_auto_instrument",
     "get_runtime",
     "runtime_context",
     # Decorators
