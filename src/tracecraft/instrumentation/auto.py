@@ -153,6 +153,8 @@ class AutoInstrumentor:
         self._llamaindex_handler: Any = None
         self._langchain_unpatcher: Callable[[], None] | None = None
         self._llamaindex_unpatcher: Callable[[], None] | None = None
+        # Store per-provider unpatchers for manual patching cleanup
+        self._provider_unpatchers: dict[str, Callable[[], None]] = {}
 
     @property
     def is_enabled(self) -> bool:
@@ -223,7 +225,7 @@ class AutoInstrumentor:
         _set_nested_attr(module, sync_path, patched_sync)
         _set_nested_attr(module, async_path, patched_async)
 
-        # Store unpatcher
+        # Store unpatcher with provider key for targeted cleanup
         def unpatch(
             mod: Any = module,
             s_path: str = sync_path,
@@ -234,6 +236,7 @@ class AutoInstrumentor:
             _set_nested_attr(mod, s_path, orig_sync)
             _set_nested_attr(mod, a_path, orig_async)
 
+        self._provider_unpatchers[provider] = unpatch
         self._patchers.append(unpatch)
 
     def _instrument_provider(self, provider: str) -> bool:
@@ -472,6 +475,17 @@ class AutoInstrumentor:
                 except Exception:
                     logger.exception("Failed to uninstrument %s", provider_title)
 
+        # Call provider-specific unpatcher for manual patching
+        unpatcher = self._provider_unpatchers.pop(provider, None)
+        if unpatcher is not None:
+            try:
+                unpatcher()
+                # Remove from general patchers list to avoid double-calling
+                if unpatcher in self._patchers:
+                    self._patchers.remove(unpatcher)
+            except Exception:
+                logger.exception("Failed to unpatch %s", provider_title)
+
         self._instrumented[provider] = False
 
     def uninstrument_openai(self) -> None:
@@ -498,9 +512,12 @@ class AutoInstrumentor:
                 logger.exception("Failed to unpatch LangChain")
             self._langchain_unpatcher = None
 
-        # Clear handler
+        # Clear handler (with exception handling for safety)
         if self._langchain_handler is not None:
-            self._langchain_handler.clear()
+            try:
+                self._langchain_handler.clear()
+            except Exception:
+                logger.debug("Failed to clear LangChain handler (may not have clear method)")
             self._langchain_handler = None
 
         self._instrumented["langchain"] = False
@@ -522,9 +539,12 @@ class AutoInstrumentor:
                 logger.exception("Failed to unpatch LlamaIndex")
             self._llamaindex_unpatcher = None
 
-        # Clear handler
+        # Clear handler (with exception handling for safety)
         if self._llamaindex_handler is not None:
-            self._llamaindex_handler.clear()
+            try:
+                self._llamaindex_handler.clear()
+            except Exception:
+                logger.debug("Failed to clear LlamaIndex handler (may not have clear method)")
             self._llamaindex_handler = None
 
         self._instrumented["llamaindex"] = False

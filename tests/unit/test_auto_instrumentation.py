@@ -22,6 +22,12 @@ class TestAutoInstrumentor:
         assert instrumentor._instrumented["anthropic"] is False
         assert instrumentor._instrumented["langchain"] is False
         assert instrumentor._instrumented["llamaindex"] is False
+        # Verify framework handlers and unpatchers are initialized
+        assert instrumentor._langchain_handler is None
+        assert instrumentor._llamaindex_handler is None
+        assert instrumentor._langchain_unpatcher is None
+        assert instrumentor._llamaindex_unpatcher is None
+        assert instrumentor._provider_unpatchers == {}
 
     def test_is_enabled_property(self):
         """Test is_enabled property."""
@@ -670,5 +676,66 @@ class TestUnpatcherCalls:
         instrumentor.uninstrument_llamaindex()
 
         # State should remain unchanged
+        assert instrumentor._llamaindex_handler is None
+        assert instrumentor._instrumented["llamaindex"] is False
+
+    def test_provider_unpatcher_called_on_uninstrument(self):
+        """Test that provider-specific unpatcher is called on uninstrument."""
+        from tracecraft.instrumentation.auto import AutoInstrumentor
+
+        instrumentor = AutoInstrumentor()
+        instrumentor._instrumented["openai"] = True
+
+        # Create a mock provider unpatcher
+        mock_unpatcher = MagicMock()
+        instrumentor._provider_unpatchers["openai"] = mock_unpatcher
+        instrumentor._patchers.append(mock_unpatcher)
+
+        instrumentor.uninstrument_openai()
+
+        # Unpatcher should have been called
+        mock_unpatcher.assert_called_once()
+        # And removed from patchers list
+        assert mock_unpatcher not in instrumentor._patchers
+        # And removed from provider_unpatchers
+        assert "openai" not in instrumentor._provider_unpatchers
+        # Provider should be marked as uninstrumented
+        assert instrumentor._instrumented["openai"] is False
+
+    def test_handler_clear_exception_handled_langchain(self):
+        """Test that handler.clear() exception is handled gracefully for LangChain."""
+        from tracecraft.instrumentation.auto import AutoInstrumentor
+
+        instrumentor = AutoInstrumentor()
+        instrumentor._instrumented["langchain"] = True
+
+        # Create a mock handler that raises on clear()
+        mock_handler = MagicMock()
+        mock_handler.clear.side_effect = AttributeError("No clear method")
+        instrumentor._langchain_handler = mock_handler
+
+        # Should not raise
+        instrumentor.uninstrument_langchain()
+
+        # Handler reference should still be cleared
+        assert instrumentor._langchain_handler is None
+        assert instrumentor._instrumented["langchain"] is False
+
+    def test_handler_clear_exception_handled_llamaindex(self):
+        """Test that handler.clear() exception is handled gracefully for LlamaIndex."""
+        from tracecraft.instrumentation.auto import AutoInstrumentor
+
+        instrumentor = AutoInstrumentor()
+        instrumentor._instrumented["llamaindex"] = True
+
+        # Create a mock handler that raises on clear()
+        mock_handler = MagicMock()
+        mock_handler.clear.side_effect = AttributeError("No clear method")
+        instrumentor._llamaindex_handler = mock_handler
+
+        # Should not raise
+        instrumentor.uninstrument_llamaindex()
+
+        # Handler reference should still be cleared
         assert instrumentor._llamaindex_handler is None
         assert instrumentor._instrumented["llamaindex"] is False
