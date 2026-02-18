@@ -89,27 +89,40 @@ class MkDocsToNextraConverter:
         return content
 
     def _convert_collapsible_admonitions(self, content: str) -> str:
-        """Convert MkDocs collapsible admonitions (???) to <Details> components."""
+        """Convert MkDocs collapsible admonitions (???) to <Details> components.
+
+        Handles both:
+        - Top-level collapsibles (??? at line start)
+        - Nested collapsibles inside tabs (    ??? indented by 4 spaces)
+        """
         # Ensure content ends with newline for consistent matching
         if not content.endswith("\n"):
             content += "\n"
 
-        # Pattern: ??? type "title"
-        #     content (indented by 4 spaces)
-        # Match indented lines or blank lines, until we hit a non-indented non-blank line
-        pattern = r'^\?\?\?(\+)?\s+(\w+)\s+"([^"]+)"\n((?:    .*\n|\s*\n)*)'
+        # Pattern: optional 4-space indent + ??? type "title"
+        #     content (indented by 4 more spaces relative to ???)
+        # Group 1: leading indent (empty or 4 spaces)
+        # Group 2: + for open state
+        # Group 3: admonition type
+        # Group 4: title
+        # Group 5: body content
+        pattern = r'^(    )?\?\?\?(\+)?\s+(\w+)\s+"([^"]+)"\n((?:(?:\1    ).*\n|\s*\n)*)'
 
         def replace_collapsible(match: re.Match) -> str:
-            is_open = match.group(1) == "+"
-            _admon_type = match.group(2)  # noqa: F841 - captured for potential future use
-            title = match.group(3)
-            body = match.group(4)
+            leading_indent = match.group(1) or ""
+            is_open = match.group(2) == "+"
+            _admon_type = match.group(3)  # noqa: F841 - captured for potential future use
+            title = match.group(4)
+            body = match.group(5)
 
-            # Remove 4-space indentation from body
+            # Determine body indentation: leading_indent + 4 spaces
+            body_indent = leading_indent + "    "
+
+            # Remove body indentation
             body_lines = []
             for line in body.split("\n"):
-                if line.startswith("    "):
-                    body_lines.append(line[4:])
+                if line.startswith(body_indent):
+                    body_lines.append(line[len(body_indent) :])
                 elif line.strip() == "":
                     body_lines.append("")
                 else:
@@ -120,31 +133,52 @@ class MkDocsToNextraConverter:
             self.log(f"Converting collapsible admonition: {title}")
 
             open_attr = " open" if is_open else ""
-            return f'<Details summary="{title}"{open_attr}>\n{body}\n</Details>\n\n'
+            result = f'<Details summary="{title}"{open_attr}>\n{body}\n</Details>\n\n'
+
+            # Preserve leading indent for nested collapsibles
+            if leading_indent:
+                indented_lines = [
+                    leading_indent + line if line else "" for line in result.split("\n")
+                ]
+                return "\n".join(indented_lines)
+            return result
 
         return re.sub(pattern, replace_collapsible, content, flags=re.MULTILINE)
 
     def _convert_admonitions(self, content: str) -> str:
-        """Convert MkDocs admonitions (!!!) to <Callout> components."""
+        """Convert MkDocs admonitions (!!!) to <Callout> components.
+
+        Handles both:
+        - Top-level admonitions (!!!  at line start)
+        - Nested admonitions inside tabs (    !!! indented by 4 spaces)
+        """
         # Ensure content ends with newline for consistent matching
         if not content.endswith("\n"):
             content += "\n"
 
-        # Pattern: !!! type "optional title"
-        #     content (indented by 4 spaces)
+        # Pattern: optional 4-space indent + !!! type "optional title"
+        #     content (indented by 4 more spaces relative to !!!)
         # Match indented lines or blank lines
-        pattern = r'^!!!\s+(\w+)(?:\s+"([^"]+)")?\n((?:    .*\n|\s*\n)*)'
+        # Group 1: leading indent (empty or 4 spaces)
+        # Group 2: admonition type
+        # Group 3: optional title
+        # Group 4: body content
+        pattern = r'^(    )?!!!\s+(\w+)(?:\s+"([^"]+)")?\n((?:(?:\1    ).*\n|\s*\n)*)'
 
         def replace_admonition(match: re.Match) -> str:
-            admon_type = match.group(1).lower()
-            title = match.group(2)
-            body = match.group(3)
+            leading_indent = match.group(1) or ""
+            admon_type = match.group(2).lower()
+            title = match.group(3)
+            body = match.group(4)
 
-            # Remove 4-space indentation from body
+            # Determine body indentation: leading_indent + 4 spaces
+            body_indent = leading_indent + "    "
+
+            # Remove body indentation
             body_lines = []
             for line in body.split("\n"):
-                if line.startswith("    "):
-                    body_lines.append(line[4:])
+                if line.startswith(body_indent):
+                    body_lines.append(line[len(body_indent) :])
                 elif line.strip() == "":
                     body_lines.append("")
                 else:
@@ -156,9 +190,18 @@ class MkDocsToNextraConverter:
             self.log(f"Converting admonition: {admon_type} -> {callout_type}")
 
             if title:
-                return f'<Callout type="{callout_type}" title="{title}">\n{body}\n</Callout>\n\n'
+                result = f'<Callout type="{callout_type}">\n**{title}**\n\n{body}\n</Callout>\n\n'
             else:
-                return f'<Callout type="{callout_type}">\n{body}\n</Callout>\n\n'
+                result = f'<Callout type="{callout_type}">\n{body}\n</Callout>\n\n'
+
+            # Preserve leading indent for nested admonitions
+            if leading_indent:
+                # Indent the entire Callout block
+                indented_lines = [
+                    leading_indent + line if line else "" for line in result.split("\n")
+                ]
+                return "\n".join(indented_lines)
+            return result
 
         return re.sub(pattern, replace_admonition, content, flags=re.MULTILINE)
 

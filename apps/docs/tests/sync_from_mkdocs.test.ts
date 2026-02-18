@@ -75,7 +75,8 @@ More content.`
 
       const output = convertContent(input)
 
-      expect(output).toContain('<Callout type="warning" title="Be Careful">')
+      expect(output).toContain('<Callout type="warning">')
+      expect(output).toContain('**Be Careful**')
       expect(output).toContain('This is a warning message.')
     })
 
@@ -94,7 +95,8 @@ More content.`
 
       const output = convertContent(input)
 
-      expect(output).toContain('<Callout type="info" title="Pro Tip">')
+      expect(output).toContain('<Callout type="info">')
+      expect(output).toContain('**Pro Tip**')
     })
   })
 
@@ -245,7 +247,8 @@ Find answers below.
       // Should have converted components
       expect(output).toContain('<Details summary="What is TraceCraft?">')
       expect(output).toContain('<Details summary="How do I install it?">')
-      expect(output).toContain('<Callout type="info" title="Pro Tip">')
+      expect(output).toContain('<Callout type="info">')
+      expect(output).toContain('**Pro Tip**')
     })
   })
 })

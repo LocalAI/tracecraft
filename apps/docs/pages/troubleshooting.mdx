@@ -677,11 +677,15 @@ tracecraft.init(
 )
 ```
 
-<Callout type="warning" title="Security trade-off">
-`EFFICIENCY` mode skips redaction on traces that are sampled out. Only use it when
-sampled-out traces are discarded immediately and never written to any persistent
-storage.
+<Callout type="warning">
+**Security trade-off**
+
+
 </Callout>
+
+    `EFFICIENCY` mode skips redaction on traces that are sampled out. Only use it when
+    sampled-out traces are discarded immediately and never written to any persistent
+    storage.
 
 Limit which step attributes are scanned by specifying `redact_keys`:
 
@@ -802,9 +806,12 @@ tracecraft.init(
 ```
 </Tabs.Tab>
 <Tabs.Tab>
-!!! danger "Not for production"
-    Only disable TLS on private internal networks. Never disable TLS verification in
-    a production environment exposed to the internet.
+<Callout type="error">
+**Not for production**
+
+Only disable TLS on private internal networks. Never disable TLS verification in
+a production environment exposed to the internet.
+</Callout>
 
 ```python
 from tracecraft.exporters import OTLPExporter
