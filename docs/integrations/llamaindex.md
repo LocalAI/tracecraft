@@ -1,6 +1,8 @@
 # LlamaIndex Integration
 
-TraceCraft integrates with LlamaIndex through the `TraceCraftSpanHandler`.
+TraceCraft integrates with LlamaIndex through the `TraceCraftSpanHandler`, a native LlamaIndex span
+handler that captures every component invocation as a TraceCraft Step with full hierarchy, token
+counts, and error details — without changing your existing LlamaIndex code.
 
 ## Installation
 
@@ -8,66 +10,739 @@ TraceCraft integrates with LlamaIndex through the `TraceCraftSpanHandler`.
 pip install "tracecraft[llamaindex]"
 ```
 
+This installs TraceCraft with LlamaIndex support (`llama-index-core>=0.10`).
+
 ## Quick Start
 
 ```python
 import tracecraft
 from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
-from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader
+from llama_index.core.callbacks import CallbackManager
+from datetime import UTC, datetime
 
 # Initialize TraceCraft
+tracecraft.init(console=True)
+
+# Attach the span handler to LlamaIndex settings
+handler = TraceCraftSpanHandler()
+Settings.callback_manager = CallbackManager(handlers=[handler])
+
+# Wrap every session in an AgentRun context
+run = AgentRun(name="llamaindex_rag", start_time=datetime.now(UTC))
+with run_context(run):
+    documents = SimpleDirectoryReader("data").load_data()
+    index = VectorStoreIndex.from_documents(documents)
+    query_engine = index.as_query_engine()
+    response = query_engine.query("What is TraceCraft?")
+    print(response)
+
+# Free internal tracking state when done
+handler.clear()
+```
+
+!!! note "run_context is required"
+    TraceCraft creates steps only when an `AgentRun` is active. Always wrap LlamaIndex calls
+    inside `run_context(run)` or `runtime.run("name")`.
+
+## How It Works
+
+### TraceCraftSpanHandler
+
+`TraceCraftSpanHandler` extends LlamaIndex's `BaseSpanHandler`. LlamaIndex calls `new_span()` when
+a component starts and `end_span()` or `drop_span()` when it finishes. The handler:
+
+1. Inspects the component instance class name and module to infer a `StepType`.
+2. Creates a `Step` with `start_time`, `inputs`, and optional `model_name`.
+3. Attaches the `Step` to the active `AgentRun` (or as a child of a parent span).
+4. Fills in `end_time`, `duration_ms`, `outputs`, and `input_tokens`/`output_tokens` on completion.
+
+### Type Inference
+
+The handler infers step types from the component being called:
+
+| Component pattern | `StepType` |
+|---|---|
+| Class/module name contains `"llm"` | `LLM` |
+| Class/module name contains `"retriever"` | `RETRIEVAL` |
+| Class/module name contains `"tool"` | `TOOL` |
+| Class/module name contains `"agent"` | `AGENT` |
+| Class name contains `"query"` or `"engine"` | `WORKFLOW` |
+| Everything else | `WORKFLOW` |
+
+### Token Capture
+
+For LLM steps, token counts are extracted from the raw response object:
+
+```
+response.raw["usage"]["prompt_tokens"]     -> step.input_tokens
+response.raw["usage"]["completion_tokens"] -> step.output_tokens
+```
+
+### Streaming
+
+When LlamaIndex streams tokens, you can call `handler.on_llm_stream(id_, chunk)` to accumulate
+chunks. The step's `is_streaming` flag is set to `True` and `streaming_chunks` holds the
+accumulated text.
+
+## Basic Examples
+
+### Simple Completion
+
+```python
+import tracecraft
+from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from llama_index.core import Settings
+from llama_index.core.callbacks import CallbackManager
+from llama_index.llms.openai import OpenAI
+from datetime import UTC, datetime
+
 tracecraft.init()
 
-# Set global handler
-import llama_index.core
-llama_index.core.global_handler = TraceCraftSpanHandler()
+handler = TraceCraftSpanHandler()
+Settings.callback_manager = CallbackManager(handlers=[handler])
 
-# Use LlamaIndex normally
-documents = SimpleDirectoryReader("data").load_data()
-index = VectorStoreIndex.from_documents(documents)
-query_engine = index.as_query_engine()
-response = query_engine.query("What is TraceCraft?")
+llm = OpenAI(model="gpt-4o-mini")
+
+run = AgentRun(name="completion", start_time=datetime.now(UTC))
+with run_context(run):
+    response = llm.complete("Explain LLM observability in one sentence.")
+    print(response.text)
+
+handler.clear()
+```
+
+### Chat Completion
+
+```python
+from llama_index.llms.openai import OpenAI
+from llama_index.core.llms import ChatMessage
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+llm = OpenAI(model="gpt-4o-mini")
+
+run = AgentRun(name="chat", start_time=datetime.now(UTC))
+with run_context(run):
+    messages = [
+        ChatMessage(role="system", content="You are a helpful assistant."),
+        ChatMessage(role="user", content="What makes TraceCraft different?"),
+    ]
+    response = llm.chat(messages)
+    print(response.message.content)
 ```
 
 ## Query Engines
 
-```python
-from llama_index.core import VectorStoreIndex
+### Basic Query Engine
 
+```python
+import tracecraft
+from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader
+from llama_index.core.callbacks import CallbackManager
+from datetime import UTC, datetime
+
+tracecraft.init()
+
+handler = TraceCraftSpanHandler()
+Settings.callback_manager = CallbackManager(handlers=[handler])
+
+documents = SimpleDirectoryReader("data").load_data()
 index = VectorStoreIndex.from_documents(documents)
 query_engine = index.as_query_engine()
 
-# Automatically traced
-response = query_engine.query("Your question")
+run = AgentRun(name="query_engine", start_time=datetime.now(UTC))
+with run_context(run):
+    response = query_engine.query("Summarize the key findings.")
+    print(response)
+
+handler.clear()
 ```
+
+### Custom Query Engine Settings
+
+```python
+from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.retrievers import VectorIndexRetriever
+from llama_index.core.response_synthesizers import get_response_synthesizer
+
+# Retriever with custom top-k
+retriever = VectorIndexRetriever(
+    index=index,
+    similarity_top_k=5,
+)
+
+# Response synthesizer with a specific mode
+response_synthesizer = get_response_synthesizer(response_mode="tree_summarize")
+
+query_engine = RetrieverQueryEngine(
+    retriever=retriever,
+    response_synthesizer=response_synthesizer,
+)
+
+run = AgentRun(name="custom_query_engine", start_time=datetime.now(UTC))
+with run_context(run):
+    response = query_engine.query("What are the main topics?")
+    print(response)
+```
+
+TraceCraft captures the retriever step (type `RETRIEVAL`) and the synthesizer step (type `LLM`)
+as children of the overall query workflow.
+
+## RAG Pipelines
+
+### Basic RAG
+
+```python
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from llama_index.core import Settings
+from llama_index.llms.openai import OpenAI
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+Settings.llm = OpenAI(model="gpt-4o-mini")
+Settings.chunk_size = 512
+
+documents = SimpleDirectoryReader("data").load_data()
+index = VectorStoreIndex.from_documents(documents)
+query_engine = index.as_query_engine(similarity_top_k=3)
+
+run = AgentRun(name="basic_rag", start_time=datetime.now(UTC))
+with run_context(run):
+    response = query_engine.query(
+        "What are the installation steps for TraceCraft?"
+    )
+    print(response)
+    for node in response.source_nodes:
+        print(f"Source: {node.metadata.get('file_name')}, Score: {node.score:.3f}")
+```
+
+### Multi-Document RAG
+
+```python
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+docs_technical = SimpleDirectoryReader("docs/technical").load_data()
+docs_user = SimpleDirectoryReader("docs/user_guide").load_data()
+
+index = VectorStoreIndex.from_documents(docs_technical + docs_user)
+query_engine = index.as_query_engine(similarity_top_k=5)
+
+run = AgentRun(name="multi_doc_rag", start_time=datetime.now(UTC))
+with run_context(run):
+    questions = [
+        "How does the exporter pipeline work?",
+        "What authentication methods are supported?",
+        "How do I configure sampling rates?",
+    ]
+    for question in questions:
+        response = query_engine.query(question)
+        print(f"Q: {question}\nA: {response}\n")
+```
+
+### RAG with Reranking
+
+```python
+from llama_index.core import VectorStoreIndex
+from llama_index.core.postprocessor import SentenceTransformerRerank
+from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.retrievers import VectorIndexRetriever
+from llama_index.core.response_synthesizers import get_response_synthesizer
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+retriever = VectorIndexRetriever(index=index, similarity_top_k=10)
+reranker = SentenceTransformerRerank(
+    model="cross-encoder/ms-marco-MiniLM-L-2-v2",
+    top_n=3,
+)
+
+query_engine = RetrieverQueryEngine(
+    retriever=retriever,
+    node_postprocessors=[reranker],
+    response_synthesizer=get_response_synthesizer(response_mode="compact"),
+)
+
+run = AgentRun(name="rag_with_reranking", start_time=datetime.now(UTC))
+with run_context(run):
+    response = query_engine.query("What is the recommended deployment strategy?")
+    print(response)
+```
+
+TraceCraft captures retrieval, reranking, and synthesis as separate steps in the trace tree.
 
 ## Chat Engines
 
-```python
-chat_engine = index.as_chat_engine()
+### Basic Chat Engine
 
-# Traced conversation
-response = chat_engine.chat("Hello")
-response = chat_engine.chat("Follow-up question")
+```python
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+documents = SimpleDirectoryReader("data").load_data()
+index = VectorStoreIndex.from_documents(documents)
+chat_engine = index.as_chat_engine(chat_mode="best", verbose=False)
+
+run = AgentRun(name="chat_session", start_time=datetime.now(UTC))
+with run_context(run):
+    response = chat_engine.chat("What is TraceCraft?")
+    print(response)
+
+    response = chat_engine.chat("How does it compare to LangSmith?")
+    print(response)
+
+    response = chat_engine.chat("What exporters does it support?")
+    print(response)
+
+handler.clear()
+```
+
+### Chat Engine with Memory
+
+```python
+from llama_index.core.memory import ChatMemoryBuffer
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+memory = ChatMemoryBuffer.from_defaults(token_limit=3000)
+chat_engine = index.as_chat_engine(
+    chat_mode="context",
+    memory=memory,
+    system_prompt=(
+        "You are a technical assistant for TraceCraft. "
+        "Answer questions based on the documentation."
+    ),
+)
+
+run = AgentRun(name="chat_with_memory", start_time=datetime.now(UTC))
+with run_context(run):
+    turns = [
+        "What is the purpose of TraceCraft?",
+        "What step types are available?",
+        "Can you give me an example using the TOOL step type?",
+    ]
+    for turn in turns:
+        response = chat_engine.chat(turn)
+        print(f"User: {turn}")
+        print(f"Assistant: {response}\n")
 ```
 
 ## Agents
 
+### ReAct Agent
+
 ```python
 from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
+from llama_index.llms.openai import OpenAI
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
 
-def calculator(a: int, b: int) -> int:
+def multiply(a: float, b: float) -> float:
+    """Multiply two numbers and return the result."""
+    return a * b
+
+def search_docs(query: str) -> str:
+    """Search the documentation for information about a topic."""
+    return f"Documentation results for '{query}': TraceCraft is an observability SDK for LLMs."
+
+multiply_tool = FunctionTool.from_defaults(fn=multiply)
+search_tool = FunctionTool.from_defaults(fn=search_docs)
+
+llm = OpenAI(model="gpt-4o-mini")
+agent = ReActAgent.from_tools(
+    [multiply_tool, search_tool],
+    llm=llm,
+    verbose=False,
+    max_iterations=10,
+)
+
+run = AgentRun(name="react_agent", start_time=datetime.now(UTC))
+with run_context(run):
+    response = agent.query("What is 47 times 89? Also, what is TraceCraft?")
+    print(response)
+```
+
+### QueryEngineTool Agent
+
+```python
+from llama_index.core.agent import ReActAgent
+from llama_index.core.tools import QueryEngineTool, ToolMetadata
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+index_docs = VectorStoreIndex.from_documents(SimpleDirectoryReader("docs").load_data())
+index_code = VectorStoreIndex.from_documents(SimpleDirectoryReader("src").load_data())
+
+docs_tool = QueryEngineTool(
+    query_engine=index_docs.as_query_engine(),
+    metadata=ToolMetadata(
+        name="documentation",
+        description="Search the TraceCraft documentation.",
+    ),
+)
+code_tool = QueryEngineTool(
+    query_engine=index_code.as_query_engine(),
+    metadata=ToolMetadata(
+        name="source_code",
+        description="Search the TraceCraft source code.",
+    ),
+)
+
+agent = ReActAgent.from_tools([docs_tool, code_tool], verbose=False)
+
+run = AgentRun(name="multi_tool_agent", start_time=datetime.now(UTC))
+with run_context(run):
+    response = agent.query(
+        "How does TraceCraft's LangChain adapter capture token counts? "
+        "Show me the relevant source code."
+    )
+    print(response)
+```
+
+### Multi-Tool Agent
+
+```python
+from llama_index.core.agent import ReActAgent
+from llama_index.core.tools import FunctionTool
+from llama_index.llms.openai import OpenAI
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+def get_weather(city: str) -> str:
+    """Get current weather for a city."""
+    return f"Weather in {city}: 72F, partly cloudy."
+
+def add_numbers(a: float, b: float) -> float:
+    """Add two numbers together."""
     return a + b
 
-tool = FunctionTool.from_defaults(fn=calculator)
-agent = ReActAgent.from_tools([tool])
+def lookup_company(name: str) -> str:
+    """Return basic info about a company."""
+    db = {"tracecraft": "Open-source LLM observability SDK, founded 2024."}
+    return db.get(name.lower(), "Company not found.")
 
-# Traced agent execution
-response = agent.query("What is 5 + 3?")
+tools = [
+    FunctionTool.from_defaults(fn=get_weather),
+    FunctionTool.from_defaults(fn=add_numbers),
+    FunctionTool.from_defaults(fn=lookup_company),
+]
+
+agent = ReActAgent.from_tools(tools, llm=OpenAI(model="gpt-4o-mini"))
+
+run = AgentRun(name="multi_tool_agent", start_time=datetime.now(UTC))
+with run_context(run):
+    response = agent.query(
+        "What is the weather in Seattle? "
+        "Also, what is 123 plus 456? "
+        "Tell me about TraceCraft."
+    )
+    print(response)
+```
+
+## Streaming
+
+### Streaming Completions
+
+```python
+import tracecraft
+from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from llama_index.core import Settings
+from llama_index.core.callbacks import CallbackManager
+from llama_index.llms.openai import OpenAI
+from datetime import UTC, datetime
+
+tracecraft.init()
+
+handler = TraceCraftSpanHandler()
+Settings.callback_manager = CallbackManager(handlers=[handler])
+
+llm = OpenAI(model="gpt-4o-mini")
+
+run = AgentRun(name="streaming_completion", start_time=datetime.now(UTC))
+with run_context(run):
+    streaming_response = llm.stream_complete("Explain RAG in 3 sentences.")
+    for token in streaming_response:
+        print(token.delta, end="", flush=True)
+    print()
+
+handler.clear()
+```
+
+### Streaming RAG
+
+```python
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+documents = SimpleDirectoryReader("data").load_data()
+index = VectorStoreIndex.from_documents(documents)
+query_engine = index.as_query_engine(streaming=True)
+
+run = AgentRun(name="streaming_rag", start_time=datetime.now(UTC))
+with run_context(run):
+    streaming_response = query_engine.query("Describe the TraceCraft architecture.")
+    streaming_response.print_response_stream()
+
+handler.clear()
+```
+
+!!! tip "Streaming and token counts"
+    When streaming is enabled, LlamaIndex may not provide final token counts until the stream
+    completes. TraceCraft captures whatever usage data is available in the response object.
+
+## Advanced Usage
+
+### Per-Run Configuration
+
+Use `run_context` to assign metadata and group related queries under one trace:
+
+```python
+import tracecraft
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+run = AgentRun(
+    name="nightly_report_generation",
+    start_time=datetime.now(UTC),
+)
+run.attributes["user_id"] = "user-789"
+run.attributes["report_type"] = "weekly_summary"
+
+with run_context(run):
+    for section in ["intro", "methodology", "results", "conclusion"]:
+        response = query_engine.query(f"Generate the {section} section of the report.")
+        print(response)
+
+tracecraft.get_runtime().end_run(run)
+```
+
+### Multiple Indices
+
+TraceCraft handles calls across multiple indices in the same run:
+
+```python
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+engine_a = index_a.as_query_engine()
+engine_b = index_b.as_query_engine()
+
+run = AgentRun(name="multi_index_query", start_time=datetime.now(UTC))
+with run_context(run):
+    answer_a = engine_a.query("What does document set A say about caching?")
+    answer_b = engine_b.query("What does document set B say about caching?")
+    print(f"Set A: {answer_a}")
+    print(f"Set B: {answer_b}")
+```
+
+Both queries appear as sibling steps inside the same run.
+
+### Custom Components
+
+When you subclass a LlamaIndex component, TraceCraft infers the step type from the class and module
+name. Ensure your class name contains a descriptive keyword (`llm`, `retriever`, `tool`, `agent`)
+so the inference logic maps it correctly:
+
+```python
+from llama_index.core.retrievers import BaseRetriever
+from llama_index.core.schema import QueryBundle, NodeWithScore
+
+class MyCustomRetriever(BaseRetriever):
+    """Custom retriever — 'retriever' in the class name triggers RETRIEVAL step type."""
+
+    def _retrieve(self, query_bundle: QueryBundle) -> list[NodeWithScore]:
+        # Your custom retrieval logic
+        return []
+```
+
+## Best Practices
+
+### 1. Initialize Once at Startup
+
+```python
+# app.py
+import tracecraft
+from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
+from llama_index.core import Settings
+from llama_index.core.callbacks import CallbackManager
+
+tracecraft.init(service_name="my-llamaindex-app")
+
+handler = TraceCraftSpanHandler()
+Settings.callback_manager = CallbackManager(handlers=[handler])
+```
+
+Attach the handler to `Settings` once. All subsequent LlamaIndex calls pick it up automatically.
+
+### 2. Always Use run_context
+
+Every query should be wrapped in a `run_context` (or `runtime.run()`) to provide the `AgentRun`
+that steps are attached to. Without it, spans are silently dropped:
+
+```python
+runtime = tracecraft.get_runtime()
+
+with runtime.run("user_query"):
+    response = query_engine.query(user_question)
+```
+
+### 3. Call clear() After Each Session
+
+The handler keeps in-flight spans in memory. Call `handler.clear()` after a session completes to
+prevent unbounded memory growth, especially in long-running servers:
+
+```python
+try:
+    with run_context(run):
+        response = query_engine.query(question)
+finally:
+    handler.clear()
+```
+
+### 4. Group Batch Queries Into One Run
+
+Wrapping a batch of queries in a single run gives you aggregate token and error counts across
+the whole batch:
+
+```python
+with runtime.run("batch_processing") as run:
+    for query in query_list:
+        engine.query(query)
+# run.total_tokens reflects all queries combined
+```
+
+### 5. Handle Errors Gracefully
+
+When a LlamaIndex component raises an exception, `drop_span()` is called and the error is captured
+in `step.error` automatically. Catch exceptions at the application level without losing trace data:
+
+```python
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+import logging
+
+logger = logging.getLogger(__name__)
+
+run = AgentRun(name="safe_query", start_time=datetime.now(UTC))
+with run_context(run):
+    try:
+        response = query_engine.query(user_query)
+    except Exception as exc:
+        # The failed span is already recorded in the run
+        logger.error("Query failed: %s", exc)
+```
+
+## Troubleshooting
+
+### Spans Not Captured
+
+**Symptom:** `run.steps` is empty after calling LlamaIndex.
+
+**Cause:** The handler was not registered with `Settings.callback_manager` before the index or
+engine was created, or no `AgentRun` was active in context.
+
+**Fix:** Register the handler before building any index, and always use `run_context`:
+
+```python
+# Register handler BEFORE creating indices or query engines
+handler = TraceCraftSpanHandler()
+Settings.callback_manager = CallbackManager(handlers=[handler])
+
+# Build your index after registration
+index = VectorStoreIndex.from_documents(documents)
+
+# Wrap calls in a run context
+run = AgentRun(name="my_run", start_time=datetime.now(UTC))
+with run_context(run):
+    response = index.as_query_engine().query("Hello")
+```
+
+### Duplicate Traces
+
+**Symptom:** Each query produces two identical runs.
+
+**Cause:** Multiple handlers were attached, or `tracecraft.init()` was called more than once.
+
+**Fix:** Create the handler and call `tracecraft.init()` once per process:
+
+```python
+# In your application entry point — call these once only
+tracecraft.init()
+handler = TraceCraftSpanHandler()
+Settings.callback_manager = CallbackManager(handlers=[handler])
+```
+
+### Missing Token Counts
+
+**Symptom:** `step.input_tokens` and `step.output_tokens` are `None` for LLM steps.
+
+**Cause:** The LLM provider does not populate `response.raw["usage"]`.
+
+**Fix:** Verify that your LLM returns usage data. For OpenAI:
+
+```python
+from llama_index.llms.openai import OpenAI
+
+llm = OpenAI(model="gpt-4o-mini")
+response = llm.complete("Hello")
+# Should contain {"usage": {"prompt_tokens": ..., "completion_tokens": ...}}
+print(response.raw)
+```
+
+### Memory Issues in Long-Running Servers
+
+**Symptom:** Memory grows unboundedly over time.
+
+**Cause:** `handler.clear()` is not called between requests, leaving completed spans in the
+handler's internal dictionary.
+
+**Fix:** Always clear the handler after each request, using `try/finally`:
+
+```python
+from tracecraft.core.context import run_context
+from tracecraft.core.models import AgentRun
+from datetime import UTC, datetime
+
+async def handle_request(query: str) -> str:
+    run = AgentRun(name="request", start_time=datetime.now(UTC))
+    try:
+        with run_context(run):
+            return str(query_engine.query(query))
+    finally:
+        handler.clear()
 ```
 
 ## Next Steps
 
 - [LangChain Integration](langchain.md)
+- [PydanticAI Integration](pydantic-ai.md)
+- [Auto-Instrumentation](auto-instrumentation.md)
 - [User Guide](../user-guide/index.md)

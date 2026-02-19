@@ -7,7 +7,9 @@ and debugging LLM/Agent traces with table and waterfall views.
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING, Any
+from uuid import UUID
 
 # Import theme for consistent styling
 from tracecraft.tui.theme import (
@@ -43,24 +45,31 @@ def _get_bindings() -> list[Any]:
     """Get keybindings for the app (only when textual is available)."""
     if not TEXTUAL_AVAILABLE or Binding is None:
         return []
+    # Note: priority=True ensures app-level bindings work regardless of focused widget
     return [
-        Binding("q", "quit", "Quit"),
-        Binding("r", "refresh", "Refresh"),
-        Binding("slash", "filter", "Filter"),
-        Binding("tab", "cycle_view", "Cycle View"),
-        Binding("i", "show_input", "Input"),
-        Binding("o", "show_output", "Output"),
-        Binding("a", "show_detail", "Detail"),
-        Binding("p", "playground", "Play"),
-        Binding("question_mark", "help", "Help"),
-        Binding("escape", "back", "Back"),
-        Binding("plus", "grow_panel", "+Panel", show=False),
-        Binding("equal", "grow_panel", "+Panel", show=False),
-        Binding("minus", "shrink_panel", "-Panel", show=False),
-        Binding("bracketleft", "shrink_left_panel", "←Div", show=False),
-        Binding("bracketright", "grow_left_panel", "Div→", show=False),
-        Binding("H", "shrink_left_panel", "←Div", show=True),
-        Binding("L", "grow_left_panel", "Div→", show=True),
+        Binding("q", "quit", "Quit", priority=True),
+        Binding("r", "refresh", "Refresh", priority=True),
+        Binding("slash", "filter", "Filter", priority=True),
+        Binding("tab", "cycle_view", "Cycle View", priority=True),
+        Binding("i", "show_input", "Input", priority=True),
+        Binding("o", "show_output", "Output", priority=True),
+        Binding("a", "show_detail", "Detail", priority=True),
+        Binding("p", "playground", "Play", priority=True),
+        Binding("question_mark", "help", "Help", priority=True),
+        Binding("escape", "back", "Back", priority=True),
+        Binding("plus", "grow_panel", "+Panel", show=False, priority=True),
+        Binding("equal", "grow_panel", "+Panel", show=False, priority=True),
+        Binding("minus", "shrink_panel", "-Panel", show=False, priority=True),
+        Binding("bracketleft", "shrink_left_panel", "←Div", show=False, priority=True),
+        Binding("bracketright", "grow_left_panel", "Div→", show=False, priority=True),
+        Binding("H", "shrink_left_panel", "←Div", show=True, priority=True),
+        Binding("L", "grow_left_panel", "Div→", show=True, priority=True),
+        Binding("m", "mark_trace", "Mark", priority=True),
+        Binding("C", "compare_traces", "Compare", priority=True),
+        Binding("V", "view_comparison", "View Result", priority=True),
+        Binding("D", "delete_trace", "Delete", priority=True),
+        Binding("N", "edit_notes", "Notes", priority=True),
+        Binding("A", "toggle_archive", "Archive", priority=True),
     ]
 
 
@@ -328,6 +337,10 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
         self._waterfall_expanded: bool = False
         self._waterfall_height: int = 18  # Default max-height
         self._left_panel_width: int = 45  # Default width percentage
+        # Comparison state
+        self._marked_trace_id: UUID | None = None
+        # Dict mapping trace_id -> list of ComparisonResults involving that trace
+        self._comparisons: dict[UUID, list[Any]] = {}
 
     def compose(self) -> ComposeResult:
         """Compose the UI layout."""
@@ -876,3 +889,375 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
             return
 
         self.push_screen(HelpScreen(context="Main App"))
+
+    # Key handlers for app-level actions
+    # This is a workaround for Textual binding resolution issues where
+    # app-level bindings show as disabled even though the actions exist.
+
+    async def on_key(self, event: Any) -> None:
+        """Handle key events directly for app-level actions."""
+        # Skip if we're in an input field (let the input handle the key)
+        from textual.widgets import Input
+
+        if isinstance(self.focused, Input):
+            return
+
+        key = event.key
+
+        # Core app actions (some inherited actions are async)
+        if key == "q":
+            await self.action_quit()
+            event.stop()
+        elif key == "r":
+            self.action_refresh()
+            event.stop()
+        elif key == "slash":
+            self.action_filter()
+            event.stop()
+        elif key == "tab":
+            self.action_cycle_view()
+            event.stop()
+        elif key == "i":
+            self.action_show_input()
+            event.stop()
+        elif key == "o":
+            self.action_show_output()
+            event.stop()
+        elif key == "a":
+            self.action_show_detail()
+            event.stop()
+        elif key == "p":
+            self.action_playground()
+            event.stop()
+        elif key == "question_mark":
+            self.action_help()
+            event.stop()
+        elif key == "escape":
+            self.action_back()
+            event.stop()
+        # Panel resizing
+        elif key in ("plus", "equal"):
+            self.action_grow_panel()
+            event.stop()
+        elif key == "minus":
+            self.action_shrink_panel()
+            event.stop()
+        elif key == "bracketleft":
+            self.action_shrink_left_panel()
+            event.stop()
+        elif key == "bracketright":
+            self.action_grow_left_panel()
+            event.stop()
+        elif key == "H":
+            self.action_shrink_left_panel()
+            event.stop()
+        elif key == "L":
+            self.action_grow_left_panel()
+            event.stop()
+        # Comparison and trace management
+        elif key == "m":
+            self.action_mark_trace()
+            event.stop()
+        elif key == "C":
+            self.action_compare_traces()
+            event.stop()
+        elif key == "V":
+            self.action_view_comparison()
+            event.stop()
+        elif key == "D":
+            self.action_delete_trace()
+            event.stop()
+        elif key == "N":
+            self.action_edit_notes()
+            event.stop()
+        elif key == "A":
+            self.action_toggle_archive()
+            event.stop()
+
+    # Comparison actions
+
+    def action_mark_trace(self) -> None:
+        """Mark the current trace for comparison."""
+        from tracecraft.tui.widgets.trace_table import TraceTable
+
+        # Use _current_run which is set by trace highlight events
+        if not self._current_run:
+            self.notify("No trace selected", severity="warning")
+            return
+
+        self._marked_trace_id = self._current_run.id
+        table = self.query_one("#trace-table", TraceTable)
+        table.set_marked_trace(self._current_run.id)
+        self.notify(f"Marked: {self._current_run.name}", timeout=2)
+
+    def action_compare_traces(self) -> None:
+        """Compare the marked trace with the current trace."""
+        from tracecraft.tui.screens.comparison_prompt_picker import ComparisonPromptPicker
+
+        if not self._marked_trace_id:
+            self.notify(
+                "No trace marked. Press 'm' to mark a trace first.",
+                severity="warning",
+            )
+            return
+
+        # Use _current_run which is set by trace highlight events
+        if not self._current_run:
+            self.notify("No trace selected", severity="warning")
+            return
+
+        if self._current_run.id == self._marked_trace_id:
+            self.notify("Cannot compare trace with itself", severity="warning")
+            return
+
+        def on_config_selected(result: tuple[str, str, str] | None) -> None:
+            if result is None:
+                return
+            self._run_comparison(result)
+
+        self.push_screen(ComparisonPromptPicker(), on_config_selected)
+
+    def _run_comparison(self, config: tuple[str, str, str]) -> None:
+        """Run the comparison with the selected configuration."""
+        from tracecraft.comparison.models import ComparisonRequest
+
+        prompt_id, model, provider = config
+
+        # Use _current_run which is set by trace highlight events
+        if not self._current_run or not self._marked_trace_id:
+            return
+
+        request = ComparisonRequest(
+            trace_a_id=self._marked_trace_id,
+            trace_b_id=self._current_run.id,
+            prompt_id=prompt_id,
+            model=model,
+            provider=provider,
+        )
+
+        self.notify("Running comparison...", timeout=3)
+        asyncio.create_task(self._execute_comparison(request))
+
+    async def _execute_comparison(self, request: Any) -> None:
+        """Execute the comparison in the background."""
+        from tracecraft.comparison.runner import ComparisonRunner
+
+        if not self._loader:
+            self.notify("No data source available", severity="error")
+            return
+
+        runner = ComparisonRunner(self._loader.store)
+
+        try:
+            result = await runner.run_comparison(request)
+
+            # Store result for both traces involved
+            trace_a_id = request.trace_a_id
+            trace_b_id = request.trace_b_id
+
+            if trace_a_id not in self._comparisons:
+                self._comparisons[trace_a_id] = []
+            self._comparisons[trace_a_id].append(result)
+
+            if trace_b_id not in self._comparisons:
+                self._comparisons[trace_b_id] = []
+            self._comparisons[trace_b_id].append(result)
+
+            # Refresh bindings so "V View Result" becomes visible
+            self.refresh_bindings()
+
+            self.notify(
+                "Comparison complete! Press V to view.",
+                severity="information",
+                timeout=5,
+            )
+        except Exception as e:
+            self.notify(f"Comparison failed: {e}", severity="error")
+
+    def action_view_comparison(self) -> None:
+        """View comparison results for the current trace."""
+        from tracecraft.tui.screens.comparison_result_viewer import ComparisonResultViewer
+
+        if not self._current_run:
+            self.notify("No trace selected", severity="warning")
+            return
+
+        trace_id = self._current_run.id
+        comparisons = self._comparisons.get(trace_id, [])
+
+        if not comparisons:
+            self.notify(
+                "No comparisons for this trace. Mark with 'm', then 'C' to compare.",
+                severity="warning",
+            )
+            return
+
+        def on_delete(result: Any) -> None:
+            """Handle deletion of a comparison result."""
+            self._delete_comparison(result)
+
+        self.push_screen(ComparisonResultViewer(comparisons, on_delete=on_delete))
+
+    def _delete_comparison(self, result: Any) -> None:
+        """Delete a comparison result from all traces it's associated with."""
+        trace_a_id = result.request.trace_a_id
+        trace_b_id = result.request.trace_b_id
+
+        # Remove from trace_a's list
+        if trace_a_id in self._comparisons:
+            self._comparisons[trace_a_id] = [
+                c for c in self._comparisons[trace_a_id] if c.id != result.id
+            ]
+            if not self._comparisons[trace_a_id]:
+                del self._comparisons[trace_a_id]
+
+        # Remove from trace_b's list
+        if trace_b_id in self._comparisons:
+            self._comparisons[trace_b_id] = [
+                c for c in self._comparisons[trace_b_id] if c.id != result.id
+            ]
+            if not self._comparisons[trace_b_id]:
+                del self._comparisons[trace_b_id]
+
+        # Refresh bindings to update "V View Result" visibility
+        self.refresh_bindings()
+
+    def has_comparisons_for_trace(self, trace_id: UUID) -> bool:
+        """Check if a trace has any comparison results."""
+        return trace_id in self._comparisons and len(self._comparisons[trace_id]) > 0
+
+    def check_action(self, action: str, _parameters: tuple[object, ...]) -> bool | None:
+        """Check if an action should be enabled.
+
+        Used to conditionally enable/disable keybindings in the footer.
+        """
+        if action == "view_comparison":
+            # Only enable "View Result" if current trace has comparison results
+            if not self._current_run:
+                return False
+            return self.has_comparisons_for_trace(self._current_run.id)
+        return None  # Default behavior for other actions
+
+    # =========================================================================
+    # Trace Management Actions (Delete, Notes, Archive)
+    # =========================================================================
+
+    def action_delete_trace(self) -> None:
+        """Delete the current trace after confirmation."""
+        from tracecraft.tui.screens.confirm_delete import ConfirmDeleteModal
+
+        if not self._current_run:
+            self.notify("No trace selected", severity="warning")
+            return
+
+        if not self._loader or not self._loader.store:
+            self.notify("No data store available", severity="error")
+            return
+
+        trace = self._current_run
+        store = self._loader.store  # Capture for closure
+
+        def on_confirm(confirmed: bool) -> None:
+            if not confirmed:
+                return
+
+            try:
+                deleted = store.delete(str(trace.id))
+                if deleted:
+                    self.notify(f"Deleted: {trace.name}", timeout=2)
+                    # Remove from local list and refresh table
+                    self._runs = [r for r in self._runs if r.id != trace.id]
+                    self._current_run = None
+                    self._refresh_trace_table()
+                else:
+                    self.notify("Trace not found", severity="warning")
+            except Exception as e:
+                self.notify(f"Delete failed: {e}", severity="error")
+
+        self.push_screen(ConfirmDeleteModal(trace), callback=on_confirm)
+
+    def action_edit_notes(self) -> None:
+        """Edit notes for the current trace."""
+        from tracecraft.tui.screens.notes_editor import NotesEditorModal
+
+        if not self._current_run:
+            self.notify("No trace selected", severity="warning")
+            return
+
+        if not self._loader or not self._loader.store:
+            self.notify("No data store available", severity="error")
+            return
+
+        trace = self._current_run
+        store = self._loader.store  # Capture for closure
+
+        # Get current notes
+        try:
+            current_notes = store.get_notes(str(trace.id))
+        except NotImplementedError:
+            self.notify("Notes not supported by this backend", severity="warning")
+            return
+
+        def on_save(notes: str | None) -> None:
+            if notes is None:
+                return  # Cancelled
+
+            try:
+                updated = store.set_notes(str(trace.id), notes)
+                if updated:
+                    self.notify("Notes saved", timeout=2)
+                else:
+                    self.notify("Trace not found", severity="warning")
+            except NotImplementedError:
+                self.notify("Notes not supported by this backend", severity="warning")
+            except Exception as e:
+                self.notify(f"Failed to save notes: {e}", severity="error")
+
+        self.push_screen(NotesEditorModal(trace, current_notes), callback=on_save)
+
+    def action_toggle_archive(self) -> None:
+        """Toggle archive status of the current trace."""
+        if not self._current_run:
+            self.notify("No trace selected", severity="warning")
+            return
+
+        if not self._loader or not self._loader.store:
+            self.notify("No data store available", severity="error")
+            return
+
+        trace = self._current_run
+
+        try:
+            is_archived = self._loader.store.is_archived(str(trace.id))
+            if is_archived:
+                success = self._loader.store.unarchive(str(trace.id))
+                if success:
+                    self.notify(f"Unarchived: {trace.name}", timeout=2)
+                else:
+                    self.notify("Trace not found", severity="warning")
+            else:
+                success = self._loader.store.archive(str(trace.id))
+                if success:
+                    self.notify(f"Archived: {trace.name}", timeout=2)
+                    # Remove from current view if hiding archived
+                    self._runs = [r for r in self._runs if r.id != trace.id]
+                    self._current_run = None
+                    self._refresh_trace_table()
+                else:
+                    self.notify("Trace not found", severity="warning")
+        except NotImplementedError:
+            self.notify("Archive not supported by this backend", severity="warning")
+        except Exception as e:
+            self.notify(f"Archive operation failed: {e}", severity="error")
+
+    def _refresh_trace_table(self) -> None:
+        """Refresh the trace table with current runs."""
+        from tracecraft.tui.widgets.trace_table import TraceTable
+
+        try:
+            table = self.query_one("#trace-table", TraceTable)
+            table.clear()
+            for run in self._runs:
+                table.add_trace(run)
+        except Exception:  # nosec B110
+            pass  # Table might not be mounted yet

@@ -20,6 +20,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
 
+from tracecraft.cli.prompts import app as prompts_app
 from tracecraft.core.models import AgentRun, Step, StepType
 
 # Create the main app
@@ -28,6 +29,9 @@ app = typer.Typer(
     help="Trace Craft CLI - View and manage LLM observability traces",
     add_completion=False,
 )
+
+# Register subcommand groups
+app.add_typer(prompts_app, name="prompts")
 
 console = Console()
 

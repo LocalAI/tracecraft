@@ -81,14 +81,26 @@ def live_test_model() -> str:
 
 def requires_openai_key(func: Any) -> Any:
     """Decorator to skip test if OpenAI API key is not set."""
+    import asyncio
 
-    @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        if not os.environ.get("OPENAI_API_KEY"):
-            pytest.skip("OPENAI_API_KEY not set")
-        return func(*args, **kwargs)
+    if asyncio.iscoroutinefunction(func):
 
-    return wrapper
+        @functools.wraps(func)
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+            if not os.environ.get("OPENAI_API_KEY"):
+                pytest.skip("OPENAI_API_KEY not set")
+            return await func(*args, **kwargs)
+
+        return async_wrapper
+    else:
+
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            if not os.environ.get("OPENAI_API_KEY"):
+                pytest.skip("OPENAI_API_KEY not set")
+            return func(*args, **kwargs)
+
+        return wrapper
 
 
 def requires_anthropic_key(func: Any) -> Any:

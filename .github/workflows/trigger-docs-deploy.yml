@@ -1,0 +1,25 @@
+name: Trigger Docs Deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+
+jobs:
+  trigger:
+    name: Trigger tracecraft-infra deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger infra repository deploy
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: 'LocalAI',
+              repo: 'tracecraft-infra',
+              workflow_id: 'amplify-rebuild.yml',
+              ref: 'main',
+            })

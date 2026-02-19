@@ -243,6 +243,10 @@ class AutoInstrumentor:
         """
         Enable auto-instrumentation for a specific provider.
 
+        Prefers manual patching (which creates TraceCraft Steps) over OTel
+        instrumentation (which creates OTel spans but requires additional
+        span processors to convert to TraceCraft format).
+
         Args:
             provider: Provider name (e.g., "openai", "anthropic").
 
@@ -253,27 +257,30 @@ class AutoInstrumentor:
             logger.debug("%s already instrumented", provider.title())
             return True
 
-        # Try OTel first
+        # Try manual patching first - this creates TraceCraft Steps directly
+        # via @trace_llm decorator, which is what users expect from auto-instrumentation
+        if provider in self._PROVIDER_CONFIGS:
+            try:
+                self._patch_provider(provider)
+                self._instrumented[provider] = True
+                logger.info("%s auto-instrumentation enabled via patching", provider.title())
+                return True
+            except ImportError:
+                logger.warning(
+                    "%s not installed. Install with: pip install %s",
+                    provider.title(),
+                    provider,
+                )
+                return False
+            except Exception:
+                logger.debug("Manual patching failed for %s, trying OTel", provider.title())
+
+        # Fall back to OTel instrumentation (creates OTel spans, not TraceCraft Steps)
         if self._try_otel_instrumentation(provider):
             self._instrumented[provider] = True
             return True
 
-        # Fall back to manual patching
-        try:
-            self._patch_provider(provider)
-            self._instrumented[provider] = True
-            logger.info("%s auto-instrumentation enabled via patching", provider.title())
-            return True
-        except ImportError:
-            logger.warning(
-                "%s not installed. Install with: pip install %s",
-                provider.title(),
-                provider,
-            )
-            return False
-        except Exception:
-            logger.exception("Failed to instrument %s", provider.title())
-            return False
+        return False
 
     def instrument_openai(self) -> bool:
         """Enable auto-instrumentation for OpenAI."""
@@ -614,15 +621,14 @@ def enable_auto_instrumentation(
     Example:
         ```python
         import tracecraft
+
+        # Preferred: pass auto_instrument directly to init()
+        tracecraft.init(auto_instrument=True)
+
+        # Advanced: call directly after init() if you need the results dict
         from tracecraft.instrumentation.auto import enable_auto_instrumentation
-
-        tracecraft.init()
-        results = enable_auto_instrumentation()
-
-        # Now all LLM/framework calls are automatically traced
-        from langchain_openai import ChatOpenAI
-        llm = ChatOpenAI()
-        llm.invoke("Hello!")  # Automatically traced!
+        results = enable_auto_instrumentation(["openai", "langchain"])
+        print(results)  # {'openai': True, 'langchain': True}
         ```
     """
     instrumentor = get_instrumentor()

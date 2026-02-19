@@ -11,6 +11,8 @@ import threading
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
+from pydantic import PrivateAttr
+
 from tracecraft.core.context import get_current_run
 from tracecraft.core.models import Step, StepType
 
@@ -82,13 +84,16 @@ class TraceCraftSpanHandler(BaseSpanHandler):
         ```
     """
 
+    # Private attributes for tracking spans (Pydantic PrivateAttr)
+    # Note: _lock is also defined in BaseSpanHandler but set to None,
+    # so we override it with a proper Lock instance in __init__
+    _steps: dict[str, Step] = PrivateAttr(default_factory=dict)
+    _lock: threading.Lock = PrivateAttr(default_factory=threading.Lock)
+
     def __init__(self) -> None:
         """Initialize the span handler."""
         super().__init__()
-        # Maps span_id -> Step for tracking in-progress spans
-        # Note: We use object.__setattr__ to bypass Pydantic's field validation
-        # since these are internal tracking attributes, not model fields
-        object.__setattr__(self, "_steps", {})
+        # BaseSpanHandler.__init__ sets _lock = None, so we must reinitialize it
         object.__setattr__(self, "_lock", threading.Lock())
 
     def clear(self) -> None:
@@ -173,22 +178,40 @@ class TraceCraftSpanHandler(BaseSpanHandler):
 
     def _extract_inputs(
         self,
-        bound_args: dict[str, Any],
+        bound_args: Any,
         instance: Any,  # noqa: ARG002
     ) -> dict[str, Any]:
-        """Extract inputs from bound arguments."""
+        """Extract inputs from bound arguments.
+
+        Args:
+            bound_args: Either a dict or an inspect.BoundArguments object.
+            instance: The LlamaIndex component instance.
+
+        Returns:
+            Dictionary of extracted input values.
+        """
         inputs: dict[str, Any] = {}
 
+        # Handle both dict and BoundArguments
+        import inspect
+
+        if isinstance(bound_args, inspect.BoundArguments):
+            args_dict = bound_args.arguments
+        elif isinstance(bound_args, dict):
+            args_dict = bound_args
+        else:
+            return inputs
+
         # Query bundle
-        if "query_bundle" in bound_args:
-            query_bundle = bound_args["query_bundle"]
+        if "query_bundle" in args_dict:
+            query_bundle = args_dict["query_bundle"]
             if hasattr(query_bundle, "query_str"):
                 inputs["query"] = query_bundle.query_str
 
         # Direct query/prompt
         for key in ["query", "prompt", "input", "task"]:
-            if key in bound_args:
-                inputs[key] = bound_args[key]
+            if key in args_dict:
+                inputs[key] = args_dict[key]
 
         return inputs
 
@@ -277,9 +300,10 @@ class TraceCraftSpanHandler(BaseSpanHandler):
     def new_span(
         self,
         id_: str,
-        bound_args: dict[str, Any],
-        instance: Any,
+        bound_args: Any,
+        instance: Any = None,
         parent_span_id: str | None = None,
+        tags: dict[str, Any] | None = None,  # noqa: ARG002
         **_kwargs: Any,
     ) -> str | None:
         """
@@ -287,9 +311,10 @@ class TraceCraftSpanHandler(BaseSpanHandler):
 
         Args:
             id_: The span ID.
-            bound_args: Arguments passed to the function being traced.
+            bound_args: Arguments passed to the function (dict or BoundArguments).
             instance: The LlamaIndex component instance.
             parent_span_id: Optional parent span ID for nesting.
+            tags: Optional tags from dispatcher.
 
         Returns:
             The span ID if created, None otherwise.
@@ -319,8 +344,8 @@ class TraceCraftSpanHandler(BaseSpanHandler):
     def end_span(
         self,
         id_: str,
-        bound_args: dict[str, Any],  # noqa: ARG002
-        instance: Any,  # noqa: ARG002
+        bound_args: Any = None,  # noqa: ARG002
+        instance: Any = None,  # noqa: ARG002
         result: Any = None,
         **_kwargs: Any,
     ) -> None:
@@ -329,7 +354,7 @@ class TraceCraftSpanHandler(BaseSpanHandler):
 
         Args:
             id_: The span ID to end.
-            bound_args: Arguments passed to the function.
+            bound_args: Arguments passed to the function (dict or BoundArguments).
             instance: The LlamaIndex component instance.
             result: The result of the operation.
         """
@@ -349,9 +374,9 @@ class TraceCraftSpanHandler(BaseSpanHandler):
     def drop_span(
         self,
         id_: str,
-        bound_args: dict[str, Any],  # noqa: ARG002
-        instance: Any,  # noqa: ARG002
-        err: BaseException,
+        bound_args: Any = None,  # noqa: ARG002
+        instance: Any = None,  # noqa: ARG002
+        err: BaseException | None = None,
         **_kwargs: Any,
     ) -> None:
         """
@@ -359,7 +384,7 @@ class TraceCraftSpanHandler(BaseSpanHandler):
 
         Args:
             id_: The span ID to drop.
-            bound_args: Arguments passed to the function.
+            bound_args: Arguments passed to the function (dict or BoundArguments).
             instance: The LlamaIndex component instance.
             err: The exception that caused the drop.
         """
@@ -370,8 +395,9 @@ class TraceCraftSpanHandler(BaseSpanHandler):
         end_time = datetime.now(UTC)
         step.end_time = end_time
         step.duration_ms = (end_time - step.start_time).total_seconds() * 1000
-        step.error = str(err)
-        step.error_type = type(err).__name__
+        if err is not None:
+            step.error = str(err)
+            step.error_type = type(err).__name__
 
         # Note: Error aggregation is done in runtime._aggregate_metrics()
         # at end_run() time, so no need to update run.error_count here
@@ -379,8 +405,8 @@ class TraceCraftSpanHandler(BaseSpanHandler):
     def prepare_to_exit_span(
         self,
         id_: str,  # noqa: ARG002
-        bound_args: dict[str, Any],  # noqa: ARG002
-        instance: Any,  # noqa: ARG002
+        bound_args: Any = None,  # noqa: ARG002
+        instance: Any = None,  # noqa: ARG002
         result: Any = None,  # noqa: ARG002
         **_kwargs: Any,
     ) -> Any:
@@ -392,7 +418,7 @@ class TraceCraftSpanHandler(BaseSpanHandler):
 
         Args:
             id_: The span ID.
-            bound_args: Arguments passed to the function.
+            bound_args: Arguments passed to the function (dict or BoundArguments).
             instance: The LlamaIndex component instance.
             result: The result of the operation.
 
@@ -404,9 +430,9 @@ class TraceCraftSpanHandler(BaseSpanHandler):
     def prepare_to_drop_span(
         self,
         id_: str,  # noqa: ARG002
-        bound_args: dict[str, Any],  # noqa: ARG002
-        instance: Any,  # noqa: ARG002
-        err: BaseException,  # noqa: ARG002
+        bound_args: Any = None,  # noqa: ARG002
+        instance: Any = None,  # noqa: ARG002
+        err: BaseException | None = None,  # noqa: ARG002
         **_kwargs: Any,
     ) -> Any:
         """
@@ -416,7 +442,7 @@ class TraceCraftSpanHandler(BaseSpanHandler):
 
         Args:
             id_: The span ID.
-            bound_args: Arguments passed to the function.
+            bound_args: Arguments passed to the function (dict or BoundArguments).
             instance: The LlamaIndex component instance.
             err: The exception that caused the drop.
 

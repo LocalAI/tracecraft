@@ -140,6 +140,10 @@ nav:
     - Processors: user-guide/processors.md
     - Terminal UI: user-guide/tui.md
     - Multi-Tenancy: user-guide/multi-tenancy.md
+    - Performance: user-guide/performance.md
+    - Security: user-guide/security.md
+  - Reference:
+    - Quick Reference: reference/quick-reference.md
   - Integrations:
     - integrations/index.md
     - LangChain: integrations/langchain.md
@@ -170,8 +174,12 @@ nav:
     - From LangSmith: migration/from-langsmith.md
     - From Langfuse: migration/from-langfuse.md
     - From OpenLLMetry: migration/from-openllmetry.md
+  - FAQ: faq.md
+  - Troubleshooting: troubleshooting.md
   - Contributing: contributing.md
   - Changelog: changelog.md
+  - Glossary: glossary.md
+  - Getting Help: getting-help.md
 
 # Customization
 extra:

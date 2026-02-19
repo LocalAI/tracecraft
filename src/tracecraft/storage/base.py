@@ -139,6 +139,78 @@ class BaseTraceStore(ABC):
             offset += batch_size
 
     # =========================================================================
+    # Notes Methods (optional - not all backends support notes)
+    # =========================================================================
+
+    def get_notes(self, trace_id: str) -> str | None:
+        """
+        Get notes for a trace.
+
+        Returns:
+            Notes text or None if not found or not set.
+
+        Raises:
+            NotImplementedError: If backend does not support notes.
+        """
+        raise NotImplementedError("Notes not supported by this backend")
+
+    def set_notes(self, trace_id: str, notes: str) -> bool:
+        """
+        Set notes for a trace.
+
+        Args:
+            trace_id: The trace ID.
+            notes: The notes text (can be empty string to clear).
+
+        Returns:
+            True if trace was updated, False if not found.
+
+        Raises:
+            NotImplementedError: If backend does not support notes.
+        """
+        raise NotImplementedError("Notes not supported by this backend")
+
+    # =========================================================================
+    # Archive Methods (optional - not all backends support archiving)
+    # =========================================================================
+
+    def archive(self, trace_id: str) -> bool:
+        """
+        Archive a trace.
+
+        Returns:
+            True if trace was archived, False if not found.
+
+        Raises:
+            NotImplementedError: If backend does not support archiving.
+        """
+        raise NotImplementedError("Archiving not supported by this backend")
+
+    def unarchive(self, trace_id: str) -> bool:
+        """
+        Unarchive a trace.
+
+        Returns:
+            True if trace was unarchived, False if not found.
+
+        Raises:
+            NotImplementedError: If backend does not support archiving.
+        """
+        raise NotImplementedError("Archiving not supported by this backend")
+
+    def is_archived(self, trace_id: str) -> bool:
+        """
+        Check if a trace is archived.
+
+        Returns:
+            True if archived, False otherwise.
+
+        Raises:
+            NotImplementedError: If backend does not support archiving.
+        """
+        raise NotImplementedError("Archiving not supported by this backend")
+
+    # =========================================================================
     # Session Management Methods (optional - not all backends support sessions)
     # =========================================================================
 

@@ -14,9 +14,10 @@ uv run ruff format src tests    # Format
 uv run mypy src                 # Type check
 uv run pre-commit run --all-files  # All checks
 
-# Documentation
+# Documentation (MkDocs - legacy)
 uv run mkdocs serve             # Local docs server at http://127.0.0.1:8000
 uv run mkdocs build --strict    # Build docs (must pass with zero warnings)
+
 
 # CLI
 uv run tracecraft ui traces/tracecraft.jsonl   # Launch TUI
@@ -91,7 +92,7 @@ with runtime.run("task_name") as run:
 - `tests/integration/` - Integration tests
 - `tests/e2e/` - End-to-end tests
 - `examples/` - Usage examples
-- `docs/` - MkDocs documentation site
+- `docs/` - MkDocs documentation site (legacy)
 
 ## Important Patterns
 

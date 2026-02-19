@@ -119,10 +119,10 @@ options = tracer.get_options(allowed_tools=["Read", "Grep"])
 ### Auto-Instrumentation
 
 ```python
-from tracecraft.instrumentation.auto import auto_instrument
+import tracecraft
 
-# Automatically instrument OpenAI and Anthropic SDKs
-auto_instrument()
+# Automatically instrument OpenAI, Anthropic, LangChain, and LlamaIndex
+tracecraft.init(auto_instrument=True)
 ```
 
 ### OpenTelemetry Receiver

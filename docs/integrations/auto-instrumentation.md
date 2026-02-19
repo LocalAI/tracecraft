@@ -17,13 +17,9 @@ This installs:
 
 ```python
 import tracecraft
-from tracecraft.instrumentation.auto import auto_instrument
 
-# Initialize TraceCraft
-tracecraft.init()
-
-# Auto-instrument OpenAI and Anthropic SDKs
-auto_instrument()
+# Initialize TraceCraft with auto-instrumentation enabled
+tracecraft.init(auto_instrument=True)
 
 # Now use OpenAI/Anthropic normally - tracing is automatic!
 import openai
@@ -83,23 +79,31 @@ message = client.messages.create(
 
 ### Selective Instrumentation
 
-```python
-from tracecraft.instrumentation.auto import auto_instrument
+Pass a list of provider names to instrument only specific SDKs:
 
-# Only OpenAI
-auto_instrument(openai=True, anthropic=False)
+```python
+import tracecraft
+
+# Only OpenAI (pick one of these options)
+tracecraft.init(auto_instrument=["openai"])
 
 # Only Anthropic
-auto_instrument(openai=False, anthropic=True)
+# tracecraft.init(auto_instrument=["anthropic"])
+
+# Multiple: OpenAI + LangChain + LlamaIndex
+# tracecraft.init(auto_instrument=["openai", "langchain", "llamaindex"])
 ```
 
 ### Disable Instrumentation
 
 ```python
-from tracecraft.instrumentation.auto import uninstrument
+from tracecraft.instrumentation.auto import disable_auto_instrumentation
 
-# Remove instrumentation
-uninstrument()
+# Remove all instrumentation
+disable_auto_instrumentation()
+
+# Remove specific providers
+disable_auto_instrumentation(["openai"])
 ```
 
 ## Combining with Manual Tracing
@@ -107,10 +111,8 @@ uninstrument()
 ```python
 import tracecraft
 from tracecraft import trace_agent
-from tracecraft.instrumentation.auto import auto_instrument
 
-tracecraft.init()
-auto_instrument()
+tracecraft.init(auto_instrument=True)
 
 @trace_agent(name="agent")
 async def my_agent(query: str):
@@ -147,10 +149,8 @@ async def my_agent(query: str):
 ```python
 # At application startup
 import tracecraft
-from tracecraft.instrumentation.auto import auto_instrument
 
-tracecraft.init()
-auto_instrument()
+tracecraft.init(auto_instrument=True)
 
 # Now use SDKs anywhere in your app
 ```
@@ -173,11 +173,10 @@ async def rag_agent(query: str):
 
 ```python
 # LangChain + Auto-instrumentation
+import tracecraft
 from tracecraft.adapters.langchain import TraceCraftCallbackHandler
-from tracecraft.instrumentation.auto import auto_instrument
 
-tracecraft.init()
-auto_instrument()
+tracecraft.init(auto_instrument=True)
 
 # Both LangChain and direct OpenAI calls are traced
 handler = TraceCraftCallbackHandler()
@@ -188,37 +187,33 @@ chain.invoke(input, config={"callbacks": [handler]})
 
 ### Instrumentation Not Working
 
-Ensure auto_instrument is called before importing SDKs:
+Ensure `tracecraft.init()` is called before importing SDKs:
 
 ```python
 # Correct order
 import tracecraft
-from tracecraft.instrumentation.auto import auto_instrument
 
-tracecraft.init()
-auto_instrument()
+tracecraft.init(auto_instrument=True)
 
 import openai  # Import after instrumentation
 
 # Incorrect order
 import openai  # Too early!
-auto_instrument()  # Won't work
+tracecraft.init(auto_instrument=True)  # Won't patch already-imported modules
 ```
 
 ### Duplicate Spans
 
-If you're seeing duplicate spans, you might be instrumenting twice:
+If you're seeing duplicate spans, you might be calling `init()` twice. TraceCraft's
+`init()` is idempotent - the second call is a no-op, so this is safe to ignore.
+If you need to re-instrument after a restart, call `disable_auto_instrumentation()`
+first:
 
 ```python
-# Don't do this
-auto_instrument()
-auto_instrument()  # Duplicate!
+from tracecraft.instrumentation.auto import disable_auto_instrumentation
 
-# Do this
-from tracecraft.instrumentation.auto import is_instrumented
-
-if not is_instrumented():
-    auto_instrument()
+disable_auto_instrumentation()
+tracecraft.init(auto_instrument=True)  # Re-instrument cleanly
 ```
 
 ## Next Steps

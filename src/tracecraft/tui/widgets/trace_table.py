@@ -12,6 +12,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar
+from uuid import UUID
 
 from rich.text import Text
 
@@ -266,6 +267,8 @@ class TraceTable(DataTable if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
         self._current_column_index: int = 0
         # Track if we need to refresh
         self._is_filtered: bool = False
+        # Track marked trace for comparison
+        self._marked_trace_id: UUID | None = None
         self._setup_columns()
 
     def _setup_columns(self) -> None:
@@ -427,6 +430,11 @@ class TraceTable(DataTable if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
         col_def = self._column_defs[col_key]
 
         if col_key == "status":
+            # Blue diamond for marked trace (takes precedence)
+            is_marked = self._marked_trace_id and trace.id == self._marked_trace_id
+            if is_marked:
+                return Text("◆", style=f"{INFO_BLUE} bold")
+            # Error/success status
             if trace.error or trace.error_count > 0:
                 return Text("✕", style=f"{DANGER_RED} bold")
             return Text("✓", style=SUCCESS_GREEN)
@@ -662,7 +670,8 @@ class TraceTable(DataTable if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
         """Get the currently selected trace."""
         if self.cursor_row is not None and self.row_count > 0:
             try:
-                row_key = self.get_row_at(self.cursor_row)
+                # Use coordinate_to_cell_key to get the row key from cursor position
+                row_key, _ = self.coordinate_to_cell_key(self.cursor_coordinate)
                 return self._row_key_to_trace.get(row_key)
             except Exception:
                 return None
@@ -680,11 +689,13 @@ class TraceTable(DataTable if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
         """
         row_key = self._trace_id_to_row_key.get(trace_id)
         if row_key:
-            # Find the row index for this key
-            for idx in range(self.row_count):
-                if self.get_row_at(idx) == row_key:
-                    self.cursor_row = idx
-                    return True
+            try:
+                # Use get_row_index to find row index from key
+                idx = self.get_row_index(row_key)
+                self.cursor_row = idx
+                return True
+            except Exception:
+                return False
         return False
 
     def on_data_table_row_highlighted(self, event: Any) -> None:
@@ -731,3 +742,43 @@ class TraceTable(DataTable if TEXTUAL_AVAILABLE else object):  # type: ignore[mi
     def sort_ascending(self) -> bool:
         """Get whether sort is ascending."""
         return self._sort_ascending
+
+    @property
+    def selected_trace(self) -> AgentRun | None:
+        """Get the currently selected trace."""
+        return self.get_selected_trace()
+
+    @property
+    def marked_trace_id(self) -> UUID | None:
+        """Get the ID of the marked trace."""
+        return self._marked_trace_id
+
+    def set_marked_trace(self, trace_id: UUID | None) -> None:
+        """
+        Set the marked trace for comparison.
+
+        Args:
+            trace_id: The trace ID to mark, or None to clear.
+        """
+        old_marked = self._marked_trace_id
+        self._marked_trace_id = trace_id
+
+        # Refresh affected rows to update mark indicator
+        if old_marked:
+            old_row_key = self._trace_id_to_row_key.get(str(old_marked))
+            if old_row_key and old_row_key in self._row_key_to_trace:
+                trace = self._row_key_to_trace[old_row_key]
+                self._update_row(old_row_key, trace)
+
+        if trace_id:
+            new_row_key = self._trace_id_to_row_key.get(str(trace_id))
+            if new_row_key and new_row_key in self._row_key_to_trace:
+                trace = self._row_key_to_trace[new_row_key]
+                self._update_row(new_row_key, trace)
+
+    def _update_row(self, row_key: Any, trace: AgentRun) -> None:
+        """Update a single row in the table."""
+        # Use update_cell with row_key and column_key directly
+        for col_key in self._column_order:
+            cell = self._get_cell_value(trace, col_key)
+            self.update_cell(row_key, col_key, cell)

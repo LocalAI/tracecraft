@@ -1,6 +1,26 @@
-# Decorators
+# Custom Instrumentation (Decorators)
 
-TraceCraft provides decorators for instrumenting your code with semantic tracing. Each decorator is designed for a specific type of operation.
+TraceCraft provides decorators for adding custom semantic tracing to your code.
+
+!!! info "Decorators are Optional"
+
+    **For most use cases, you don't need decorators.**
+
+    TraceCraft's [auto-instrumentation](../integrations/auto-instrumentation.md) automatically
+    captures all OpenAI and Anthropic LLM calls without any code changes. Framework adapters
+    for LangChain and LlamaIndex also provide automatic tracing.
+
+    **Use decorators only when you need to:**
+
+    - Add custom semantic meaning (e.g., mark a function as an "agent" vs a "tool")
+    - Capture custom inputs/outputs beyond what auto-instrumentation provides
+    - Create explicit hierarchical trace structures
+    - Add custom attributes to spans
+    - Trace non-LLM operations (database queries, API calls, etc.)
+
+    [:octicons-arrow-right-24: Start with Auto-Instrumentation](../integrations/auto-instrumentation.md)
+
+---
 
 ## Overview
 

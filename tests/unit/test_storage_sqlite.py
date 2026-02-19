@@ -791,7 +791,7 @@ class TestSchemaMigration:
 
         # Check schema version
         results = store.execute_sql("SELECT version FROM schema_version")
-        assert results[0]["version"] == 7
+        assert results[0]["version"] == 8
 
         # Check new tables exist (v2+ tables)
         tables = store.execute_sql("SELECT name FROM sqlite_master WHERE type='table'")
@@ -800,6 +800,12 @@ class TestSchemaMigration:
         assert "trace_versions" in table_names
         assert "playground_iterations" in table_names
         assert "sessions" in table_names  # v7
+
+        # Check new columns exist (v8)
+        columns = store.execute_sql("PRAGMA table_info(traces)")
+        column_names = {c["name"] for c in columns}
+        assert "notes" in column_names
+        assert "archived" in column_names
         # Evaluation and agents tables should NOT exist (removed in v6)
         assert "evaluation_sets" not in table_names
         assert "evaluation_cases" not in table_names
@@ -884,9 +890,9 @@ class TestSchemaMigration:
         # Now open with SQLiteTraceStore - should trigger migration
         store = SQLiteTraceStore(db_path)
 
-        # Check schema version is now 7
+        # Check schema version is now 8
         results = store.execute_sql("SELECT version FROM schema_version")
-        assert results[0]["version"] == 7
+        assert results[0]["version"] == 8
 
         # Check new tables exist (v2+ tables)
         tables = store.execute_sql("SELECT name FROM sqlite_master WHERE type='table'")
@@ -895,6 +901,12 @@ class TestSchemaMigration:
         assert "trace_versions" in table_names
         assert "playground_iterations" in table_names
         assert "sessions" in table_names  # v7
+
+        # Check new columns exist (v8)
+        columns = store.execute_sql("PRAGMA table_info(traces)")
+        column_names = {c["name"] for c in columns}
+        assert "notes" in column_names
+        assert "archived" in column_names
         # Evaluation and agents tables should NOT exist (removed in v6)
         assert "evaluation_sets" not in table_names
         assert "evaluation_cases" not in table_names
@@ -940,7 +952,7 @@ class TestWALRecovery:
 
         # Verify the store works
         results = store.execute_sql("SELECT version FROM schema_version")
-        assert results[0]["version"] == 7
+        assert results[0]["version"] == 8
 
         # WAL files should be recreated properly by SQLite
         store.close()

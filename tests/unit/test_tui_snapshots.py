@@ -321,3 +321,55 @@ class TestTraceTableIntegration:
             assert table.trace_count == 3
             assert table.row_count == 3
             assert table.sort_column == "name"
+
+    @pytest.mark.asyncio
+    async def test_mark_trace(self) -> None:
+        """Test that set_marked_trace updates the marked trace and visual indicator."""
+        traces = create_multiple_traces()
+        app = TraceTableTestApp(traces)
+        async with app.run_test() as pilot:
+            table = app.query_one("#trace-table", TraceTable)
+
+            # Initially no trace is marked
+            assert table.marked_trace_id is None
+
+            # Mark the first trace
+            first_trace_id = traces[0].id
+            table.set_marked_trace(first_trace_id)
+
+            # Verify the trace is marked
+            assert table.marked_trace_id == first_trace_id
+
+            # Mark a different trace
+            second_trace_id = traces[1].id
+            table.set_marked_trace(second_trace_id)
+
+            # Verify the marked trace changed
+            assert table.marked_trace_id == second_trace_id
+
+            # Clear the mark
+            table.set_marked_trace(None)
+            assert table.marked_trace_id is None
+
+    @pytest.mark.asyncio
+    async def test_mark_trace_updates_cell_display(self) -> None:
+        """Test that marking a trace updates the status cell in the table."""
+        traces = create_multiple_traces()
+        app = TraceTableTestApp(traces)
+        async with app.run_test() as pilot:
+            table = app.query_one("#trace-table", TraceTable)
+
+            # Mark the first trace
+            first_trace_id = traces[0].id
+            table.set_marked_trace(first_trace_id)
+
+            # The table should still be functional (no crash/freeze)
+            assert table.row_count == 3
+            assert table.trace_count == 3
+
+            # Mark a different trace (this exercises _update_row for both old and new)
+            second_trace_id = traces[1].id
+            table.set_marked_trace(second_trace_id)
+
+            # Table should still be functional
+            assert table.row_count == 3

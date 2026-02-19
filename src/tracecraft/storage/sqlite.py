@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Schema version for migrations
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 SCHEMA_SQL = """
 -- Traces table (run-level metadata)
@@ -43,6 +43,8 @@ CREATE TABLE IF NOT EXISTS traces (
     error_type TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     project_id TEXT,
+    notes TEXT,
+    archived BOOLEAN DEFAULT FALSE,
 
     -- JSON blob for full trace data
     data JSON NOT NULL,
@@ -60,6 +62,7 @@ CREATE INDEX IF NOT EXISTS idx_traces_session ON traces(session_id);
 CREATE INDEX IF NOT EXISTS idx_traces_user ON traces(user_id);
 CREATE INDEX IF NOT EXISTS idx_traces_environment ON traces(environment);
 CREATE INDEX IF NOT EXISTS idx_traces_project ON traces(project_id);
+CREATE INDEX IF NOT EXISTS idx_traces_archived ON traces(archived);
 
 -- Tags table (many-to-many)
 CREATE TABLE IF NOT EXISTS trace_tags (
@@ -494,6 +497,21 @@ class SQLiteTraceStore(BaseTraceStore):
             f"Migrated {len(existing_sessions)} existing session_id values to sessions table"
         )
 
+    def _migrate_to_v8(self, cursor: sqlite3.Cursor) -> None:
+        """Migrate to v8: add notes and archived columns to traces table."""
+        logger.info("Migrating schema to v8: adding notes and archived columns")
+
+        # Add notes column
+        cursor.execute("ALTER TABLE traces ADD COLUMN notes TEXT")
+
+        # Add archived column with default FALSE
+        cursor.execute("ALTER TABLE traces ADD COLUMN archived BOOLEAN DEFAULT FALSE")
+
+        # Add index for archived traces
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_traces_archived ON traces(archived)")
+
+        logger.info("Added notes and archived columns to traces table")
+
     def _migrate_schema(self, cursor: sqlite3.Cursor, from_version: int) -> None:
         """Run schema migrations."""
         logger.info(f"Migrating schema from v{from_version} to v{SCHEMA_VERSION}")
@@ -506,6 +524,9 @@ class SQLiteTraceStore(BaseTraceStore):
 
         if from_version < 7:
             self._migrate_to_v7(cursor)
+
+        if from_version < 8:
+            self._migrate_to_v8(cursor)
 
         cursor.execute(
             "UPDATE schema_version SET version = ?",
@@ -717,6 +738,71 @@ class SQLiteTraceStore(BaseTraceStore):
         with self._transaction() as cursor:
             cursor.execute("DELETE FROM traces WHERE id = ?", (trace_id,))
             return cursor.rowcount > 0
+
+    # =========================================================================
+    # Notes Methods
+    # =========================================================================
+
+    def get_notes(self, trace_id: str) -> str | None:
+        """Get notes for a trace."""
+        with self._transaction() as cursor:
+            cursor.execute("SELECT notes FROM traces WHERE id = ?", (trace_id,))
+            row = cursor.fetchone()
+            return row["notes"] if row else None
+
+    def set_notes(self, trace_id: str, notes: str) -> bool:
+        """Set notes for a trace.
+
+        Args:
+            trace_id: The trace ID.
+            notes: The notes text (can be empty string to clear).
+
+        Returns:
+            True if trace was updated, False if not found.
+        """
+        with self._transaction() as cursor:
+            cursor.execute(
+                "UPDATE traces SET notes = ? WHERE id = ?",
+                (notes if notes else None, trace_id),
+            )
+            return cursor.rowcount > 0
+
+    # =========================================================================
+    # Archive Methods
+    # =========================================================================
+
+    def archive(self, trace_id: str) -> bool:
+        """Archive a trace.
+
+        Returns:
+            True if trace was archived, False if not found.
+        """
+        with self._transaction() as cursor:
+            cursor.execute(
+                "UPDATE traces SET archived = TRUE WHERE id = ?",
+                (trace_id,),
+            )
+            return cursor.rowcount > 0
+
+    def unarchive(self, trace_id: str) -> bool:
+        """Unarchive a trace.
+
+        Returns:
+            True if trace was unarchived, False if not found.
+        """
+        with self._transaction() as cursor:
+            cursor.execute(
+                "UPDATE traces SET archived = FALSE WHERE id = ?",
+                (trace_id,),
+            )
+            return cursor.rowcount > 0
+
+    def is_archived(self, trace_id: str) -> bool:
+        """Check if a trace is archived."""
+        with self._transaction() as cursor:
+            cursor.execute("SELECT archived FROM traces WHERE id = ?", (trace_id,))
+            row = cursor.fetchone()
+            return bool(row["archived"]) if row else False
 
     def count(self, query: TraceQuery | None = None) -> int:
         """Count traces matching query."""

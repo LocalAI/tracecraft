@@ -393,17 +393,17 @@ class TestInitAutoInstrument:
             rt._runtime = None
 
 
-class TestInitAndAutoInstrumentFunction:
-    """Tests for the init_and_auto_instrument convenience function."""
+class TestInitAutoInstrumentParam:
+    """Tests for the auto_instrument parameter on init()."""
 
-    def test_init_and_auto_instrument_basic(self):
-        """Test init_and_auto_instrument basic call."""
+    def test_init_auto_instrument_true(self):
+        """Test init with auto_instrument=True."""
         import tracecraft
         from tracecraft.core import runtime as rt
 
         rt._runtime = None
 
-        result = tracecraft.init_and_auto_instrument(console=False, jsonl=False)
+        result = tracecraft.init(auto_instrument=True, console=False, jsonl=False)
 
         assert result is not None
 
@@ -411,16 +411,14 @@ class TestInitAndAutoInstrumentFunction:
         result.shutdown()
         rt._runtime = None
 
-    def test_init_and_auto_instrument_with_providers(self):
-        """Test init_and_auto_instrument with specific providers."""
+    def test_init_auto_instrument_with_providers(self):
+        """Test init with specific provider list."""
         import tracecraft
         from tracecraft.core import runtime as rt
 
         rt._runtime = None
 
-        result = tracecraft.init_and_auto_instrument(
-            providers=["openai"], console=False, jsonl=False
-        )
+        result = tracecraft.init(auto_instrument=["openai"], console=False, jsonl=False)
 
         assert result is not None
 

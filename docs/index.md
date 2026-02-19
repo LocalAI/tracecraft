@@ -2,166 +2,236 @@
 
 **Vendor-neutral LLM observability SDK** - Instrument once, observe anywhere.
 
-TraceCraft is the "LiteLLM for Observability" - a portable Python instrumentation SDK that lets you capture consistent agent/LLM trace semantics and route them to any backend (Langfuse, Datadog, Phoenix, or any OTLP-compatible system).
+TraceCraft is the "LiteLLM for Observability" - a portable Python instrumentation SDK that lets you capture consistent agent/LLM trace semantics and route them to any backend.
+
+---
+
+## Get Started in 30 Seconds
+
+!!! success "Zero Code Changes Required"
+
+    TraceCraft's auto-instrumentation captures every LLM call automatically.
+    No decorators. No wrappers. No code changes.
+
+```bash
+pip install "tracecraft[auto,tui]"
+```
+
+```python
+import tracecraft
+
+tracecraft.init(auto_instrument=True)
+
+# Your existing code works unchanged!
+```
+
+**That's it.** Every OpenAI and Anthropic call is now traced.
+
+[:octicons-arrow-right-24: Quick Start Guide](getting-started/quickstart.md)
+
+---
+
+## Explore Your Traces Instantly
+
+!!! tip "The TUI Works with ANY OpenTelemetry Data"
+
+    The TraceCraft TUI isn't just for TraceCraft traces. It reads any
+    OpenTelemetry-compatible data - OpenLLMetry, Jaeger exports, custom instrumentation.
+
+```bash
+tracecraft tui traces/
+```
+
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  TraceCraft TUI                                              traces: 47  ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃  TRACE ID         NAME                 DURATION    STATUS    TOKENS      ┃
+┃  ─────────────────────────────────────────────────────────────────────── ┃
+┃▸ abc123...        research_agent       2.34s       ✓         4,521       ┃
+┃  def456...        chat.completions     0.89s       ✓         1,247       ┃
+┃  ghi789...        rag_query            1.56s       ✗         2,891       ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+┃  research_agent (2.34s)                                                   ┃
+┃  ├─ web_search (0.45s)                                                    ┃
+┃  └─ chat.completions [gpt-4] (1.89s) ◀─── View prompts, tokens, costs    ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+```
+
+**Features:**
+
+- Hierarchical trace view (agents → tools → LLM calls)
+- Search, filter, and compare traces
+- View full prompts, completions, and token usage
+- Export to JSON, HTML, or clipboard
+- Works completely offline
+
+[:octicons-arrow-right-24: Terminal UI Guide](user-guide/tui.md)
+
+---
 
 ## Why TraceCraft?
 
+<div class="grid cards" markdown>
+
+- :material-auto-fix:{ .lg .middle } **Zero-Code Instrumentation**
+
+    ---
+
+    Auto-instrument OpenAI, Anthropic, LangChain, and LlamaIndex.
+    No decorators or code changes needed.
+
+    [:octicons-arrow-right-24: Auto-Instrumentation](integrations/auto-instrumentation.md)
+
+- :material-monitor:{ .lg .middle } **Powerful Terminal UI**
+
+    ---
+
+    Explore traces interactively. Search, filter, compare.
+    Works with ANY OpenTelemetry data.
+
+    [:octicons-arrow-right-24: Terminal UI](user-guide/tui.md)
+
+- :material-lock-open-variant:{ .lg .middle } **No Vendor Lock-in**
+
+    ---
+
+    Export to Langfuse, Datadog, Phoenix, Jaeger, Grafana,
+    or any OTLP-compatible backend.
+
+    [:octicons-arrow-right-24: Exporters](user-guide/exporters.md)
+
+- :material-shield-check:{ .lg .middle } **Privacy by Default**
+
+    ---
+
+    PII redaction and client-side sampling built into the SDK.
+    Sensitive data never leaves your infrastructure.
+
+    [:octicons-arrow-right-24: Security](user-guide/security.md)
+
+</div>
+
+---
+
+## Comparison
+
 | Feature | TraceCraft | LangSmith | Langfuse | Phoenix |
 |---------|------------|-----------|----------|---------|
-| **Vendor Lock-in** | None - export anywhere | LangChain ecosystem | Langfuse backend | Arize ecosystem |
-| **Framework Support** | LangChain, LlamaIndex, PydanticAI, custom | LangChain only | Multiple | Multiple |
-| **Local Development** | Full offline support | Cloud required | Self-host option | Self-host option |
-| **OpenTelemetry Native** | Built on OTel | Proprietary | Proprietary | OTel compatible |
-| **PII Redaction** | Built-in SDK | Backend only | Backend only | Backend only |
-| **Schema Support** | OTel GenAI + OpenInference | Proprietary | Proprietary | OpenInference |
+| **Zero-Code Instrumentation** | Yes | No | No | No |
+| **Terminal UI** | Yes | No | No | No |
+| **Vendor Lock-in** | None | LangChain | Langfuse | Arize |
+| **Framework Support** | All major | LangChain | Multiple | Multiple |
+| **Local Development** | Full offline | Cloud required | Self-host | Self-host |
+| **OpenTelemetry Native** | Built on OTel | Proprietary | Proprietary | Compatible |
+| **PII Redaction** | SDK-level | Backend only | Backend only | Backend only |
 | **Cost** | Free & Open Source | Paid tiers | Paid tiers | Paid tiers |
 
-## Key Features
+---
 
-### Local-First Development
-
-Beautiful console output and HTML reports without any backend setup. Perfect for development and debugging.
-
-```python
-import tracecraft
-
-# That's it - you're ready to trace!
-tracecraft.init()
-```
-
-### Built on OpenTelemetry
-
-Higher-level abstractions on the proven OpenTelemetry foundation. Use standard OTLP exporters to send data anywhere.
-
-### Dual-Dialect Schema Support
-
-Supports both OTel GenAI conventions and OpenInference, making it compatible with multiple backends out of the box.
-
-### Privacy by Default
-
-PII redaction and client-side sampling built into the SDK, not just the backend. Your sensitive data never leaves your infrastructure.
-
-### Framework Agnostic
-
-Works seamlessly with:
-
-- LangChain
-- LlamaIndex
-- PydanticAI
-- Claude SDK
-- Custom code
-
-### Multiple Export Targets
-
-Send traces to one or more destinations:
-
-- Console (Rich terminal output)
-- JSONL files
-- OTLP (Jaeger, Grafana, Datadog, etc.)
-- MLflow
-- HTML reports
-- Custom exporters
-
-## Quick Example
-
-```python
-import tracecraft
-from tracecraft import trace_agent, trace_tool
-
-# Initialize with defaults (console + JSONL output)
-tracecraft.init()
-
-@trace_agent(name="research_agent")
-async def research(query: str) -> str:
-    """Research agent that searches and synthesizes information."""
-    results = await search(query)
-    return synthesize(results)
-
-@trace_tool(name="web_search")
-async def search(query: str) -> list[str]:
-    """Search tool that returns results."""
-    # Your search implementation
-    return ["result1", "result2"]
-
-def synthesize(results: list[str]) -> str:
-    return f"Synthesized {len(results)} results"
-
-# Run your agent
-import asyncio
-asyncio.run(research("What is TraceCraft?"))
-```
-
-## Architecture
+## How It Works
 
 ```mermaid
-graph TB
-    App[Your Application]
-    App --> SDK[TraceCraft SDK]
+graph LR
+    App[Your App] --> Auto[Auto-Instrumentation]
+    Auto --> SDK[TraceCraft SDK]
 
-    SDK --> Inst[Instrumentation Layer]
-    Inst --> Dec[@decorators]
-    Inst --> Adapt[Framework Adapters]
-    Inst --> Auto[Auto-instrumentation]
+    SDK --> Console[Console]
+    SDK --> JSONL[JSONL/SQLite]
+    SDK --> OTLP[OTLP Export]
+    SDK --> TUI[Terminal UI]
 
-    SDK --> Proc[Processing Layer]
-    Proc --> Redact[PII Redaction]
-    Proc --> Sample[Sampling]
-    Proc --> Enrich[Enrichment]
-
-    SDK --> Export[Export Layer]
-    Export --> Console[Console]
-    Export --> JSONL[JSONL/SQLite]
-    Export --> OTLP[OTLP]
-    Export --> MLflow[MLflow]
-
-    OTLP --> Langfuse[Langfuse]
-    OTLP --> Datadog[Datadog]
-    OTLP --> Phoenix[Phoenix]
-    OTLP --> Grafana[Grafana]
+    OTLP --> Langfuse
+    OTLP --> Datadog
+    OTLP --> Phoenix
+    OTLP --> Jaeger
 ```
+
+1. **Install** TraceCraft with auto-instrumentation
+2. **Add two lines** to initialize (no code changes to your app)
+3. **Run your app** - all LLM calls are automatically traced
+4. **Explore** with the Terminal UI or export to any backend
+
+---
 
 ## Installation
 
-=== "Basic"
+=== "Recommended (Auto + TUI)"
 
     ```bash
-    pip install tracecraft
+    pip install "tracecraft[auto,tui]"
     ```
 
-=== "With Framework Support"
+    Auto-instruments OpenAI and Anthropic. Includes the Terminal UI.
+
+=== "With Frameworks"
 
     ```bash
     # LangChain
-    pip install "tracecraft[langchain]"
+    pip install "tracecraft[langchain,tui]"
 
     # LlamaIndex
-    pip install "tracecraft[llamaindex]"
+    pip install "tracecraft[llamaindex,tui]"
 
-    # PydanticAI
-    pip install "tracecraft[pydantic-ai]"
-    ```
-
-=== "With Export Capabilities"
-
-    ```bash
-    # OTLP export (Jaeger, Grafana, etc.)
-    pip install "tracecraft[otlp]"
-
-    # Terminal UI for trace exploration
-    pip install "tracecraft[tui]"
-
-    # All features
+    # All frameworks
     pip install "tracecraft[all]"
     ```
 
-=== "Using uv (recommended)"
+=== "Using uv"
 
     ```bash
-    uv add tracecraft
-
-    # Or with extras
-    uv add "tracecraft[all]"
+    uv add "tracecraft[auto,tui]"
     ```
+
+---
+
+## What Gets Captured?
+
+Auto-instrumentation automatically captures:
+
+| SDK | Captured Data |
+|-----|---------------|
+| **OpenAI** | Chat completions, embeddings, streaming, function calls, token usage |
+| **Anthropic** | Messages, streaming, tool use, token counts |
+| **LangChain** | Chains, agents, tools, retrievers, LLM calls |
+| **LlamaIndex** | Query engines, chat engines, agents, retrievers |
+
+!!! info "Need Custom Instrumentation?"
+
+    Decorators are available if you want to add custom semantic meaning
+    to your traces, but they're **completely optional**.
+
+    [:octicons-arrow-right-24: Custom Instrumentation](user-guide/decorators.md)
+
+---
+
+## Export Anywhere
+
+TraceCraft is vendor-neutral. Send traces to any backend:
+
+```python
+from tracecraft.exporters import OTLPExporter
+
+tracecraft.init(
+    exporters=[
+        OTLPExporter(endpoint="http://localhost:4317"),  # Jaeger, Tempo, etc.
+    ]
+)
+```
+
+**Supported backends:**
+
+- Langfuse
+- Datadog
+- Phoenix (Arize)
+- Jaeger
+- Grafana Tempo
+- Honeycomb
+- Any OTLP-compatible system
+
+[:octicons-arrow-right-24: Exporters Guide](user-guide/exporters.md)
+
+---
 
 ## Next Steps
 
@@ -171,23 +241,23 @@ graph TB
 
     ---
 
-    Get up and running in 5 minutes
+    Get running in 2 minutes with auto-instrumentation
 
     [:octicons-arrow-right-24: Quick Start](getting-started/quickstart.md)
 
-- :material-book-open-variant:{ .lg .middle } **User Guide**
+- :material-monitor:{ .lg .middle } **Terminal UI**
 
     ---
 
-    Learn about decorators, configuration, and exporters
+    Explore traces interactively in your terminal
 
-    [:octicons-arrow-right-24: User Guide](user-guide/index.md)
+    [:octicons-arrow-right-24: Terminal UI](user-guide/tui.md)
 
 - :material-connection:{ .lg .middle } **Integrations**
 
     ---
 
-    Use with LangChain, LlamaIndex, and more
+    LangChain, LlamaIndex, PydanticAI adapters
 
     [:octicons-arrow-right-24: Integrations](integrations/index.md)
 
@@ -201,15 +271,7 @@ graph TB
 
 </div>
 
-## Framework Support
-
-| Framework | Status | Installation |
-|-----------|--------|--------------|
-| LangChain | Stable | `tracecraft[langchain]` |
-| LlamaIndex | Stable | `tracecraft[llamaindex]` |
-| PydanticAI | Stable | `tracecraft[pydantic-ai]` |
-| Claude SDK | Beta | `tracecraft[claude-sdk]` |
-| Custom Code | Stable | Base package |
+---
 
 ## Community & Support
 
