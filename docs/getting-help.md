@@ -16,7 +16,7 @@ Before opening an issue or starting a discussion, the answer may already exist:
 
     Answers to common setup and usage questions
 
-    [:octicons-arrow-right-24: Troubleshooting Guide](user-guide/tui.md)
+    [:octicons-arrow-right-24: Troubleshooting Guide](troubleshooting.md)
 
 - :material-book-open-variant:{ .lg .middle } **User Guide**
 
