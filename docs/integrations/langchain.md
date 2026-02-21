@@ -1,6 +1,6 @@
 # LangChain Integration
 
-TraceCraft provides native integration with LangChain through the `TraceCraftCallbackHandler`.
+Trace Craft provides native integration with LangChain through the `TraceCraftCallbackHandler`.
 
 ## Installation
 
@@ -8,7 +8,7 @@ TraceCraft provides native integration with LangChain through the `TraceCraftCal
 pip install "tracecraft[langchain]"
 ```
 
-This installs TraceCraft with LangChain support (`langchain-core>=0.1`).
+This installs Trace Craft with LangChain support (`langchain-core>=0.1`).
 
 ## Quick Start
 
@@ -18,7 +18,7 @@ from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
-# Initialize TraceCraft
+# Initialize Trace Craft
 tracecraft.init()
 
 # Create LangChain components
@@ -50,7 +50,7 @@ The `TraceCraftCallbackHandler` implements LangChain's callback interface and au
 - Token usage
 - Errors and retries
 
-All events are converted to TraceCraft spans with proper hierarchy.
+All events are converted to Trace Craft spans with proper hierarchy.
 
 ## Basic Examples
 
@@ -67,7 +67,7 @@ chain = prompt | llm
 
 handler = TraceCraftCallbackHandler()
 result = chain.invoke(
-    {"topic": "TraceCraft"},
+    {"topic": "Trace Craft"},
     config={"callbacks": [handler]}
 )
 ```
@@ -101,7 +101,7 @@ chain = (
 
 handler = TraceCraftCallbackHandler()
 result = chain.invoke(
-    {"text": "TraceCraft is amazing!"},
+    {"text": "Trace Craft is amazing!"},
     config={"callbacks": [handler]}
 )
 ```
@@ -210,7 +210,7 @@ chain = (
 # Trace RAG pipeline
 handler = TraceCraftCallbackHandler()
 result = chain.invoke(
-    "What is TraceCraft?",
+    "What is Trace Craft?",
     config={"callbacks": [handler]}
 )
 ```
@@ -238,14 +238,14 @@ chain = (
 
 handler = TraceCraftCallbackHandler()
 result = chain.invoke(
-    "Explain TraceCraft's architecture",
+    "Explain Trace Craft's architecture",
     config={"callbacks": [handler]}
 )
 ```
 
 ## Streaming
 
-TraceCraft supports LangChain streaming:
+Trace Craft supports LangChain streaming:
 
 ```python
 from langchain_openai import ChatOpenAI
@@ -267,7 +267,7 @@ for chunk in chain.stream(
 
 ## LangGraph Integration
 
-TraceCraft works with LangGraph:
+Trace Craft works with LangGraph:
 
 ```python
 from langgraph.graph import StateGraph
@@ -336,7 +336,7 @@ result = chain.invoke(
 
 ### Multiple Handlers
 
-Combine TraceCraft with other handlers:
+Combine Trace Craft with other handlers:
 
 ```python
 from langchain.callbacks import StdOutCallbackHandler
@@ -430,7 +430,7 @@ chain.invoke(input)  # Handler not passed
 
 ### Missing Spans
 
-Make sure TraceCraft is initialized:
+Make sure Trace Craft is initialized:
 
 ```python
 import tracecraft

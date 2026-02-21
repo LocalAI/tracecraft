@@ -1,6 +1,6 @@
 # High Throughput Deployment Guide
 
-Configure TraceCraft for high-volume production environments.
+Configure Trace Craft for high-volume production environments.
 
 ## Overview
 
@@ -194,10 +194,10 @@ Tested on 8-core, 32GB RAM, Kubernetes cluster:
 | Configuration | Throughput | Latency (p99) | Drop Rate |
 |---------------|------------|---------------|-----------|
 | Baseline (no tracing) | 10,000 req/s | 50ms | 0% |
-| TraceCraft (console) | 8,500 req/s | 65ms | 0% |
-| TraceCraft (OTLP) | 9,200 req/s | 55ms | 0% |
-| TraceCraft (buffered) | 9,800 req/s | 52ms | 0% |
-| TraceCraft (sampled 10%) | 9,900 req/s | 51ms | 0% |
+| Trace Craft (console) | 8,500 req/s | 65ms | 0% |
+| Trace Craft (OTLP) | 9,200 req/s | 55ms | 0% |
+| Trace Craft (buffered) | 9,800 req/s | 52ms | 0% |
+| Trace Craft (sampled 10%) | 9,900 req/s | 51ms | 0% |
 
 ## Monitoring the Tracing System
 

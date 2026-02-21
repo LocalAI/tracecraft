@@ -1,8 +1,8 @@
 # Deployment
 
-TraceCraft is designed to run everywhere - from a developer laptop to high-throughput production
+Trace Craft is designed to run everywhere - from a developer laptop to high-throughput production
 clusters on managed cloud platforms. This section covers how to configure, deploy, and operate
-TraceCraft in each environment.
+Trace Craft in each environment.
 
 ## Deployment Options
 
@@ -21,7 +21,7 @@ TraceCraft in each environment.
 
     ---
 
-    Deploy TraceCraft alongside AWS Bedrock AgentCore. Covers IAM roles, CloudWatch
+    Deploy Trace Craft alongside AWS Bedrock AgentCore. Covers IAM roles, CloudWatch
     integration, and ECS task definitions.
 
     [:octicons-arrow-right-24: AWS AgentCore](aws-agentcore.md)
@@ -39,7 +39,7 @@ TraceCraft in each environment.
 
     ---
 
-    Run TraceCraft with Vertex AI Agent Builder. Covers Workload Identity, Cloud Trace
+    Run Trace Craft with Vertex AI Agent Builder. Covers Workload Identity, Cloud Trace
     export, and Cloud Run deployment.
 
     [:octicons-arrow-right-24: GCP Vertex Agent](gcp-vertex-agent.md)

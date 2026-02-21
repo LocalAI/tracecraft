@@ -1,13 +1,13 @@
-site_name: TraceCraft Documentation
+site_name: Trace Craft Documentation
 site_url: https://tracecraft.dev
 site_description: Vendor-neutral LLM observability SDK - instrument once, observe anywhere
-site_author: TraceCraft Contributors
+site_author: Local AI
 repo_url: https://github.com/LocalAI/tracecraft
 repo_name: LocalAI/tracecraft
 edit_uri: edit/main/docs/
 
 # Copyright
-copyright: Copyright &copy; 2024-2026 TraceCraft Contributors
+copyright: 'Copyright &copy; 2026 <a href="https://localai.com">Local AI</a>'
 
 # Configuration
 theme:

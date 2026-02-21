@@ -1,4 +1,4 @@
-# TraceCraft
+# Trace Craft
 
 [![CI](https://github.com/LocalAI/tracecraft/actions/workflows/ci.yml/badge.svg)](https://github.com/LocalAI/tracecraft/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/LocalAI/tracecraft/branch/main/graph/badge.svg)](https://codecov.io/gh/LocalAI/tracecraft)
@@ -8,13 +8,13 @@
 
 > **Vendor-neutral LLM observability — instrument once, observe anywhere.**
 
-TraceCraft is a Python observability SDK with a built-in **Terminal UI (TUI)** that lets you visually explore, debug, and analyze agent traces right in your terminal — no browser, no cloud dashboard, no waiting.
+Trace Craft is a Python observability SDK with a built-in **Terminal UI (TUI)** that lets you visually explore, debug, and analyze agent traces right in your terminal — no browser, no cloud dashboard, no waiting.
 
 ---
 
 ## The fastest path: zero code changes
 
-If your app already uses OpenAI, Anthropic, LangChain, LlamaIndex, or any OpenTelemetry-compatible framework, TraceCraft can observe it **without touching a single line of application code**.
+If your app already uses OpenAI, Anthropic, LangChain, LlamaIndex, or any OpenTelemetry-compatible framework, Trace Craft can observe it **without touching a single line of application code**.
 
 **Step 1 — Install and set one environment variable:**
 
@@ -40,11 +40,11 @@ Traces from any OTLP-compatible framework (OpenLLMetry, LangChain, LlamaIndex, D
 
 ---
 
-![TraceCraft TUI - Main View](docs/assets/screenshots/tui-main-view.svg)
+![Trace Craft TUI - Main View](docs/assets/screenshots/tui-main-view.svg)
 
 *All your agent runs at a glance — name, duration, token usage, and status.*
 
-![TraceCraft TUI - Waterfall and Detail View](docs/assets/screenshots/tui-waterfall-view.svg)
+![Trace Craft TUI - Waterfall and Detail View](docs/assets/screenshots/tui-waterfall-view.svg)
 
 *Hierarchical waterfall view with timing bars. See exactly where your agent spends its time. Navigate to any LLM step and press `i` for the prompt, `o` for the response, or `a` for attributes.*
 
@@ -85,13 +85,13 @@ Or, if you prefer to write traces to a file and open the TUI separately:
 tracecraft tui
 ```
 
-> **Note:** Call `tracecraft.init()` **before** importing any LLM SDK. TraceCraft patches SDKs at import time — importing first means the patch won't apply.
+> **Note:** Call `tracecraft.init()` **before** importing any LLM SDK. Trace Craft patches SDKs at import time — importing first means the patch won't apply.
 
 ---
 
 ## SDK decorators
 
-For fine-grained control — custom span names, explicit inputs/outputs, structured step hierarchies — TraceCraft provides `@trace_agent`, `@trace_tool`, `@trace_llm`, and `@trace_retrieval` decorators, plus a `step()` context manager for inline instrumentation. See the [SDK Guide](https://tracecraft.dev/getting-started/quickstart/) for details.
+For fine-grained control — custom span names, explicit inputs/outputs, structured step hierarchies — Trace Craft provides `@trace_agent`, `@trace_tool`, `@trace_llm`, and `@trace_retrieval` decorators, plus a `step()` context manager for inline instrumentation. See the [SDK Guide](https://tracecraft.dev/getting-started/quickstart/) for details.
 
 ---
 
@@ -112,9 +112,9 @@ For fine-grained control — custom span names, explicit inputs/outputs, structu
 
 ---
 
-## Why TraceCraft?
+## Why Trace Craft?
 
-| Feature | TraceCraft | LangSmith | Langfuse | Phoenix |
+| Feature | Trace Craft | LangSmith | Langfuse | Phoenix |
 |---------|------------|-----------|----------|---------|
 | **Terminal UI** | **Yes — built-in** | No | No | No |
 | **Zero-Code Instrumentation** | Yes | No | No | No |
@@ -257,4 +257,4 @@ Apache-2.0 — See [LICENSE](LICENSE) for details.
 
 ---
 
-Made with care by the TraceCraft Contributors
+Made with care by the Trace Craft Contributors

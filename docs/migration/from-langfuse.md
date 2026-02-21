@@ -1,10 +1,10 @@
-# Migrating from Langfuse to TraceCraft
+# Migrating from Langfuse to Trace Craft
 
-This guide helps you migrate from Langfuse to TraceCraft for LLM observability.
+This guide helps you migrate from Langfuse to Trace Craft for LLM observability.
 
 ## Key Differences
 
-| Feature | Langfuse | TraceCraft |
+| Feature | Langfuse | Trace Craft |
 |---------|----------|------------|
 | Architecture | Cloud + self-host | Local-first |
 | UI | Web dashboard | HTML reports + OTLP backends |
@@ -13,7 +13,7 @@ This guide helps you migrate from Langfuse to TraceCraft for LLM observability.
 
 ## Migration Steps
 
-### 1. Install TraceCraft
+### 1. Install Trace Craft
 
 ```bash
 pip install tracecraft
@@ -36,7 +36,7 @@ def my_agent(query: str) -> str:
     return process(query)
 ```
 
-**After (TraceCraft):**
+**After (Trace Craft):**
 
 ```python
 import tracecraft
@@ -62,7 +62,7 @@ span.end(output=result)
 trace.update(output=final_result)
 ```
 
-**After (TraceCraft):**
+**After (Trace Craft):**
 
 ```python
 from tracecraft.core.context import run_context
@@ -97,7 +97,7 @@ handler = CallbackHandler()
 chain.invoke(input, config={"callbacks": [handler]})
 ```
 
-**After (TraceCraft):**
+**After (Trace Craft):**
 
 ```python
 from tracecraft.adapters.langchain import TraceCraftCallbackHandler
@@ -116,7 +116,7 @@ os.environ["LANGFUSE_SECRET_KEY"] = "sk-..."
 os.environ["LANGFUSE_HOST"] = "https://cloud.langfuse.com"
 ```
 
-**After (TraceCraft):**
+**After (Trace Craft):**
 
 ```python
 import tracecraft
@@ -133,7 +133,7 @@ tracecraft.init(exporters=[
 
 ## Feature Mapping
 
-| Langfuse Feature | TraceCraft Equivalent |
+| Langfuse Feature | Trace Craft Equivalent |
 |------------------|----------------------|
 | `@observe()` | `@trace_agent`, `@trace_llm`, `@trace_tool` |
 | `langfuse.trace()` | `AgentRun` + `run_context` |

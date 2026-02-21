@@ -1,16 +1,16 @@
 # OpenTelemetry Integration
 
-TraceCraft provides seamless OpenTelemetry (OTel) integration, allowing you to collect traces from any OTel-instrumented application and view them in TraceCraft's powerful TUI.
+Trace Craft provides seamless OpenTelemetry (OTel) integration, allowing you to collect traces from any OTel-instrumented application and view them in Trace Craft's powerful TUI.
 
 !!! tip "When to Use This"
     Use the OTel integration when you want to:
 
     - **Receive traces** from existing OTel-instrumented applications
     - **Use standard instrumentation** libraries (OpenAI, Anthropic, LangChain, etc.)
-    - **Send to multiple backends** simultaneously (TraceCraft + DataDog, etc.)
+    - **Send to multiple backends** simultaneously (Trace Craft + DataDog, etc.)
     - **Integrate with existing OTel infrastructure** (collectors, pipelines)
 
-    For simpler use cases, consider [Auto-Instrumentation](auto-instrumentation.md) or [TraceCraft decorators](../user-guide/decorators.md).
+    For simpler use cases, consider [Auto-Instrumentation](auto-instrumentation.md) or [Trace Craft decorators](../user-guide/decorators.md).
 
 ---
 
@@ -120,7 +120,7 @@ tracecraft tui sqlite://traces/my_traces.db
 ```
 
 !!! success "That's it!"
-    Your traces are now being collected and can be viewed in TraceCraft's terminal UI.
+    Your traces are now being collected and can be viewed in Trace Craft's terminal UI.
 
 ---
 
@@ -152,7 +152,7 @@ The `setup_exporter()` function replaces 20+ lines of OpenTelemetry boilerplate 
     tracer = trace.get_tracer("my-agent")
     ```
 
-=== "After (With TraceCraft) - 3 lines"
+=== "After (With Trace Craft) - 3 lines"
 
     ```python
     from tracecraft.otel import setup_exporter
@@ -204,7 +204,7 @@ The `instrument` parameter accepts any combination of these SDK names:
     pip install opentelemetry-instrumentation-anthropic
     ```
 
-    TraceCraft will display a warning if a requested package is missing.
+    Trace Craft will display a warning if a requested package is missing.
 
 ---
 
@@ -212,7 +212,7 @@ The `instrument` parameter accepts any combination of these SDK names:
 
 `setup_exporter()` respects standard OpenTelemetry environment variables, making it easy to configure in different environments:
 
-| TraceCraft Variable | OTel Fallback | Description | Example |
+| Trace Craft Variable | OTel Fallback | Description | Example |
 |---------------------|---------------|-------------|---------|
 | `TRACECRAFT_ENDPOINT` | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP endpoint URL | `http://localhost:4318` |
 | `TRACECRAFT_SERVICE_NAME` | `OTEL_SERVICE_NAME` | Service name | `my-agent` |
@@ -246,13 +246,13 @@ The `instrument` parameter accepts any combination of these SDK names:
 
 ## Backend URL Schemes
 
-TraceCraft supports custom URL schemes for different observability backends:
+Trace Craft supports custom URL schemes for different observability backends:
 
 | Scheme | Converts To | Default Port | Use Case |
 |--------|-------------|--------------|----------|
 | `http://` | `http://` | 4318 | Local development, internal collectors |
 | `https://` | `https://` | 4318 | Production OTLP endpoints |
-| `tracecraft://` | `http://` | 4318 | TraceCraft receiver (alias for http) |
+| `tracecraft://` | `http://` | 4318 | Trace Craft receiver (alias for http) |
 | `datadog://` | `https://` | 4318 | DataDog OTLP intake |
 | `azure://` | `https://` | 443 | Azure Application Insights |
 | `aws://` | `https://` | 443 | AWS X-Ray |
@@ -260,7 +260,7 @@ TraceCraft supports custom URL schemes for different observability backends:
 
 ### Examples
 
-=== "Local TraceCraft"
+=== "Local Trace Craft"
 
     ```python
     tracer = setup_exporter(endpoint="tracecraft://localhost:4318")
@@ -286,9 +286,9 @@ TraceCraft supports custom URL schemes for different observability backends:
 
 ---
 
-## TraceCraft Span Attributes
+## Trace Craft Span Attributes
 
-To ensure your traces display correctly in TraceCraft's TUI, set these attributes on your spans:
+To ensure your traces display correctly in Trace Craft's TUI, set these attributes on your spans:
 
 ### Step Types
 
@@ -1009,7 +1009,7 @@ signal.signal(signal.SIGINT, graceful_shutdown)
 
 ### Empty Input/Output in TUI
 
-??? question "Are you setting TraceCraft attributes?"
+??? question "Are you setting Trace Craft attributes?"
     Ensure you set the required attributes on parent spans:
 
     ```python
@@ -1093,7 +1093,7 @@ Use `parse_endpoint` to understand how URLs are interpreted:
 ```python
 from tracecraft.otel import parse_endpoint
 
-# Parse a TraceCraft URL
+# Parse a Trace Craft URL
 config = parse_endpoint("tracecraft://myhost:4318/custom/path")
 print(f"Scheme: {config.scheme}")          # tracecraft
 print(f"Host: {config.host}")              # myhost
@@ -1186,7 +1186,7 @@ print(f"Backend Type: {config.backend_type}")  # tracecraft
 
     ---
 
-    Alternative approach using TraceCraft's native instrumentation
+    Alternative approach using Trace Craft's native instrumentation
 
     [:octicons-arrow-right-24: Auto-Instrumentation](auto-instrumentation.md)
 

@@ -1,6 +1,6 @@
 # Processors
 
-Processors transform trace data before export. TraceCraft includes built-in processors for PII redaction, sampling, and enrichment.
+Processors transform trace data before export. Trace Craft includes built-in processors for PII redaction, sampling, and enrichment.
 
 ## Overview
 
@@ -62,7 +62,7 @@ mode=RedactionMode.HASH
 
 ### Built-In Patterns
 
-TraceCraft redacts common PII:
+Trace Craft redacts common PII:
 
 - Email addresses
 - Phone numbers

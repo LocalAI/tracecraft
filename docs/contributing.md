@@ -1,6 +1,6 @@
-# Contributing to TraceCraft
+# Contributing to Trace Craft
 
-Thank you for your interest in contributing to TraceCraft! This guide will help you get started.
+Thank you for your interest in contributing to Trace Craft! This guide will help you get started.
 
 ## Code of Conduct
 
@@ -17,7 +17,7 @@ Found a bug? Please report it:
    - Clear title and description
    - Steps to reproduce
    - Expected vs actual behavior
-   - Your environment (OS, Python version, TraceCraft version)
+   - Your environment (OS, Python version, Trace Craft version)
    - Minimal code example if possible
 
 ### Suggesting Features
@@ -465,4 +465,4 @@ By contributing, you agree that your contributions will be licensed under the Ap
 
 Don't hesitate to ask! Create a discussion or reach out to maintainers.
 
-Thank you for contributing to TraceCraft!
+Thank you for contributing to Trace Craft!

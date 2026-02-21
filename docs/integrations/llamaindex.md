@@ -1,7 +1,7 @@
 # LlamaIndex Integration
 
-TraceCraft integrates with LlamaIndex through the `TraceCraftSpanHandler`, a native LlamaIndex span
-handler that captures every component invocation as a TraceCraft Step with full hierarchy, token
+Trace Craft integrates with LlamaIndex through the `TraceCraftSpanHandler`, a native LlamaIndex span
+handler that captures every component invocation as a Trace Craft Step with full hierarchy, token
 counts, and error details — without changing your existing LlamaIndex code.
 
 ## Installation
@@ -10,7 +10,7 @@ counts, and error details — without changing your existing LlamaIndex code.
 pip install "tracecraft[llamaindex]"
 ```
 
-This installs TraceCraft with LlamaIndex support (`llama-index-core>=0.10`).
+This installs Trace Craft with LlamaIndex support (`llama-index-core>=0.10`).
 
 ## Quick Start
 
@@ -23,7 +23,7 @@ from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader
 from llama_index.core.callbacks import CallbackManager
 from datetime import UTC, datetime
 
-# Initialize TraceCraft
+# Initialize Trace Craft
 tracecraft.init(console=True)
 
 # Attach the span handler to LlamaIndex settings
@@ -36,7 +36,7 @@ with run_context(run):
     documents = SimpleDirectoryReader("data").load_data()
     index = VectorStoreIndex.from_documents(documents)
     query_engine = index.as_query_engine()
-    response = query_engine.query("What is TraceCraft?")
+    response = query_engine.query("What is Trace Craft?")
     print(response)
 
 # Free internal tracking state when done
@@ -44,7 +44,7 @@ handler.clear()
 ```
 
 !!! note "run_context is required"
-    TraceCraft creates steps only when an `AgentRun` is active. Always wrap LlamaIndex calls
+    Trace Craft creates steps only when an `AgentRun` is active. Always wrap LlamaIndex calls
     inside `run_context(run)` or `runtime.run("name")`.
 
 ## How It Works
@@ -131,7 +131,7 @@ run = AgentRun(name="chat", start_time=datetime.now(UTC))
 with run_context(run):
     messages = [
         ChatMessage(role="system", content="You are a helpful assistant."),
-        ChatMessage(role="user", content="What makes TraceCraft different?"),
+        ChatMessage(role="user", content="What makes Trace Craft different?"),
     ]
     response = llm.chat(messages)
     print(response.message.content)
@@ -194,7 +194,7 @@ with run_context(run):
     print(response)
 ```
 
-TraceCraft captures the retriever step (type `RETRIEVAL`) and the synthesizer step (type `LLM`)
+Trace Craft captures the retriever step (type `RETRIEVAL`) and the synthesizer step (type `LLM`)
 as children of the overall query workflow.
 
 ## RAG Pipelines
@@ -219,7 +219,7 @@ query_engine = index.as_query_engine(similarity_top_k=3)
 run = AgentRun(name="basic_rag", start_time=datetime.now(UTC))
 with run_context(run):
     response = query_engine.query(
-        "What are the installation steps for TraceCraft?"
+        "What are the installation steps for Trace Craft?"
     )
     print(response)
     for node in response.source_nodes:
@@ -282,7 +282,7 @@ with run_context(run):
     print(response)
 ```
 
-TraceCraft captures retrieval, reranking, and synthesis as separate steps in the trace tree.
+Trace Craft captures retrieval, reranking, and synthesis as separate steps in the trace tree.
 
 ## Chat Engines
 
@@ -300,7 +300,7 @@ chat_engine = index.as_chat_engine(chat_mode="best", verbose=False)
 
 run = AgentRun(name="chat_session", start_time=datetime.now(UTC))
 with run_context(run):
-    response = chat_engine.chat("What is TraceCraft?")
+    response = chat_engine.chat("What is Trace Craft?")
     print(response)
 
     response = chat_engine.chat("How does it compare to LangSmith?")
@@ -325,7 +325,7 @@ chat_engine = index.as_chat_engine(
     chat_mode="context",
     memory=memory,
     system_prompt=(
-        "You are a technical assistant for TraceCraft. "
+        "You are a technical assistant for Trace Craft. "
         "Answer questions based on the documentation."
     ),
 )
@@ -333,7 +333,7 @@ chat_engine = index.as_chat_engine(
 run = AgentRun(name="chat_with_memory", start_time=datetime.now(UTC))
 with run_context(run):
     turns = [
-        "What is the purpose of TraceCraft?",
+        "What is the purpose of Trace Craft?",
         "What step types are available?",
         "Can you give me an example using the TOOL step type?",
     ]
@@ -361,7 +361,7 @@ def multiply(a: float, b: float) -> float:
 
 def search_docs(query: str) -> str:
     """Search the documentation for information about a topic."""
-    return f"Documentation results for '{query}': TraceCraft is an observability SDK for LLMs."
+    return f"Documentation results for '{query}': Trace Craft is an observability SDK for LLMs."
 
 multiply_tool = FunctionTool.from_defaults(fn=multiply)
 search_tool = FunctionTool.from_defaults(fn=search_docs)
@@ -376,7 +376,7 @@ agent = ReActAgent.from_tools(
 
 run = AgentRun(name="react_agent", start_time=datetime.now(UTC))
 with run_context(run):
-    response = agent.query("What is 47 times 89? Also, what is TraceCraft?")
+    response = agent.query("What is 47 times 89? Also, what is Trace Craft?")
     print(response)
 ```
 
@@ -397,14 +397,14 @@ docs_tool = QueryEngineTool(
     query_engine=index_docs.as_query_engine(),
     metadata=ToolMetadata(
         name="documentation",
-        description="Search the TraceCraft documentation.",
+        description="Search the Trace Craft documentation.",
     ),
 )
 code_tool = QueryEngineTool(
     query_engine=index_code.as_query_engine(),
     metadata=ToolMetadata(
         name="source_code",
-        description="Search the TraceCraft source code.",
+        description="Search the Trace Craft source code.",
     ),
 )
 
@@ -413,7 +413,7 @@ agent = ReActAgent.from_tools([docs_tool, code_tool], verbose=False)
 run = AgentRun(name="multi_tool_agent", start_time=datetime.now(UTC))
 with run_context(run):
     response = agent.query(
-        "How does TraceCraft's LangChain adapter capture token counts? "
+        "How does Trace Craft's LangChain adapter capture token counts? "
         "Show me the relevant source code."
     )
     print(response)
@@ -455,7 +455,7 @@ with run_context(run):
     response = agent.query(
         "What is the weather in Seattle? "
         "Also, what is 123 plus 456? "
-        "Tell me about TraceCraft."
+        "Tell me about Trace Craft."
     )
     print(response)
 ```
@@ -505,7 +505,7 @@ query_engine = index.as_query_engine(streaming=True)
 
 run = AgentRun(name="streaming_rag", start_time=datetime.now(UTC))
 with run_context(run):
-    streaming_response = query_engine.query("Describe the TraceCraft architecture.")
+    streaming_response = query_engine.query("Describe the Trace Craft architecture.")
     streaming_response.print_response_stream()
 
 handler.clear()
@@ -513,7 +513,7 @@ handler.clear()
 
 !!! tip "Streaming and token counts"
     When streaming is enabled, LlamaIndex may not provide final token counts until the stream
-    completes. TraceCraft captures whatever usage data is available in the response object.
+    completes. Trace Craft captures whatever usage data is available in the response object.
 
 ## Advanced Usage
 
@@ -544,7 +544,7 @@ tracecraft.get_runtime().end_run(run)
 
 ### Multiple Indices
 
-TraceCraft handles calls across multiple indices in the same run:
+Trace Craft handles calls across multiple indices in the same run:
 
 ```python
 from tracecraft.core.context import run_context
@@ -566,7 +566,7 @@ Both queries appear as sibling steps inside the same run.
 
 ### Custom Components
 
-When you subclass a LlamaIndex component, TraceCraft infers the step type from the class and module
+When you subclass a LlamaIndex component, Trace Craft infers the step type from the class and module
 name. Ensure your class name contains a descriptive keyword (`llm`, `retriever`, `tool`, `agent`)
 so the inference logic maps it correctly:
 

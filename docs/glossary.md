@@ -1,14 +1,14 @@
 # Glossary
 
-This glossary defines the key terms used in TraceCraft and the broader LLM observability ecosystem. Terms are organized into four categories and sorted alphabetically within each category.
+This glossary defines the key terms used in Trace Craft and the broader LLM observability ecosystem. Terms are organized into four categories and sorted alphabetically within each category.
 
 ---
 
-## TraceCraft-Specific Terms
+## Trace Craft-Specific Terms
 
 ### Adapter
 
-A framework-specific integration that translates the tracing callbacks and lifecycle hooks of an external framework into TraceCraft Steps. Adapters exist for LangChain, LlamaIndex, and PydanticAI. Rather than modifying your framework code, you install the adapter once and TraceCraft automatically captures all relevant operations.
+A framework-specific integration that translates the tracing callbacks and lifecycle hooks of an external framework into Trace Craft Steps. Adapters exist for LangChain, LlamaIndex, and PydanticAI. Rather than modifying your framework code, you install the adapter once and Trace Craft automatically captures all relevant operations.
 
 See also: [Integrations](integrations/index.md), [Step](#step)
 
@@ -18,7 +18,7 @@ See also: [Integrations](integrations/index.md), [Step](#step)
 
 The top-level container for a complete agent execution. An `AgentRun` holds metadata (run ID, timestamps, status), the initial input and final output, tags, and the full tree of child Steps. Every traced execution produces exactly one `AgentRun`.
 
-`AgentRun` is the TraceCraft equivalent of a **Trace** in OpenTelemetry.
+`AgentRun` is the Trace Craft equivalent of a **Trace** in OpenTelemetry.
 
 ```python
 from tracecraft import TraceCraftRuntime
@@ -39,7 +39,7 @@ See also: [Step](#step), [Trace](#trace)
 
 ### Auto-Instrumentation
 
-Automatic tracing of third-party SDK calls (such as OpenAI or Anthropic) without modifying your existing code. TraceCraft's auto-instrumentation wraps installed OpenTelemetry instrumentation libraries and patches the SDK at import time, so every API call becomes a traced Step.
+Automatic tracing of third-party SDK calls (such as OpenAI or Anthropic) without modifying your existing code. Trace Craft's auto-instrumentation wraps installed OpenTelemetry instrumentation libraries and patches the SDK at import time, so every API call becomes a traced Step.
 
 ```python
 import tracecraft
@@ -55,7 +55,7 @@ See also: [Auto-Instrumentation Guide](integrations/auto-instrumentation.md)
 
 ### Decorator
 
-A Python function annotation that automatically creates and manages a Step when the decorated function is called. TraceCraft provides four built-in decorators, each corresponding to a semantic operation type:
+A Python function annotation that automatically creates and manages a Step when the decorated function is called. Trace Craft provides four built-in decorators, each corresponding to a semantic operation type:
 
 | Decorator | Step Type | Typical Use |
 |---|---|---|
@@ -112,7 +112,7 @@ See also: [Exporters Guide](user-guide/exporters.md)
 
 ### OTLPReceiverServer
 
-An HTTP server bundled with TraceCraft that listens for incoming OpenTelemetry traces (sent via the OTLP HTTP protocol) and stores them in a TraceCraft storage backend. This allows any OTel-instrumented application - regardless of language or framework - to send traces to TraceCraft for analysis in the TUI.
+An HTTP server bundled with Trace Craft that listens for incoming OpenTelemetry traces (sent via the OTLP HTTP protocol) and stores them in a Trace Craft storage backend. This allows any OTel-instrumented application - regardless of language or framework - to send traces to Trace Craft for analysis in the TUI.
 
 ```python
 from tracecraft.receiver import OTLPReceiverServer
@@ -159,7 +159,7 @@ See also: [Processors Guide](user-guide/processors.md), [PII Redaction](#pii-red
 
 A single traced operation within an `AgentRun`. Steps form a tree: a parent Step can have many child Steps, reflecting the actual call hierarchy of your code. Each Step records its type, name, start time, duration, status, inputs, outputs, and arbitrary attributes.
 
-`Step` is the TraceCraft equivalent of a **Span** in OpenTelemetry.
+`Step` is the Trace Craft equivalent of a **Span** in OpenTelemetry.
 
 ```python
 from tracecraft import step
@@ -209,7 +209,7 @@ See also: [Step](#step), [Decorator](#decorator)
 
 ### TraceCraftConfig
 
-A dataclass that holds all configuration options for a TraceCraft runtime instance. Pass it to `TraceCraftRuntime` directly, or use the convenience parameters on `tracecraft.init()`.
+A dataclass that holds all configuration options for a Trace Craft runtime instance. Pass it to `TraceCraftRuntime` directly, or use the convenience parameters on `tracecraft.init()`.
 
 ```python
 from tracecraft import TraceCraftConfig, TraceCraftRuntime
@@ -257,7 +257,7 @@ See also: [TraceCraftConfig](#tracecraftconfig), [Multi-Tenancy](user-guide/mult
 
 ### TUI
 
-The Terminal User Interface included with TraceCraft for browsing and analyzing stored traces offline. Built with [Textual](https://textual.textualize.io/), the TUI reads from JSONL or SQLite storage and provides an interactive, keyboard-driven interface for exploring the trace tree, inspecting inputs/outputs, reading LLM prompts and completions, and comparing runs.
+The Terminal User Interface included with Trace Craft for browsing and analyzing stored traces offline. Built with [Textual](https://textual.textualize.io/), the TUI reads from JSONL or SQLite storage and provides an interactive, keyboard-driven interface for exploring the trace tree, inspecting inputs/outputs, reading LLM prompts and completions, and comparing runs.
 
 ```bash
 # Launch from a JSONL file
@@ -277,7 +277,7 @@ See also: [Terminal UI Guide](user-guide/tui.md), [OTLPReceiverServer](#otlprece
 
 An OpenTelemetry SDK component that queues completed spans in memory and exports them in batches at regular intervals or when the queue reaches a threshold. Preferred over `SimpleSpanProcessor` in production because it reduces the performance impact of exporting on the critical path.
 
-TraceCraft's `setup_exporter()` uses `BatchSpanProcessor` by default (`batch_export=True`).
+Trace Craft's `setup_exporter()` uses `BatchSpanProcessor` by default (`batch_export=True`).
 
 See also: [SimpleSpanProcessor](#simplespanprocessor), [OpenTelemetry Receiver](integrations/otel-receiver.md)
 
@@ -287,7 +287,7 @@ See also: [SimpleSpanProcessor](#simplespanprocessor), [OpenTelemetry Receiver](
 
 **OpenTelemetry Protocol** - The standard wire protocol for transmitting traces, metrics, and logs between OpenTelemetry-instrumented applications and backends. Comes in two transport variants: HTTP/protobuf (port 4318) and gRPC (port 4317).
 
-TraceCraft's `OTLPExporter` and `OTLPReceiverServer` both use OTLP HTTP.
+Trace Craft's `OTLPExporter` and `OTLPReceiverServer` both use OTLP HTTP.
 
 See also: [Exporters Guide](user-guide/exporters.md), [OTLPReceiverServer](#otlpreceiverserver)
 
@@ -295,7 +295,7 @@ See also: [Exporters Guide](user-guide/exporters.md), [OTLPReceiverServer](#otlp
 
 ### Propagation
 
-The mechanism for passing trace context (trace ID, span ID, sampling flags) across process or network boundaries so that distributed operations can be linked into a single coherent trace. TraceCraft uses the **W3C Trace Context** standard (`traceparent` and `tracestate` HTTP headers) for cross-service propagation, and Python `contextvars` for propagation across async boundaries within a single process.
+The mechanism for passing trace context (trace ID, span ID, sampling flags) across process or network boundaries so that distributed operations can be linked into a single coherent trace. Trace Craft uses the **W3C Trace Context** standard (`traceparent` and `tracestate` HTTP headers) for cross-service propagation, and Python `contextvars` for propagation across async boundaries within a single process.
 
 See also: [W3C Trace Context](#w3c-trace-context), [Trace Context](#trace-context)
 
@@ -303,10 +303,10 @@ See also: [W3C Trace Context](#w3c-trace-context), [Trace Context](#trace-contex
 
 ### Resource
 
-In OpenTelemetry, a `Resource` is the set of immutable attributes that describe the entity producing telemetry - typically the service name, version, and deployment environment. TraceCraft automatically creates a `Resource` from your `TraceCraftConfig.service_name` and related fields.
+In OpenTelemetry, a `Resource` is the set of immutable attributes that describe the entity producing telemetry - typically the service name, version, and deployment environment. Trace Craft automatically creates a `Resource` from your `TraceCraftConfig.service_name` and related fields.
 
 ```python
-# Equivalent OTel resource attributes populated by TraceCraft
+# Equivalent OTel resource attributes populated by Trace Craft
 {
     "service.name": "my-agent",
     "service.version": "1.0.0",
@@ -320,7 +320,7 @@ In OpenTelemetry, a `Resource` is the set of immutable attributes that describe 
 
 Standardized attribute names and values defined by the OpenTelemetry project for common concepts (HTTP requests, database queries, LLM calls, etc.). Using semantic conventions makes traces portable across different backends and analysis tools.
 
-TraceCraft follows the **OTel GenAI Semantic Conventions** and also emits **OpenInference** attributes for maximum backend compatibility.
+Trace Craft follows the **OTel GenAI Semantic Conventions** and also emits **OpenInference** attributes for maximum backend compatibility.
 
 See also: [OTel GenAI Conventions](#otel-genai-conventions), [OpenInference](#openinference)
 
@@ -340,7 +340,7 @@ See also: [BatchSpanProcessor](#batchspanprocessor)
 
 The fundamental unit of work in OpenTelemetry. A Span represents a single operation with a start time, end time, status, and a set of key-value attributes. Spans are linked by parent-child relationships to form a tree within a Trace.
 
-In TraceCraft terminology, a Span corresponds to a [Step](#step).
+In Trace Craft terminology, a Span corresponds to a [Step](#step).
 
 See also: [Step](#step), [Trace](#trace), [Trace Context](#trace-context)
 
@@ -350,7 +350,7 @@ See also: [Step](#step), [Trace](#trace), [Trace Context](#trace-context)
 
 In OpenTelemetry, a Trace is the complete record of a distributed operation: a directed acyclic graph of Spans sharing the same `trace_id`. It represents the full path of a request or task through a system.
 
-In TraceCraft terminology, a Trace corresponds to an [AgentRun](#agentrun).
+In Trace Craft terminology, a Trace corresponds to an [AgentRun](#agentrun).
 
 See also: [AgentRun](#agentrun), [Span](#span)
 
@@ -358,7 +358,7 @@ See also: [AgentRun](#agentrun), [Span](#span)
 
 ### Trace Context
 
-The metadata that links related Spans together into a Trace: primarily the `trace_id` (shared by all Spans in a Trace), the `span_id` (unique per Span), the `parent_span_id` (links child to parent), and trace flags (sampling decision). TraceCraft manages trace context automatically via Python `contextvars`.
+The metadata that links related Spans together into a Trace: primarily the `trace_id` (shared by all Spans in a Trace), the `span_id` (unique per Span), the `parent_span_id` (links child to parent), and trace flags (sampling decision). Trace Craft manages trace context automatically via Python `contextvars`.
 
 See also: [Propagation](#propagation), [W3C Trace Context](#w3c-trace-context)
 
@@ -376,7 +376,7 @@ See also: [TraceCraftRuntime](#tracecraftruntime)
 
 ### Completion
 
-The output text generated by an LLM in response to a prompt. TraceCraft captures completions in `Step.outputs` under the key `completion` (or via OTel GenAI convention attributes such as `gen_ai.completion`). For streaming responses, individual chunks are captured in `streaming_chunks`.
+The output text generated by an LLM in response to a prompt. Trace Craft captures completions in `Step.outputs` under the key `completion` (or via OTel GenAI convention attributes such as `gen_ai.completion`). For streaming responses, individual chunks are captured in `streaming_chunks`.
 
 See also: [Prompt](#prompt), [Streaming](#streaming), [Token](#token)
 
@@ -384,7 +384,7 @@ See also: [Prompt](#prompt), [Streaming](#streaming), [Token](#token)
 
 ### Cost Tracking
 
-Calculating the monetary cost of LLM API calls based on token usage and provider-specific pricing tables. TraceCraft records input and output token counts on LLM Steps and can compute estimated cost in USD when the model and provider are known.
+Calculating the monetary cost of LLM API calls based on token usage and provider-specific pricing tables. Trace Craft records input and output token counts on LLM Steps and can compute estimated cost in USD when the model and provider are known.
 
 ```python
 # Attributes recorded on an LLM Step
@@ -399,7 +399,7 @@ See also: [Token Counting](#token-counting), [Token](#token)
 
 ### Latency
 
-The elapsed wall-clock time for an operation. TraceCraft records `duration_ms` on every Step, making it straightforward to identify slow LLM calls, retrieval bottlenecks, or tool timeouts in the TUI.
+The elapsed wall-clock time for an operation. Trace Craft records `duration_ms` on every Step, making it straightforward to identify slow LLM calls, retrieval bottlenecks, or tool timeouts in the TUI.
 
 See also: [Step](#step)
 
@@ -407,7 +407,7 @@ See also: [Step](#step)
 
 ### PII Redaction
 
-The process of removing or masking personally identifiable information (names, email addresses, phone numbers, credit card numbers, etc.) from trace data before it is stored or exported. TraceCraft's `RedactionProcessor` applies configurable regex patterns client-side, so sensitive data never leaves your infrastructure.
+The process of removing or masking personally identifiable information (names, email addresses, phone numbers, credit card numbers, etc.) from trace data before it is stored or exported. Trace Craft's `RedactionProcessor` applies configurable regex patterns client-side, so sensitive data never leaves your infrastructure.
 
 ```python
 from tracecraft.processors.redaction import RedactionProcessor, RedactionMode
@@ -424,7 +424,7 @@ See also: [Processor](#processor), [RedactionMode]
 
 ### Prompt
 
-The input text (or structured messages) sent to an LLM. TraceCraft captures prompts in `Step.inputs` and via OTel GenAI convention attributes such as `gen_ai.prompt`. Prompts are displayed in the TUI's detail panel and can be redacted if they contain PII.
+The input text (or structured messages) sent to an LLM. Trace Craft captures prompts in `Step.inputs` and via OTel GenAI convention attributes such as `gen_ai.prompt`. Prompts are displayed in the TUI's detail panel and can be redacted if they contain PII.
 
 See also: [Completion](#completion), [PII Redaction](#pii-redaction)
 
@@ -434,7 +434,7 @@ See also: [Completion](#completion), [PII Redaction](#pii-redaction)
 
 **Retrieval-Augmented Generation** - An architecture that combines a retrieval system (vector database, search engine) with an LLM. The retrieval step fetches relevant documents based on the user's query; those documents are added to the LLM prompt as context, grounding the response in factual information.
 
-TraceCraft traces RAG pipelines end-to-end using `StepType.RETRIEVAL` for the retrieval step and `StepType.LLM` for the generation step.
+Trace Craft traces RAG pipelines end-to-end using `StepType.RETRIEVAL` for the retrieval step and `StepType.LLM` for the generation step.
 
 See also: [StepType](#steptype), `@trace_retrieval` in [Decorators Guide](user-guide/decorators.md)
 
@@ -442,7 +442,7 @@ See also: [StepType](#steptype), `@trace_retrieval` in [Decorators Guide](user-g
 
 ### Sampling
 
-Selectively recording only a fraction of all traces to reduce storage costs and processing overhead while still providing statistical visibility. TraceCraft's `SamplingProcessor` supports rate-based sampling with configurable overrides to always capture errors and slow traces.
+Selectively recording only a fraction of all traces to reduce storage costs and processing overhead while still providing statistical visibility. Trace Craft's `SamplingProcessor` supports rate-based sampling with configurable overrides to always capture errors and slow traces.
 
 ```python
 from tracecraft.processors.sampling import SamplingProcessor
@@ -461,7 +461,7 @@ See also: [Processor](#processor)
 
 ### Streaming
 
-Receiving LLM output incrementally as it is generated, token by token, rather than waiting for the complete response. TraceCraft captures streaming responses by accumulating `streaming_chunks` on the LLM Step and recording the final assembled completion.
+Receiving LLM output incrementally as it is generated, token by token, rather than waiting for the complete response. Trace Craft captures streaming responses by accumulating `streaming_chunks` on the LLM Step and recording the final assembled completion.
 
 See also: [Completion](#completion), [Token](#token)
 
@@ -469,7 +469,7 @@ See also: [Completion](#completion), [Token](#token)
 
 ### Token
 
-The basic unit of text that LLMs process. Roughly equivalent to a word fragment (a typical English word is 1-2 tokens). Token counts directly determine the cost and throughput of LLM API calls. TraceCraft records `input_tokens` and `output_tokens` on every LLM Step.
+The basic unit of text that LLMs process. Roughly equivalent to a word fragment (a typical English word is 1-2 tokens). Token counts directly determine the cost and throughput of LLM API calls. Trace Craft records `input_tokens` and `output_tokens` on every LLM Step.
 
 See also: [Token Counting](#token-counting), [Cost Tracking](#cost-tracking)
 
@@ -477,7 +477,7 @@ See also: [Token Counting](#token-counting), [Cost Tracking](#cost-tracking)
 
 ### Token Counting
 
-Measuring the number of tokens in a prompt (input tokens) and a completion (output tokens). Token counts are reported by the LLM provider in the API response and are captured automatically by TraceCraft on LLM Steps. They are the basis for [Cost Tracking](#cost-tracking).
+Measuring the number of tokens in a prompt (input tokens) and a completion (output tokens). Token counts are reported by the LLM provider in the API response and are captured automatically by Trace Craft on LLM Steps. They are the basis for [Cost Tracking](#cost-tracking).
 
 See also: [Token](#token), [Cost Tracking](#cost-tracking)
 
@@ -487,7 +487,7 @@ See also: [Token](#token), [Cost Tracking](#cost-tracking)
 
 ### JSONL
 
-**JSON Lines** - A text format where each line is a self-contained, valid JSON object. TraceCraft uses JSONL as its default local storage format: each line represents one serialized `AgentRun`. JSONL is human-readable, easy to stream, and directly parseable with standard tools.
+**JSON Lines** - A text format where each line is a self-contained, valid JSON object. Trace Craft uses JSONL as its default local storage format: each line represents one serialized `AgentRun`. JSONL is human-readable, easy to stream, and directly parseable with standard tools.
 
 ```bash
 # Each line is one AgentRun
@@ -500,7 +500,7 @@ See also: [Exporters Guide](user-guide/exporters.md)
 
 ### MLflow
 
-An open-source platform for managing the machine learning lifecycle, including experiment tracking, model registry, and evaluation. TraceCraft can export traces to MLflow as runs, making it possible to correlate agent behavior with ML experiments and model versions.
+An open-source platform for managing the machine learning lifecycle, including experiment tracking, model registry, and evaluation. Trace Craft can export traces to MLflow as runs, making it possible to correlate agent behavior with ML experiments and model versions.
 
 ```python
 from tracecraft.exporters import MLflowExporter
@@ -514,7 +514,7 @@ See also: [Exporters Guide](user-guide/exporters.md)
 
 ### OpenInference
 
-A trace schema standard developed by Arize AI for LLM and agent tracing. It defines attribute names such as `llm.model_name`, `llm.token_count.prompt`, `input.value`, and `output.value`. TraceCraft emits OpenInference attributes alongside OTel GenAI attributes, making traces compatible with Phoenix and other Arize-ecosystem backends.
+A trace schema standard developed by Arize AI for LLM and agent tracing. It defines attribute names such as `llm.model_name`, `llm.token_count.prompt`, `input.value`, and `output.value`. Trace Craft emits OpenInference attributes alongside OTel GenAI attributes, making traces compatible with Phoenix and other Arize-ecosystem backends.
 
 See also: [OTel GenAI Conventions](#otel-genai-conventions), [Core Concepts](getting-started/concepts.md#schema-support)
 
@@ -525,7 +525,7 @@ See also: [OTel GenAI Conventions](#otel-genai-conventions), [Core Concepts](get
 The OpenTelemetry Semantic Conventions for Generative AI: a standardized set of attribute names for LLM operations maintained by the OpenTelemetry project. Key attributes include `gen_ai.system`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`, and `gen_ai.usage.output_tokens`.
 
 ```python
-# Attributes emitted by TraceCraft on LLM Steps
+# Attributes emitted by Trace Craft on LLM Steps
 {
     "gen_ai.system": "openai",
     "gen_ai.request.model": "gpt-4o",
@@ -541,7 +541,7 @@ See also: [OpenInference](#openinference), [Semantic Conventions](#semantic-conv
 
 ### W3C Trace Context
 
-An HTTP header standard ([W3C Recommendation](https://www.w3.org/TR/trace-context/)) for propagating trace context across service boundaries. It defines two headers: `traceparent` (carries `trace_id`, `span_id`, and sampling flags) and `tracestate` (vendor-specific context). TraceCraft uses W3C Trace Context for cross-service propagation.
+An HTTP header standard ([W3C Recommendation](https://www.w3.org/TR/trace-context/)) for propagating trace context across service boundaries. It defines two headers: `traceparent` (carries `trace_id`, `span_id`, and sampling flags) and `tracestate` (vendor-specific context). Trace Craft uses W3C Trace Context for cross-service propagation.
 
 See also: [Propagation](#propagation), [Trace Context](#trace-context)
 
@@ -549,6 +549,6 @@ See also: [Propagation](#propagation), [Trace Context](#trace-context)
 
 ## See Also
 
-- [Core Concepts](getting-started/concepts.md) - Conceptual overview of how TraceCraft works
+- [Core Concepts](getting-started/concepts.md) - Conceptual overview of how Trace Craft works
 - [API Reference](api/index.md) - Full API documentation
 - [User Guide](user-guide/index.md) - Feature documentation and how-to guides

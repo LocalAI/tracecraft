@@ -1,6 +1,6 @@
 # Terminal UI
 
-The TraceCraft Terminal UI (TUI) is the flagship feature of TraceCraft — a powerful, interactive trace explorer that runs right in your terminal. Analyze LLM traces, debug agent behavior, inspect prompts and responses, compare performance across runs, and understand exactly what your AI application did at every step.
+The Trace Craft Terminal UI (TUI) is the flagship feature of Trace Craft — a powerful, interactive trace explorer that runs right in your terminal. Analyze LLM traces, debug agent behavior, inspect prompts and responses, compare performance across runs, and understand exactly what your AI application did at every step.
 
 !!! tip "Two Ways to Get Traces into the TUI"
 
@@ -23,7 +23,7 @@ The TraceCraft Terminal UI (TUI) is the flagship feature of TraceCraft — a pow
 
     ---
 
-    **Path A — TraceCraft instrumentation** (you control the code):
+    **Path A — Trace Craft instrumentation** (you control the code):
 
     The fastest option is `receiver=True` — one `init()` call, then start the TUI:
 
@@ -73,7 +73,7 @@ The TraceCraft Terminal UI (TUI) is the flagship feature of TraceCraft — a pow
 
 ### Main View — All Your Agent Runs
 
-![TraceCraft TUI - Main View](../assets/screenshots/tui-main-view.svg)
+![Trace Craft TUI - Main View](../assets/screenshots/tui-main-view.svg)
 
 *The main view shows all captured agent runs with name, duration, token usage, and status. Navigate with arrow keys. The filter bar at the top lets you search and filter by project or session.*
 
@@ -83,7 +83,7 @@ The TraceCraft Terminal UI (TUI) is the flagship feature of TraceCraft — a pow
 
 Select any trace and press `Enter` — the waterfall expands to show the complete call tree:
 
-![TraceCraft TUI - Waterfall View](../assets/screenshots/tui-waterfall-view.svg)
+![Trace Craft TUI - Waterfall View](../assets/screenshots/tui-waterfall-view.svg)
 
 *The waterfall shows agent → tool → LLM call hierarchy with timing bars. See exactly where your agent spends its time.*
 
@@ -93,7 +93,7 @@ Select any trace and press `Enter` — the waterfall expands to show the complet
 
 Press `i` while viewing any span to see the exact prompt, system message, and context:
 
-![TraceCraft TUI - Input View](../assets/screenshots/tui-input-view.svg)
+![Trace Craft TUI - Input View](../assets/screenshots/tui-input-view.svg)
 
 *Full prompt inspection — every system message, user message, and context sent to the model.*
 
@@ -103,7 +103,7 @@ Press `i` while viewing any span to see the exact prompt, system message, and co
 
 Press `o` to view the model's complete response:
 
-![TraceCraft TUI - Output View](../assets/screenshots/tui-output-view.svg)
+![Trace Craft TUI - Output View](../assets/screenshots/tui-output-view.svg)
 
 *Model response with token counts and cost estimates displayed inline.*
 
@@ -113,7 +113,7 @@ Press `o` to view the model's complete response:
 
 Press `a` to view all span attributes — model name, temperature, token counts, costs, and custom metadata:
 
-![TraceCraft TUI - Attributes View](../assets/screenshots/tui-attributes-view.svg)
+![Trace Craft TUI - Attributes View](../assets/screenshots/tui-attributes-view.svg)
 
 *All span attributes: model, provider, temperature, token usage, cost, custom metadata, and timing.*
 
@@ -125,7 +125,7 @@ There are two independent paths. Choose the one that fits your setup — or use 
 
 ---
 
-### Path A: TraceCraft Instrumentation
+### Path A: Trace Craft Instrumentation
 
 Use this when you own the code. You have three options — auto-instrumentation is the fastest to set up.
 
@@ -302,7 +302,7 @@ Traces appear live in the TUI as they are received (with `--watch` mode enabled 
 
 ### Installation
 
-=== "Path A — TraceCraft instrumentation"
+=== "Path A — Trace Craft instrumentation"
 
     ```bash
     pip install "tracecraft[tui]"
@@ -318,7 +318,7 @@ Traces appear live in the TUI as they are received (with `--watch` mode enabled 
 
 ### Launch
 
-**Path A — after running your TraceCraft-instrumented agent:**
+**Path A — after running your Trace Craft-instrumented agent:**
 
 ```bash
 # Open TUI from config-specified storage (default: traces/tracecraft.db)
@@ -354,7 +354,7 @@ Traces appear in the TUI in real-time.
 
 The TUI supports both JSONL and SQLite storage backends. SQLite enables additional features:
 
-![TraceCraft TUI - SQLite Database View](../assets/screenshots/tui-db-main-view.svg)
+![Trace Craft TUI - SQLite Database View](../assets/screenshots/tui-db-main-view.svg)
 
 *SQLite view: project and session columns are populated, enabling filtering by project or session. Agent names like "WeatherAgent" and "MathTutor" are shown with full project context.*
 
@@ -370,7 +370,7 @@ tracecraft.init(sqlite=True)  # Saves to traces/tracecraft.db
 
 All TUI actions are keyboard-driven. Press `?` at any time to show the built-in keyboard shortcut reference:
 
-![TraceCraft TUI - Help Screen](../assets/screenshots/tui-help-screen.svg)
+![Trace Craft TUI - Help Screen](../assets/screenshots/tui-help-screen.svg)
 
 *The help screen (press `?`) shows all keyboard shortcuts in context.*
 
@@ -450,7 +450,7 @@ Navigate with `↑`/`↓`. Press `Enter` to select a trace and expand the waterf
 
 The waterfall shows the complete call hierarchy for the selected trace. Press `Enter` on any trace to expand it:
 
-![TraceCraft TUI - Waterfall View](../assets/screenshots/tui-waterfall-view.svg)
+![Trace Craft TUI - Waterfall View](../assets/screenshots/tui-waterfall-view.svg)
 
 - **Agent spans** are shown at the top level
 - **Tool calls** are nested under agents
@@ -466,7 +466,7 @@ Navigate the waterfall with `↑`/`↓` to select specific spans. Press `i`, `o`
 
 Press `/` to activate the filter bar. Type to filter traces by name or agent:
 
-![TraceCraft TUI - Filter Active](../assets/screenshots/tui-filter-active.svg)
+![Trace Craft TUI - Filter Active](../assets/screenshots/tui-filter-active.svg)
 
 *Filter bar active with search text typed. The result count updates in real-time.*
 
@@ -476,7 +476,7 @@ Press `Escape` to clear the filter and return to the full trace list.
 
 Click the **ERRORS** toggle button or use the filter dropdown to show only traces with errors:
 
-![TraceCraft TUI - Error Traces Only](../assets/screenshots/tui-errors-only.svg)
+![Trace Craft TUI - Error Traces Only](../assets/screenshots/tui-errors-only.svg)
 
 *Error filter active — shows "9 of 61" matching traces. Error traces are immediately visible for fast debugging.*
 
@@ -488,7 +488,7 @@ This is the fastest way to find and debug failing agent runs.
 
 Press `i` to view the exact input sent to the selected operation:
 
-![TraceCraft TUI - Input View](../assets/screenshots/tui-input-view.svg)
+![Trace Craft TUI - Input View](../assets/screenshots/tui-input-view.svg)
 
 - **For LLM spans**: Shows system messages, user messages, and any documents/context
 - **For tool spans**: Shows the arguments passed to the tool
@@ -500,7 +500,7 @@ Press `i` to view the exact input sent to the selected operation:
 
 Press `o` to view the output from the selected operation:
 
-![TraceCraft TUI - Output View](../assets/screenshots/tui-output-view.svg)
+![Trace Craft TUI - Output View](../assets/screenshots/tui-output-view.svg)
 
 - **For LLM spans**: Shows the model's response, with token counts and cost estimates
 - **For tool spans**: Shows the tool's return value
@@ -512,7 +512,7 @@ Press `o` to view the output from the selected operation:
 
 Press `a` to see all metadata for the selected span:
 
-![TraceCraft TUI - Attributes View](../assets/screenshots/tui-attributes-view.svg)
+![Trace Craft TUI - Attributes View](../assets/screenshots/tui-attributes-view.svg)
 
 - Model name and provider
 - Temperature, max tokens, and other LLM parameters
@@ -528,7 +528,7 @@ Press `a` to see all metadata for the selected span:
 
 Press `N` to add notes to any trace (requires SQLite storage):
 
-![TraceCraft TUI - Notes Editor](../assets/screenshots/tui-notes-editor.svg)
+![Trace Craft TUI - Notes Editor](../assets/screenshots/tui-notes-editor.svg)
 
 *Notes editor for the selected trace. Notes persist across TUI sessions in the SQLite database.*
 
@@ -572,7 +572,7 @@ Press `p` on any LLM span to open the **Playground** — an interactive prompt e
 - See the new response alongside the original
 - Iterate on prompts without changing your code
 
-The Playground connects to real LLM APIs, so your TraceCraft API key configuration must be set for the chosen model.
+The Playground connects to real LLM APIs, so your Trace Craft API key configuration must be set for the chosen model.
 
 ---
 

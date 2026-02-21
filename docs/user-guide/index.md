@@ -1,6 +1,6 @@
 # User Guide
 
-Welcome to the TraceCraft SDK Guide. This section covers TraceCraft's Python SDK in detail — decorators, configuration, exporters, processors, and advanced patterns.
+Welcome to the Trace Craft SDK Guide. This section covers Trace Craft's Python SDK in detail — decorators, configuration, exporters, processors, and advanced patterns.
 
 !!! tip "Looking for the Terminal UI guide?"
     The TUI has its own section: [Terminal UI](../user-guide/tui.md)

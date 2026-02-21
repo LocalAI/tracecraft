@@ -1,10 +1,10 @@
-# Migrating from LangSmith to TraceCraft
+# Migrating from LangSmith to Trace Craft
 
-This guide helps you migrate from LangSmith to TraceCraft for LLM observability.
+This guide helps you migrate from LangSmith to Trace Craft for LLM observability.
 
 ## Key Differences
 
-| Feature | LangSmith | TraceCraft |
+| Feature | LangSmith | Trace Craft |
 |---------|-----------|------------|
 | Vendor Lock-in | LangChain ecosystem | Vendor-neutral |
 | Export Formats | Proprietary | OTLP, JSONL, HTML |
@@ -13,7 +13,7 @@ This guide helps you migrate from LangSmith to TraceCraft for LLM observability.
 
 ## Migration Steps
 
-### 1. Install TraceCraft
+### 1. Install Trace Craft
 
 ```bash
 pip install tracecraft
@@ -34,13 +34,13 @@ from langchain_openai import ChatOpenAI
 llm = ChatOpenAI()
 ```
 
-**After (TraceCraft):**
+**After (Trace Craft):**
 
 ```python
 import tracecraft
 from tracecraft.adapters.langchain import TraceCraftCallbackHandler
 
-# Initialize TraceCraft
+# Initialize Trace Craft
 tracecraft.init(console=True, jsonl=True)
 
 # Use the callback handler
@@ -94,7 +94,7 @@ tracecraft.init(exporters=[otlp])
 
 ## Feature Mapping
 
-| LangSmith Feature | TraceCraft Equivalent |
+| LangSmith Feature | Trace Craft Equivalent |
 |-------------------|----------------------|
 | `@traceable` decorator | `@tracecraft.trace_agent` |
 | Run trees | Nested Steps with parent_id |

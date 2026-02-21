@@ -1,7 +1,7 @@
 # Troubleshooting
 
 This guide covers the most common problems encountered when installing, configuring, or running
-TraceCraft. Each issue includes the root cause and a concrete solution.
+Trace Craft. Each issue includes the root cause and a concrete solution.
 
 If your problem is not listed here, check the [FAQ](faq.md) or open an issue on
 [GitHub](https://github.com/LocalAI/tracecraft/issues).
@@ -20,7 +20,7 @@ ModuleNotFoundError: No module named 'tracecraft.adapters.langchain'
 
 **Cause**
 
-TraceCraft uses optional dependency groups (extras) to keep the base package lightweight.
+Trace Craft uses optional dependency groups (extras) to keep the base package lightweight.
 Adapters and some exporters are not installed unless you request them explicitly.
 
 **Solution**
@@ -64,7 +64,7 @@ AttributeError: module 'opentelemetry.trace' has no attribute 'use_span'
 
 **Cause**
 
-TraceCraft targets the OpenTelemetry Python SDK `>=1.20`. An older version installed by
+Trace Craft targets the OpenTelemetry Python SDK `>=1.20`. An older version installed by
 another package in your environment is taking precedence.
 
 **Solution**
@@ -227,7 +227,7 @@ blocking the collector port, or the backend process not yet running.
     nc -zv localhost 4317
     ```
 
-2. Enable debug logging to see what TraceCraft is attempting to send:
+2. Enable debug logging to see what Trace Craft is attempting to send:
 
     ```python
     import logging
@@ -358,7 +358,7 @@ async def worker(task: str) -> str:
     ...
 ```
 
-For framework integrations, always use the TraceCraft adapter:
+For framework integrations, always use the Trace Craft adapter:
 
 ```python
 from tracecraft.adapters.langchain import TraceCraftCallbackHandler

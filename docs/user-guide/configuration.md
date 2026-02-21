@@ -1,6 +1,6 @@
 # Configuration
 
-TraceCraft can be configured through code, a config file, or environment variables. This guide covers all available configuration options.
+Trace Craft can be configured through code, a config file, or environment variables. This guide covers all available configuration options.
 
 ## Configuration Precedence
 
@@ -27,7 +27,7 @@ tracecraft.init(service_name="code-service")
 
 ## Config File
 
-The easiest way to configure TraceCraft for a project is a config file at `.tracecraft/config.yaml` in your project root (or `~/.tracecraft/config.yaml` globally). The file is loaded automatically — no code changes required.
+The easiest way to configure Trace Craft for a project is a config file at `.tracecraft/config.yaml` in your project root (or `~/.tracecraft/config.yaml` globally). The file is loaded automatically — no code changes required.
 
 ### Minimal Config
 
@@ -306,7 +306,7 @@ export TRACECRAFT_AUTO_INSTRUMENT=openai,langchain  # selective
 !!! warning "Initialize Before Importing SDKs"
 
     `tracecraft.init()` must be called **before** importing OpenAI, Anthropic,
-    LangChain, or LlamaIndex. TraceCraft patches at import time — importing first
+    LangChain, or LlamaIndex. Trace Craft patches at import time — importing first
     means the patch won't apply.
 
 ### Console Output

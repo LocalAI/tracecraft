@@ -1,6 +1,6 @@
 # Installation
 
-This guide covers all the ways to install TraceCraft and its optional dependencies.
+This guide covers all the ways to install Trace Craft and its optional dependencies.
 
 ## Requirements
 
@@ -27,7 +27,7 @@ This guide covers all the ways to install TraceCraft and its optional dependenci
     poetry add tracecraft
     ```
 
-This installs the core TraceCraft SDK with:
+This installs the core Trace Craft SDK with:
 
 - OpenTelemetry API and SDK
 - Rich console output
@@ -36,7 +36,7 @@ This installs the core TraceCraft SDK with:
 
 ## Optional Dependencies
 
-TraceCraft uses optional dependencies for different features. Install only what you need:
+Trace Craft uses optional dependencies for different features. Install only what you need:
 
 ### Framework Integrations
 
@@ -168,7 +168,7 @@ No code changes required - just import and initialize!
 
 ### Convenience Bundles
 
-TraceCraft provides convenience bundles for common use cases:
+Trace Craft provides convenience bundles for common use cases:
 
 === "All Features"
 
@@ -214,16 +214,16 @@ Verify your installation:
 ```python
 import tracecraft
 
-print(f"TraceCraft version: {tracecraft.__version__}")
+print(f"Trace Craft version: {tracecraft.__version__}")
 
 # Test basic functionality
 tracecraft.init()
-print("TraceCraft initialized successfully!")
+print("Trace Craft initialized successfully!")
 ```
 
 ## Development Installation
 
-For contributing to TraceCraft:
+For contributing to Trace Craft:
 
 ```bash
 # Clone the repository
@@ -289,7 +289,7 @@ If you encounter version conflicts with OpenTelemetry packages, ensure you're us
 pip install --upgrade opentelemetry-api opentelemetry-sdk
 ```
 
-TraceCraft requires:
+Trace Craft requires:
 
 - opentelemetry-api >= 1.20
 - opentelemetry-sdk >= 1.20
@@ -316,6 +316,6 @@ Download from: <https://visualstudio.microsoft.com/visual-cpp-build-tools/>
 
 ## Next Steps
 
-Now that TraceCraft is installed, follow the quick start guide:
+Now that Trace Craft is installed, follow the quick start guide:
 
 [:octicons-arrow-right-24: Quick Start Guide](quickstart.md){ .md-button .md-button--primary }

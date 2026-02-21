@@ -1,6 +1,6 @@
 # Production Deployment
 
-Best practices for deploying TraceCraft in production environments.
+Best practices for deploying Trace Craft in production environments.
 
 ## Production Configuration
 
@@ -101,7 +101,7 @@ def health_check():
 
 ### Metrics
 
-Track TraceCraft metrics:
+Track Trace Craft metrics:
 
 ```python
 from tracecraft import get_runtime

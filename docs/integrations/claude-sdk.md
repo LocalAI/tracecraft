@@ -1,8 +1,8 @@
 # Claude SDK Integration
 
-TraceCraft integrates with the Claude Agent SDK through the `ClaudeTraceCraftr` adapter, which
+Trace Craft integrates with the Claude Agent SDK through the `ClaudeTraceCraftr` adapter, which
 hooks into the SDK's `PreToolUse`, `PostToolUse`, `Stop`, and `SubagentStop` events to capture
-every tool call and subagent invocation as a TraceCraft Step — with no changes to your Claude
+every tool call and subagent invocation as a Trace Craft Step — with no changes to your Claude
 agent prompts or tool definitions.
 
 ## Installation
@@ -11,7 +11,7 @@ agent prompts or tool definitions.
 pip install "tracecraft[claude-sdk]"
 ```
 
-This installs TraceCraft with `claude-code-sdk` support. The `claude-code-sdk` package must also
+This installs Trace Craft with `claude-code-sdk` support. The `claude-code-sdk` package must also
 be installed:
 
 ```bash
@@ -26,7 +26,7 @@ import tracecraft
 from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
 from claude_code_sdk import query, ClaudeCodeOptions
 
-# Initialize TraceCraft
+# Initialize Trace Craft
 tracecraft.init(console=True)
 
 # Create the tracer
@@ -53,7 +53,7 @@ asyncio.run(main())
 `ClaudeTraceCraftr` works through Claude SDK's hook system. When you call `tracer.get_options()`,
 it returns a `ClaudeCodeOptions` object with four hook handlers pre-configured:
 
-| Hook | When called | What TraceCraft does |
+| Hook | When called | What Trace Craft does |
 |---|---|---|
 | `PreToolUse` | Before any tool runs | Creates a `Step`, records `start_time` and `inputs` |
 | `PostToolUse` | After the tool returns | Completes the step with `end_time`, `duration_ms`, and `outputs` |
@@ -66,7 +66,7 @@ Each hook is identified by a `tool_use_id` that correlates `PreToolUse` with its
 
 ## Tool Type Mapping
 
-The adapter maps Claude SDK tool names to TraceCraft `StepType` values:
+The adapter maps Claude SDK tool names to Trace Craft `StepType` values:
 
 | Tool | StepType | Notes |
 |---|---|---|
@@ -240,7 +240,7 @@ asyncio.run(main())
 
 ## Streaming Support
 
-Claude SDK messages stream as they arrive. TraceCraft captures tool-level spans regardless of
+Claude SDK messages stream as they arrive. Trace Craft captures tool-level spans regardless of
 how you consume the message stream:
 
 ```python
@@ -273,7 +273,7 @@ asyncio.run(main())
 
 ## Subagent Tracing
 
-When Claude uses the `Task` tool to spawn a subagent, TraceCraft creates an `AGENT`-typed step
+When Claude uses the `Task` tool to spawn a subagent, Trace Craft creates an `AGENT`-typed step
 and waits for the `SubagentStop` hook to close it with the subagent's result.
 
 ### Task Tool Tracing
@@ -548,7 +548,7 @@ tool_use_id   str | None  — Same ID as the matching PreToolUse
 ### Stop
 
 Called when the Claude agent finishes its session (normal completion or error). `tool_use_id`
-is typically `None`. TraceCraft uses this hook to close any steps that were opened but not
+is typically `None`. Trace Craft uses this hook to close any steps that were opened but not
 yet completed.
 
 ### SubagentStop

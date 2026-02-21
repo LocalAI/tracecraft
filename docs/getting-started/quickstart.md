@@ -1,13 +1,13 @@
 # Quick Start
 
-Get TraceCraft running in under 2 minutes.
+Get Trace Craft running in under 2 minutes.
 
 ## Step 1 — Zero code changes (absolute simplest)
 
 !!! success "No decorators. No code changes. Just point and trace."
 
     If your app already emits OTLP traces (via OpenLLMetry, LangChain, LlamaIndex, DSPy,
-    or the standard OTel SDK), TraceCraft can receive them with no modifications to your app.
+    or the standard OTel SDK), Trace Craft can receive them with no modifications to your app.
 
 **Install:**
 
@@ -35,7 +35,7 @@ OpenLLMetry, LangChain, LlamaIndex, DSPy, or the standard OpenTelemetry SDK.
 ## Step 2 — Config file (one line of code)
 
 If your app does not already emit OTLP traces, create a config file and add a single
-`tracecraft.init()` call before your LLM imports. TraceCraft's auto-instrumentation
+`tracecraft.init()` call before your LLM imports. Trace Craft's auto-instrumentation
 patches the SDKs at runtime and streams traces to the TUI.
 
 **Create `.tracecraft/config.yaml` in your project root:**
@@ -109,7 +109,7 @@ Once your app is running and the TUI is open, you will see a live trace list:
 
 ```
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃  TraceCraft TUI                                              traces: 47  ┃
+┃  Trace Craft TUI                                              traces: 47  ┃
 ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃  TRACE ID         NAME                 DURATION    STATUS    TOKENS      ┃
 ┃  ─────────────────────────────────────────────────────────────────────── ┃
@@ -141,7 +141,7 @@ filters, and comparison views.
 
     **One line, for Path 2.** If your app calls OpenAI or Anthropic directly without
     existing OTel instrumentation, add `tracecraft.init()` before your LLM imports and
-    TraceCraft auto-instruments the SDKs for you.
+    Trace Craft auto-instruments the SDKs for you.
 
 ??? question "What if I'm using LangChain or LlamaIndex?"
 
@@ -149,7 +149,7 @@ filters, and comparison views.
     adapters are also available for richer context — see the
     [Integrations](../integrations/index.md) page.
 
-??? question "Can I use the TUI without TraceCraft instrumentation?"
+??? question "Can I use the TUI without Trace Craft instrumentation?"
 
     **Yes.** The TUI accepts any OpenTelemetry-compatible trace data over OTLP.
     See the [TUI Guide](../user-guide/tui.md) for details.

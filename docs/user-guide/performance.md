@@ -1,6 +1,6 @@
 # Performance Guide
 
-TraceCraft is designed to add minimal overhead to your LLM applications. This guide explains how to tune the SDK for your performance requirements, from development setups where you want full observability to high-throughput production environments where every millisecond counts.
+Trace Craft is designed to add minimal overhead to your LLM applications. This guide explains how to tune the SDK for your performance requirements, from development setups where you want full observability to high-throughput production environments where every millisecond counts.
 
 ---
 
@@ -8,7 +8,7 @@ TraceCraft is designed to add minimal overhead to your LLM applications. This gu
 
 ### Why Performance Matters in LLM Observability
 
-LLM calls already carry significant latency (hundreds of milliseconds to multiple seconds). The observability layer should never become the bottleneck. TraceCraft is built with this constraint in mind:
+LLM calls already carry significant latency (hundreds of milliseconds to multiple seconds). The observability layer should never become the bottleneck. Trace Craft is built with this constraint in mind:
 
 - **Synchronous decorators** add only function-call overhead when processors are bypassed.
 - **Processor pipelines** run inline but are short-circuited by sampling so most traces never reach redaction or export.
@@ -332,7 +332,7 @@ with step("process_batch", type=StepType.WORKFLOW) as s:
 
 ### Garbage Collection Considerations
 
-TraceCraft holds `AgentRun` objects in memory from `start_run()` until `end_run()` exports and releases them. For long-running agents (minutes or more), keep the following in mind:
+Trace Craft holds `AgentRun` objects in memory from `start_run()` until `end_run()` exports and releases them. For long-running agents (minutes or more), keep the following in mind:
 
 - Large `inputs` and `outputs` dicts are held for the full run duration.
 - Deeply nested step hierarchies (many children) can accumulate significant memory.
@@ -352,7 +352,7 @@ config = TraceCraftConfig(
 
 ### When to Use Async
 
-TraceCraft's decorators transparently support both synchronous and asynchronous functions. The `@trace_agent`, `@trace_tool`, `@trace_llm`, and `@trace_retrieval` decorators detect `asyncio.iscoroutinefunction` at decoration time and wrap accordingly.
+Trace Craft's decorators transparently support both synchronous and asynchronous functions. The `@trace_agent`, `@trace_tool`, `@trace_llm`, and `@trace_retrieval` decorators detect `asyncio.iscoroutinefunction` at decoration time and wrap accordingly.
 
 ```python
 # Synchronous — works directly
@@ -370,7 +370,7 @@ Use the async path whenever your application is already async. The overhead is i
 
 ### Context Propagation Across Async Boundaries
 
-Python's `contextvars` (which TraceCraft uses internally) do **not** automatically propagate across `asyncio.gather()` or `asyncio.create_task()`. Each new task gets an independent copy of the context at creation time. For most simple cases this is fine, but for complex fan-out patterns use the helpers from `tracecraft.contrib.async_helpers`.
+Python's `contextvars` (which Trace Craft uses internally) do **not** automatically propagate across `asyncio.gather()` or `asyncio.create_task()`. Each new task gets an independent copy of the context at creation time. For most simple cases this is fine, but for complex fan-out patterns use the helpers from `tracecraft.contrib.async_helpers`.
 
 ```python
 from tracecraft.contrib.async_helpers import gather_with_context
