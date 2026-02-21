@@ -1,127 +1,113 @@
 # TraceCraft
 
-**Vendor-neutral LLM observability SDK** - Instrument once, observe anywhere.
+**Vendor-neutral LLM observability — instrument once, observe anywhere.**
 
-TraceCraft is the "LiteLLM for Observability" - a portable Python instrumentation SDK that lets you capture consistent agent/LLM trace semantics and route them to any backend.
+TraceCraft is a Python observability SDK with a built-in **Terminal UI (TUI)** that lets you visually explore, debug, and analyze your agent traces right in your terminal — no browser, no cloud dashboard, no waiting.
 
 ---
 
-## Get Started in 30 Seconds
+## The fastest path: zero code changes
 
-!!! success "Zero Code Changes Required"
+If your app already uses OpenAI, Anthropic, LangChain, LlamaIndex, or any OpenTelemetry-compatible framework, TraceCraft can observe it **without touching a single line of application code**.
 
-    TraceCraft's auto-instrumentation captures every LLM call automatically.
-    No decorators. No wrappers. No code changes.
+**Step 1 — Install and set one environment variable:**
 
 ```bash
-pip install "tracecraft[auto,tui]"
+pip install "tracecraft[receiver,tui]"
+
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 ```
+
+**Step 2 — Start the receiver and TUI together:**
+
+```bash
+tracecraft serve --tui
+```
+
+**Step 3 — Run your existing app unchanged:**
+
+```bash
+python your_app.py
+```
+
+Traces from any OTLP-compatible framework (OpenLLMetry, LangChain, LlamaIndex, DSPy, or any standard OpenTelemetry SDK) stream live into the TUI the moment they arrive. No `init()` call. No decorators. No code changes.
+
+---
+
+## The Terminal UI — Your Agent's Black Box Recorder
+
+After traces are flowing in, the TUI gives you complete visibility into every agent run:
+
+![TraceCraft TUI - Main View](assets/screenshots/tui-main-view.svg)
+
+*All your agent runs at a glance — name, duration, token usage, and status. Select any trace to drill down.*
+
+Select any trace to expand the full call hierarchy with timing bars. Navigate to any LLM step and press `i` for the prompt, `o` for the response, or `a` for all span attributes and metadata.
+
+![TraceCraft TUI - Waterfall and Detail View](assets/screenshots/tui-waterfall-view.svg)
+
+*Hierarchical waterfall view — agents, tools, and LLM calls with precise timing. See exactly where your agent spends its time.*
+
+---
+
+## Path 2 — Config file + one `init()` call
+
+When you want a persistent local setup — custom service name, JSONL export, PII redaction — drop a config file into your project and add one line to your app:
+
+**`.tracecraft/config.yaml`:**
+
+```yaml
+# .tracecraft/config.yaml
+default:
+  exporters:
+    receiver: true         # stream to tracecraft serve --tui
+  instrumentation:
+    auto_instrument: true  # patches OpenAI, Anthropic, LangChain, LlamaIndex
+```
+
+**Your app:**
 
 ```python
 import tracecraft
 
-tracecraft.init(auto_instrument=True)
-
-# Your existing code works unchanged!
+tracecraft.init()  # reads .tracecraft/config.yaml automatically
 ```
 
-**That's it.** Every OpenAI and Anthropic call is now traced.
+**Then start the TUI:**
 
-[:octicons-arrow-right-24: Quick Start Guide](getting-started/quickstart.md)
+```bash
+tracecraft serve --tui
+```
+
+Or, if you prefer to write traces to a file and open the TUI separately:
+
+```bash
+tracecraft tui
+```
+
+!!! tip "Call `tracecraft.init()` before importing any LLM SDK"
+
+    TraceCraft patches SDKs at import time. Import your LLM libraries **after** calling `init()` so the patches apply correctly.
+
+[:octicons-arrow-right-24: Full Configuration Reference](user-guide/configuration.md)
 
 ---
 
-## Explore Your Traces Instantly
+## Path 3 — SDK decorators and custom tracing
 
-!!! tip "The TUI Works with ANY OpenTelemetry Data"
+For fine-grained control — custom span names, explicit inputs/outputs, structured step hierarchies — TraceCraft provides `@trace_agent`, `@trace_tool`, `@trace_llm`, and `@trace_retrieval` decorators, plus a `step()` context manager for inline instrumentation.
 
-    The TraceCraft TUI isn't just for TraceCraft traces. It reads any
-    OpenTelemetry-compatible data - OpenLLMetry, Jaeger exports, custom instrumentation.
-
-```bash
-tracecraft tui traces/
-```
-
-```
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃  TraceCraft TUI                                              traces: 47  ┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃  TRACE ID         NAME                 DURATION    STATUS    TOKENS      ┃
-┃  ─────────────────────────────────────────────────────────────────────── ┃
-┃▸ abc123...        research_agent       2.34s       ✓         4,521       ┃
-┃  def456...        chat.completions     0.89s       ✓         1,247       ┃
-┃  ghi789...        rag_query            1.56s       ✗         2,891       ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-┃  research_agent (2.34s)                                                   ┃
-┃  ├─ web_search (0.45s)                                                    ┃
-┃  └─ chat.completions [gpt-4] (1.89s) ◀─── View prompts, tokens, costs    ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-```
-
-**Features:**
-
-- Hierarchical trace view (agents → tools → LLM calls)
-- Search, filter, and compare traces
-- View full prompts, completions, and token usage
-- Export to JSON, HTML, or clipboard
-- Works completely offline
-
-[:octicons-arrow-right-24: Terminal UI Guide](user-guide/tui.md)
+[:octicons-arrow-right-24: SDK Guide](getting-started/quickstart.md)
 
 ---
 
 ## Why TraceCraft?
 
-<div class="grid cards" markdown>
-
-- :material-auto-fix:{ .lg .middle } **Zero-Code Instrumentation**
-
-    ---
-
-    Auto-instrument OpenAI, Anthropic, LangChain, and LlamaIndex.
-    No decorators or code changes needed.
-
-    [:octicons-arrow-right-24: Auto-Instrumentation](integrations/auto-instrumentation.md)
-
-- :material-monitor:{ .lg .middle } **Powerful Terminal UI**
-
-    ---
-
-    Explore traces interactively. Search, filter, compare.
-    Works with ANY OpenTelemetry data.
-
-    [:octicons-arrow-right-24: Terminal UI](user-guide/tui.md)
-
-- :material-lock-open-variant:{ .lg .middle } **No Vendor Lock-in**
-
-    ---
-
-    Export to Langfuse, Datadog, Phoenix, Jaeger, Grafana,
-    or any OTLP-compatible backend.
-
-    [:octicons-arrow-right-24: Exporters](user-guide/exporters.md)
-
-- :material-shield-check:{ .lg .middle } **Privacy by Default**
-
-    ---
-
-    PII redaction and client-side sampling built into the SDK.
-    Sensitive data never leaves your infrastructure.
-
-    [:octicons-arrow-right-24: Security](user-guide/security.md)
-
-</div>
-
----
-
-## Comparison
-
 | Feature | TraceCraft | LangSmith | Langfuse | Phoenix |
 |---------|------------|-----------|----------|---------|
+| **Terminal UI** | **Yes — built-in** | No | No | No |
 | **Zero-Code Instrumentation** | Yes | No | No | No |
-| **Terminal UI** | Yes | No | No | No |
 | **Vendor Lock-in** | None | LangChain | Langfuse | Arize |
-| **Framework Support** | All major | LangChain | Multiple | Multiple |
 | **Local Development** | Full offline | Cloud required | Self-host | Self-host |
 | **OpenTelemetry Native** | Built on OTel | Proprietary | Proprietary | Compatible |
 | **PII Redaction** | SDK-level | Backend only | Backend only | Backend only |
@@ -129,34 +115,82 @@ tracecraft tui traces/
 
 ---
 
+## What the TUI Shows You
+
+| View | What You See |
+|------|-------------|
+| **Trace List** | All agent runs — name, duration, tokens, status, timestamp |
+| **Waterfall** | Full call hierarchy with timing bars (agent → tool → LLM) |
+| **Input View** | Exact prompts, system messages, and context sent to the model |
+| **Output View** | Model responses with token counts and cost estimates |
+| **Attributes** | Model parameters, custom metadata, error details |
+
+**Keyboard shortcuts:**
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Navigate traces |
+| `Enter` | Expand waterfall for selected trace |
+| `i` | View input/prompt |
+| `o` | View output/response |
+| `a` | View attributes |
+| `/` | Filter traces |
+| `m` + `C` | Mark and compare two traces |
+| `p` | Open playground for prompt editing |
+| `q` | Quit |
+
+[:octicons-arrow-right-24: Full TUI Guide](user-guide/tui.md)
+
+---
+
 ## How It Works
 
 ```mermaid
 graph LR
-    App[Your App] --> Auto[Auto-Instrumentation]
-    Auto --> SDK[TraceCraft SDK]
+    External[Any OTLP App] -->|OTEL_EXPORTER_OTLP_ENDPOINT| Receiver[tracecraft serve]
+    App[Your App + tracecraft.init()] -->|auto-instr / decorators| JSONL[JSONL / SQLite]
+    Receiver --> JSONL
 
-    SDK --> Console[Console]
-    SDK --> JSONL[JSONL/SQLite]
-    SDK --> OTLP[OTLP Export]
-    SDK --> TUI[Terminal UI]
+    JSONL --> TUI[Terminal UI]
 
-    OTLP --> Langfuse
-    OTLP --> Datadog
-    OTLP --> Phoenix
-    OTLP --> Jaeger
+    App -->|OTLP export| Langfuse
+    App -->|OTLP export| Datadog
+    App -->|OTLP export| Phoenix
 ```
 
-1. **Install** TraceCraft with auto-instrumentation
-2. **Add two lines** to initialize (no code changes to your app)
-3. **Run your app** - all LLM calls are automatically traced
-4. **Explore** with the Terminal UI or export to any backend
+**Path 1 — Zero code changes (OTLP env var):**
+
+1. Set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`
+2. `tracecraft serve --tui` — starts receiver on `:4318` and opens TUI
+3. Run your existing app — traces appear live as they arrive
+
+**Path 2 — Config file + `init()` call:**
+
+1. Add `.tracecraft/config.yaml` and call `tracecraft.init()` in your app
+2. Run your agent — traces go to JSONL/SQLite
+3. `tracecraft serve --tui` or `tracecraft tui` to explore
 
 ---
 
 ## Installation
 
-=== "Recommended (Auto + TUI)"
+=== "With TUI (Recommended)"
+
+    ```bash
+    pip install "tracecraft[tui]"
+    ```
+
+    Includes the Terminal UI for local trace exploration.
+
+=== "With OTLP Receiver + TUI"
+
+    ```bash
+    pip install "tracecraft[receiver,tui]"
+    ```
+
+    Start `tracecraft serve --tui` and point any OTLP app at `http://localhost:4318`.
+
+=== "With Auto-Instrumentation + TUI"
 
     ```bash
     pip install "tracecraft[auto,tui]"
@@ -185,79 +219,31 @@ graph LR
 
 ---
 
-## What Gets Captured?
-
-Auto-instrumentation automatically captures:
-
-| SDK | Captured Data |
-|-----|---------------|
-| **OpenAI** | Chat completions, embeddings, streaming, function calls, token usage |
-| **Anthropic** | Messages, streaming, tool use, token counts |
-| **LangChain** | Chains, agents, tools, retrievers, LLM calls |
-| **LlamaIndex** | Query engines, chat engines, agents, retrievers |
-
-!!! info "Need Custom Instrumentation?"
-
-    Decorators are available if you want to add custom semantic meaning
-    to your traces, but they're **completely optional**.
-
-    [:octicons-arrow-right-24: Custom Instrumentation](user-guide/decorators.md)
-
----
-
-## Export Anywhere
-
-TraceCraft is vendor-neutral. Send traces to any backend:
-
-```python
-from tracecraft.exporters import OTLPExporter
-
-tracecraft.init(
-    exporters=[
-        OTLPExporter(endpoint="http://localhost:4317"),  # Jaeger, Tempo, etc.
-    ]
-)
-```
-
-**Supported backends:**
-
-- Langfuse
-- Datadog
-- Phoenix (Arize)
-- Jaeger
-- Grafana Tempo
-- Honeycomb
-- Any OTLP-compatible system
-
-[:octicons-arrow-right-24: Exporters Guide](user-guide/exporters.md)
-
----
-
 ## Next Steps
 
 <div class="grid cards" markdown>
+
+- :material-monitor:{ .lg .middle } **Terminal UI Guide**
+
+    ---
+
+    Master the TUI — navigation, filtering, comparison, keyboard shortcuts
+
+    [:octicons-arrow-right-24: Terminal UI](user-guide/tui.md)
 
 - :material-clock-fast:{ .lg .middle } **Quick Start**
 
     ---
 
-    Get running in 2 minutes with auto-instrumentation
+    Get running in 5 minutes with instrumentation and the TUI
 
     [:octicons-arrow-right-24: Quick Start](getting-started/quickstart.md)
-
-- :material-monitor:{ .lg .middle } **Terminal UI**
-
-    ---
-
-    Explore traces interactively in your terminal
-
-    [:octicons-arrow-right-24: Terminal UI](user-guide/tui.md)
 
 - :material-connection:{ .lg .middle } **Integrations**
 
     ---
 
-    LangChain, LlamaIndex, PydanticAI adapters
+    LangChain, LlamaIndex, PydanticAI, Claude SDK adapters
 
     [:octicons-arrow-right-24: Integrations](integrations/index.md)
 
@@ -265,7 +251,7 @@ tracecraft.init(
 
     ---
 
-    Complete API documentation
+    Complete API documentation for decorators, exporters, and more
 
     [:octicons-arrow-right-24: API Reference](api/index.md)
 

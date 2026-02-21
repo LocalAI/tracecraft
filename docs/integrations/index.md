@@ -1,6 +1,18 @@
 # Integrations
 
-TraceCraft integrates with popular LLM frameworks and cloud platforms. This section covers all available integrations.
+TraceCraft integrates with popular LLM frameworks and cloud platforms.
+
+!!! success "No custom integration code required"
+
+    Point any OTLP-instrumented app at TraceCraft and you're done:
+
+    ```bash
+    tracecraft serve --tui
+    OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 python your_app.py
+    ```
+
+    Works with OpenLLMetry, LangChain, LlamaIndex, DSPy, PydanticAI, and any standard
+    OpenTelemetry SDK — no TraceCraft-specific code needed.
 
 ## Framework Integrations
 
@@ -80,63 +92,71 @@ TraceCraft integrates with popular LLM frameworks and cloud platforms. This sect
 
 ### LangChain
 
-```python
-from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+The simplest path requires no TraceCraft-specific code — just set the OTLP endpoint:
 
-handler = TraceCraftCallbackHandler()
-chain.invoke(input, config={"callbacks": [handler]})
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 python your_langchain_app.py
 ```
 
-### LlamaIndex
-
-```python
-from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
-
-import llama_index.core
-llama_index.core.global_handler = TraceCraftSpanHandler()
-```
-
-### PydanticAI
-
-```python
-from tracecraft.adapters.pydantic_ai import TraceCraftSpanProcessor
-from opentelemetry.sdk.trace import TracerProvider
-
-processor = TraceCraftSpanProcessor()
-provider = TracerProvider()
-provider.add_span_processor(processor)
-```
-
-### Claude SDK
-
-```python
-from tracecraft.adapters.claude_sdk import ClaudeTraceCraftr
-
-tracer = ClaudeTraceCraftr(runtime=runtime)
-options = tracer.get_options(allowed_tools=["Read", "Grep"])
-```
-
-### Auto-Instrumentation
+Or use auto-instrumentation with one line:
 
 ```python
 import tracecraft
+tracecraft.init(auto_instrument=True)   # patches LangChain automatically
+```
 
-# Automatically instrument OpenAI, Anthropic, LangChain, and LlamaIndex
+For richer span context using the native adapter, see [LangChain Integration](langchain.md).
+
+### LlamaIndex
+
+Set the OTLP endpoint if LlamaIndex is already emitting OTel traces:
+
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 python your_llamaindex_app.py
+```
+
+Or enable auto-instrumentation:
+
+```python
+import tracecraft
+tracecraft.init(auto_instrument=True)   # patches LlamaIndex automatically
+```
+
+For the native span handler, see [LlamaIndex Integration](llamaindex.md).
+
+### PydanticAI
+
+Set the OTLP endpoint for any PydanticAI app already emitting OTel traces:
+
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 python your_pydanticai_app.py
+```
+
+Or use auto-instrumentation:
+
+```python
+import tracecraft
 tracecraft.init(auto_instrument=True)
 ```
 
-### OpenTelemetry Receiver
+For the native span processor, see [PydanticAI Integration](pydantic-ai.md).
+
+### Claude SDK
+
+Set the OTLP endpoint for Claude SDK apps already emitting OTel traces:
+
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 python your_claude_app.py
+```
+
+Or use auto-instrumentation:
 
 ```python
-from tracecraft.otel import setup_exporter
-
-# Configure OTel to send traces to TraceCraft
-tracer = setup_exporter(
-    endpoint="http://localhost:4318",
-    service_name="my-agent",
-    instrument=["openai"],
-)
+import tracecraft
+tracecraft.init(auto_instrument=True)
 ```
+
+For the full adapter with tool-level tracing, see [Claude SDK Integration](claude-sdk.md).
 
 ## Choosing an Integration
 

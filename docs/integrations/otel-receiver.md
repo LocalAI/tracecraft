@@ -116,7 +116,7 @@ with tracer.start_as_current_span("MyAgent") as span:
 ### Step 4: View in TUI
 
 ```bash
-tracecraft ui sqlite://traces/my_traces.db
+tracecraft tui sqlite://traces/my_traces.db
 ```
 
 !!! success "That's it!"

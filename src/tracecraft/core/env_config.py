@@ -193,6 +193,10 @@ class ExporterConfig(BaseModel):
     mlflow_tracking_uri: str | None = None
     mlflow_experiment_name: str = "tracecraft"
 
+    # TraceCraft TUI receiver settings
+    receiver: bool = False
+    receiver_endpoint: str = "http://localhost:4318"
+
 
 class ProcessorConfig(BaseModel):
     """Processor configuration."""
@@ -206,12 +210,34 @@ class ProcessorConfig(BaseModel):
     enrichment_enabled: bool = True
 
 
+class InstrumentationConfig(BaseModel):
+    """Auto-instrumentation configuration.
+
+    Controls which LLM SDKs and frameworks are automatically patched
+    to capture traces without manual decorators.
+
+    Example config.yaml usage::
+
+        default:
+          instrumentation:
+            auto_instrument: true          # instrument everything
+            # or selectively:
+            # auto_instrument:
+            #   - openai
+            #   - langchain
+    """
+
+    auto_instrument: bool | list[str] = False
+
+
 class EnvironmentSettings(BaseModel):
     """Settings for a specific environment."""
 
+    service_name: str | None = None
     storage: StorageConfig = Field(default_factory=StorageConfig)
     exporters: ExporterConfig = Field(default_factory=ExporterConfig)
     processors: ProcessorConfig = Field(default_factory=ProcessorConfig)
+    instrumentation: InstrumentationConfig = Field(default_factory=InstrumentationConfig)
 
 
 class TraceCraftEnvConfig(BaseModel):

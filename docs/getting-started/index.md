@@ -36,37 +36,41 @@ Understand the key concepts behind TraceCraft.
 
 ## Quick Example
 
-Here's a minimal example to get a taste of TraceCraft:
+The fastest way to get traces into the TUI requires **zero code changes** to your existing application:
+
+```bash
+# Terminal 1 — start the receiver + TUI
+pip install "tracecraft[receiver,tui]"
+tracecraft serve --tui
+
+# Terminal 2 — run your existing app, unchanged
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+python your_app.py
+```
+
+Any OTLP-instrumented app (OpenLLMetry, LangChain, LlamaIndex, DSPy, or standard OTel SDK) sends traces directly to the TUI — no code changes needed.
+
+**Prefer a config file?** Create `.tracecraft/config.yaml` and add one line to your app:
+
+```yaml
+# .tracecraft/config.yaml
+default:
+  exporters:
+    receiver: true
+  instrumentation:
+    auto_instrument: true
+```
 
 ```python
 import tracecraft
-from tracecraft import trace_agent, trace_tool
-
-# Initialize TraceCraft
-tracecraft.init()
-
-@trace_agent(name="assistant")
-async def assistant(message: str) -> str:
-    """Main assistant that coordinates tasks."""
-    context = await search(message)
-    return f"Found: {context}"
-
-@trace_tool(name="search")
-async def search(query: str) -> list[str]:
-    """Search for relevant information."""
-    return ["result1", "result2"]
-
-# Use your traced functions
-import asyncio
-asyncio.run(assistant("Hello!"))
+tracecraft.init()   # reads from .tracecraft/config.yaml
 ```
 
-That's it! TraceCraft will automatically:
+```bash
+tracecraft serve --tui && python your_app.py
+```
 
-- Capture the function hierarchy
-- Record inputs and outputs
-- Measure timing
-- Export to console and JSONL file
+Auto-instrumentation and decorators add rich structured spans — [→ SDK Guide](../user-guide/index.md)
 
 ## Key Features at a Glance
 
@@ -94,62 +98,12 @@ tracecraft.init(
 )
 ```
 
-### Framework Integration
+### Terminal UI
 
-Native support for popular frameworks:
+Explore your traces with the interactive terminal UI:
 
-```python
-# LangChain
-from tracecraft.adapters.langchain import TraceCraftCallbackHandler
-handler = TraceCraftCallbackHandler()
-chain.invoke(input, config={"callbacks": [handler]})
-
-# LlamaIndex
-from tracecraft.adapters.llamaindex import TraceCraftSpanHandler
-import llama_index.core
-llama_index.core.global_handler = TraceCraftSpanHandler()
-```
-
-## Common Use Cases
-
-### Local Development
-
-Perfect for debugging and development without any external services:
-
-```python
-tracecraft.init(
-    console=True,      # Pretty print to terminal
-    jsonl=True,        # Save to local file
-)
-```
-
-### Production Monitoring
-
-Send traces to your observability platform:
-
-```python
-tracecraft.init(
-    service_name="production-agent",
-    otlp_endpoint="https://otlp.example.com",
-    sampling_rate=0.1,  # Sample 10% of traces
-    enable_pii_redaction=True
-)
-```
-
-### Multi-Backend
-
-Send traces to multiple destinations:
-
-```python
-from tracecraft.exporters import OTLPExporter, JSONLExporter
-
-tracecraft.init(
-    exporters=[
-        OTLPExporter(endpoint="http://jaeger:4317"),
-        OTLPExporter(endpoint="http://tempo:4317"),
-        JSONLExporter(filepath="traces.jsonl"),
-    ]
-)
+```bash
+tracecraft tui
 ```
 
 ## Next Steps

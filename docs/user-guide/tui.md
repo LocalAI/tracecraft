@@ -1,61 +1,300 @@
 # Terminal UI
 
-The TraceCraft Terminal UI (TUI) is a powerful, interactive trace explorer that runs right in your terminal. Analyze LLM traces, debug issues, compare performance, and understand your AI application's behavior - all without leaving the command line.
+The TraceCraft Terminal UI (TUI) is the flagship feature of TraceCraft — a powerful, interactive trace explorer that runs right in your terminal. Analyze LLM traces, debug agent behavior, inspect prompts and responses, compare performance across runs, and understand exactly what your AI application did at every step.
 
-!!! success "Works with ANY OpenTelemetry Data"
+!!! tip "Two Ways to Get Traces into the TUI"
 
-    **You don't need TraceCraft instrumentation to use the TUI.** It reads standard
-    OpenTelemetry trace formats, so you can use it with:
+    **Path B — OTLP receiver** (zero code changes — the simplest option):
 
-    - TraceCraft traces
-    - OpenLLMetry traces
-    - Any OTLP-exported traces (via JSONL/SQLite)
-    - Jaeger exports
-    - Custom OpenTelemetry instrumentation
+    ```bash
+    tracecraft serve --tui
+    ```
+
+    Then point any OTLP-compatible framework at it:
+
+    ```bash
+    OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 python your_app.py
+    ```
+
+    Works with OpenLLMetry, LangChain's OTel exporter, LlamaIndex, DSPy, or any standard
+    OpenTelemetry SDK. Traces appear live in the TUI as they arrive.
+
+    Or use `tracecraft tui --serve` to start the receiver and open the TUI in one command.
+
+    ---
+
+    **Path A — TraceCraft instrumentation** (you control the code):
+
+    The fastest option is `receiver=True` — one `init()` call, then start the TUI:
+
+    ```python
+    import tracecraft
+
+    # Call init() BEFORE importing any LLM SDK
+    tracecraft.init(
+        auto_instrument=True,   # patches OpenAI, Anthropic, LangChain, LlamaIndex
+        receiver=True,          # streams traces to tracecraft serve --tui
+        service_name="my-app",
+    )
+
+    from openai import OpenAI
+    OpenAI().chat.completions.create(...)  # automatically captured and streamed
+    ```
+
+    Start the TUI receiver:
+    ```bash
+    tracecraft serve --tui
+    ```
+
+    Or write to JSONL and open the TUI against the file:
+    ```python
+    tracecraft.init(auto_instrument=True, jsonl=True)
+    ```
+    ```bash
+    tracecraft tui traces/
+    ```
+
+    Or use decorators for custom agent/tool spans:
+    ```python
+    @tracecraft.trace_agent(name="my_agent")
+    async def my_agent(query: str) -> str: ...
+    ```
+
+!!! note "No-argument shortcut"
+    `tracecraft tui` with no arguments reads the storage location from `.tracecraft/config.yaml`
+    (defaults to `sqlite://traces/tracecraft.db` if no config is found).
+
+    `tracecraft tui --serve` starts an OTLP receiver on `:4318` and opens the TUI in one step —
+    an alternative to running `tracecraft serve --tui` in a separate terminal.
 
 ---
 
-## Why Use the TUI?
+## What the TUI Looks Like
 
-<div class="grid cards" markdown>
+### Main View — All Your Agent Runs
 
-- :material-lightning-bolt:{ .lg .middle } **Instant Analysis**
+![TraceCraft TUI - Main View](../assets/screenshots/tui-main-view.svg)
 
-    ---
+*The main view shows all captured agent runs with name, duration, token usage, and status. Navigate with arrow keys. The filter bar at the top lets you search and filter by project or session.*
 
-    No browser, no cloud dashboard, no waiting. Launch and explore traces in milliseconds.
+---
 
-- :material-tree:{ .lg .middle } **Hierarchical View**
+### Waterfall View — Call Hierarchy and Timing
 
-    ---
+Select any trace and press `Enter` — the waterfall expands to show the complete call tree:
 
-    See the complete call tree: agents → tools → LLM calls → sub-operations.
+![TraceCraft TUI - Waterfall View](../assets/screenshots/tui-waterfall-view.svg)
 
-- :material-magnify:{ .lg .middle } **Powerful Search**
+*The waterfall shows agent → tool → LLM call hierarchy with timing bars. See exactly where your agent spends its time.*
 
-    ---
+---
 
-    Find traces by name, duration, status, token count, or any attribute.
+### Input View — Every Prompt Sent to the Model
 
-- :material-compare:{ .lg .middle } **Side-by-Side Compare**
+Press `i` while viewing any span to see the exact prompt, system message, and context:
 
-    ---
+![TraceCraft TUI - Input View](../assets/screenshots/tui-input-view.svg)
 
-    Compare two traces to understand performance differences.
+*Full prompt inspection — every system message, user message, and context sent to the model.*
 
-- :material-export:{ .lg .middle } **Export Anywhere**
+---
 
-    ---
+### Output View — Every Model Response
 
-    Export traces to JSON, HTML reports, or copy to clipboard.
+Press `o` to view the model's complete response:
 
-- :material-lock:{ .lg .middle } **Fully Offline**
+![TraceCraft TUI - Output View](../assets/screenshots/tui-output-view.svg)
 
-    ---
+*Model response with token counts and cost estimates displayed inline.*
 
-    All data stays local. No cloud uploads. Perfect for sensitive applications.
+---
 
-</div>
+### Attributes View — Span Metadata and Parameters
+
+Press `a` to view all span attributes — model name, temperature, token counts, costs, and custom metadata:
+
+![TraceCraft TUI - Attributes View](../assets/screenshots/tui-attributes-view.svg)
+
+*All span attributes: model, provider, temperature, token usage, cost, custom metadata, and timing.*
+
+---
+
+## Getting Traces into the TUI
+
+There are two independent paths. Choose the one that fits your setup — or use both.
+
+---
+
+### Path A: TraceCraft Instrumentation
+
+Use this when you own the code. You have three options — auto-instrumentation is the fastest to set up.
+
+#### Option 1 — Auto-Instrument + Stream to TUI in One Call
+
+The `receiver=True` shorthand wires everything up in a single `init()` call: it auto-instruments your LLM SDKs and sends completed traces directly to the TUI receiver over OTLP. No JSONL file, no separate exporter config.
+
+```python
+import tracecraft
+
+# Must call init() BEFORE importing any LLM SDK
+tracecraft.init(
+    auto_instrument=True,      # patches OpenAI, Anthropic, LangChain, LlamaIndex
+    receiver=True,             # streams traces to tracecraft serve --tui
+    service_name="my-agent",   # optional — appears in the TUI trace list
+)
+
+# Now use your SDKs normally
+from openai import OpenAI
+client = OpenAI()
+client.chat.completions.create(...)  # automatically traced and streamed to TUI
+```
+
+Start the TUI receiver in a separate terminal:
+
+```bash
+tracecraft serve --tui
+```
+
+That's the entire setup — two terminal commands, three lines of Python.
+
+**Custom receiver address:**
+
+```python
+tracecraft.init(
+    auto_instrument=True,
+    receiver="http://my-host:4318",  # remote or non-default port
+    service_name="my-agent",
+)
+```
+
+**Combined with other exporters** (receiver + Langfuse/Jaeger at the same time):
+
+```python
+from tracecraft.exporters import OTLPExporter
+
+tracecraft.init(
+    auto_instrument=True,
+    receiver=True,                                          # local TUI
+    exporters=[OTLPExporter(endpoint="http://jaeger:4317")],  # also export to Jaeger
+    service_name="my-agent",
+)
+```
+
+[:octicons-arrow-right-24: Full Auto-Instrumentation Guide](../integrations/auto-instrumentation.md)
+
+#### Option 2 — Auto-Instrumentation to JSONL (File-Based)
+
+Write traces to a local JSONL file, then open the TUI against that file:
+
+```python
+import tracecraft
+
+# IMPORTANT: call init() before importing any LLM SDK
+tracecraft.init(auto_instrument=True, jsonl=True)
+
+from openai import OpenAI
+client = OpenAI()
+client.chat.completions.create(...)   # automatically traced to JSONL
+```
+
+```bash
+tracecraft tui traces/   # open TUI against the written file
+```
+
+Supports all four frameworks — see the [Auto-Instrumentation Guide](../integrations/auto-instrumentation.md) for per-framework examples.
+
+#### Option 3 — Decorators
+
+For custom agent/tool tracing with rich step names, semantic types, and custom attributes:
+
+```python
+import tracecraft
+from tracecraft import trace_agent, trace_tool, trace_llm
+
+# Initialize with JSONL or SQLite output
+tracecraft.init(jsonl=True)  # or: sqlite=True
+
+@trace_agent(name="research_agent")
+async def research(query: str) -> str:
+    docs = await retrieve_docs(query)
+    return await summarize(docs)
+
+@trace_tool(name="retrieve_docs")
+async def retrieve_docs(query: str) -> list[str]:
+    return ["doc1", "doc2"]
+
+@trace_llm(name="summarize", model="gpt-4o", provider="openai")
+async def summarize(docs: list[str]) -> str:
+    ...
+```
+
+Run your agent, then:
+
+```bash
+tracecraft tui traces/
+```
+
+!!! tip "Combine Both"
+
+    Auto-instrumentation and decorators work together — use decorators for agent/orchestration
+    spans and auto-instrumentation to capture every underlying LLM call automatically.
+
+#### Option 4 — Framework Adapters
+
+For explicit per-invocation tracing with a LangChain adapter:
+
+```python
+import tracecraft
+from tracecraft.adapters.langchain import TraceCraftCallbackHandler
+
+tracecraft.init(jsonl=True)
+
+handler = TraceCraftCallbackHandler()
+result = chain.invoke({"input": "hello"}, config={"callbacks": [handler]})
+```
+
+---
+
+### Path B: OTLP Receiver (`tracecraft serve --tui`)
+
+Use this when you have an existing app using **any OTLP-compatible framework** — OpenLLMetry,
+LangChain's OpenTelemetry exporter, LlamaIndex, DSPy, standard OTel SDK, or anything that
+speaks OTLP. **No changes to your application code required.**
+
+```bash
+# Start the receiver + TUI together
+tracecraft serve --tui
+
+# Or start just the receiver (headless), view in TUI separately
+tracecraft serve --storage traces/myapp.db
+tracecraft tui traces/myapp.db
+```
+
+The receiver listens on `http://localhost:4318` (standard OTLP HTTP port). Point your app at it:
+
+```bash
+# Any OTLP-instrumented app
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 python your_app.py
+```
+
+Or configure in code:
+
+```python
+# OpenLLMetry example
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+
+tracer_provider.add_span_processor(
+    BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces"))
+)
+```
+
+**Supported conventions:**
+
+- OTel GenAI Semantic Conventions (`gen_ai.*` attributes)
+- OpenInference Semantic Conventions (`llm.*` attributes — used by LlamaIndex, Phoenix)
+
+Traces appear live in the TUI as they are received (with `--watch` mode enabled by default).
 
 ---
 
@@ -63,395 +302,277 @@ The TraceCraft Terminal UI (TUI) is a powerful, interactive trace explorer that 
 
 ### Installation
 
-```bash
-pip install "tracecraft[tui]"
-```
+=== "Path A — TraceCraft instrumentation"
+
+    ```bash
+    pip install "tracecraft[tui]"
+    # or with auto-instrumentation:
+    pip install "tracecraft[auto,tui]"
+    ```
+
+=== "Path B — OTLP receiver"
+
+    ```bash
+    pip install "tracecraft[receiver,tui]"
+    ```
 
 ### Launch
 
+**Path A — after running your TraceCraft-instrumented agent:**
+
 ```bash
-# From a JSONL file
+# Open TUI from config-specified storage (default: traces/tracecraft.db)
+tracecraft tui
+
+# From a JSONL file (default output from tracecraft.init(jsonl=True))
 tracecraft tui traces/tracecraft.jsonl
 
-# From a SQLite database
-tracecraft tui traces.db
+# From a SQLite database (richer — supports projects, sessions, notes)
+tracecraft tui traces/tracecraft.db
 
 # From a directory (auto-discovers trace files)
 tracecraft tui traces/
-
-# From any OTLP-compatible export
-tracecraft tui my-otel-traces.jsonl
 ```
 
-That's it! You're now exploring your traces.
+!!! note
+    `tracecraft tui` with no arguments reads the storage path from `.tracecraft/config.yaml`.
 
----
+**Path B — start receiver + TUI together:**
 
-## Interface Overview
+```bash
+# Start receiver on :4318 and open TUI (live-updating)
+tracecraft serve --tui
 
-When you launch the TUI, you'll see three main panels:
-
-```
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃  TraceCraft TUI v0.5.0                                         traces: 156   ┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃                                                                               ┃
-┃  ┌─ TRACE LIST ──────────────────────────────────────────────────────────┐   ┃
-┃  │  TRACE ID       NAME                    DURATION   STATUS   TOKENS    │   ┃
-┃  │  ─────────────────────────────────────────────────────────────────── │   ┃
-┃  │▸ a1b2c3...      research_agent          2.34s      ✓        4,521    │   ┃
-┃  │  d4e5f6...      chat.completions        0.89s      ✓        1,247    │   ┃
-┃  │  g7h8i9...      rag_query               1.56s      ✗        2,891    │   ┃
-┃  │  j0k1l2...      summarize_docs          3.21s      ✓        8,432    │   ┃
-┃  └───────────────────────────────────────────────────────────────────────┘   ┃
-┃                                                                               ┃
-┃  ┌─ SPAN TREE ───────────────────────────────────────────────────────────┐   ┃
-┃  │  research_agent (2.34s)                                               │   ┃
-┃  │  ├─ web_search (0.45s)                                                │   ┃
-┃  │  │  └─ google_api_call (0.43s)                                        │   ┃
-┃  │  ├─ process_results (0.12s)                                           │   ┃
-┃  │  └─ chat.completions [gpt-4] (1.77s) ◀─────── Currently Selected     │   ┃
-┃  │     ├─ Input: "Summarize these search results..."                     │   ┃
-┃  │     ├─ Output: "Based on the search results..."                       │   ┃
-┃  │     └─ Tokens: 1,247 (prompt: 892, completion: 355)                   │   ┃
-┃  └───────────────────────────────────────────────────────────────────────┘   ┃
-┃                                                                               ┃
-┃  ┌─ DETAILS ─────────────────────────────────────────────────────────────┐   ┃
-┃  │  Span: chat.completions                                               │   ┃
-┃  │  ─────────────────────────────────────────────────────────────────── │   ┃
-┃  │  Model:      gpt-4                                                    │   ┃
-┃  │  Provider:   openai                                                   │   ┃
-┃  │  Duration:   1.77s                                                    │   ┃
-┃  │  Status:     Success                                                  │   ┃
-┃  │                                                                       │   ┃
-┃  │  ┌─ Input ────────────────────────────────────────────────────────┐  │   ┃
-┃  │  │ Summarize these search results about climate change:           │  │   ┃
-┃  │  │ 1. Global temperatures have risen 1.1°C since pre-industrial.. │  │   ┃
-┃  │  │ 2. Arctic ice is melting at an unprecedented rate...           │  │   ┃
-┃  │  └────────────────────────────────────────────────────────────────┘  │   ┃
-┃  │                                                                       │   ┃
-┃  │  ┌─ Output ───────────────────────────────────────────────────────┐  │   ┃
-┃  │  │ Based on the search results, climate change is causing         │  │   ┃
-┃  │  │ significant global impacts including rising temperatures...    │  │   ┃
-┃  │  └────────────────────────────────────────────────────────────────┘  │   ┃
-┃  └───────────────────────────────────────────────────────────────────────┘   ┃
-┃                                                                               ┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃ [↑↓] Navigate  [Enter] Expand  [Tab] Switch Panel  [/] Search  [q] Quit      ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+# Custom port or storage location
+tracecraft serve --tui --port 4317 --storage my_traces.db
 ```
 
-### The Three Panels
+Then set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in your app and run it.
+Traces appear in the TUI in real-time.
 
-| Panel | Purpose |
-|-------|---------|
-| **Trace List** | All traces in your data source, sorted by time. Shows duration, status, and token counts at a glance. |
-| **Span Tree** | Hierarchical view of the selected trace. See how operations nest: agent → tool → LLM call. |
-| **Details** | Deep dive into the selected span. View inputs, outputs, attributes, errors, and timing. |
+### Loading from SQLite vs JSONL
+
+The TUI supports both JSONL and SQLite storage backends. SQLite enables additional features:
+
+![TraceCraft TUI - SQLite Database View](../assets/screenshots/tui-db-main-view.svg)
+
+*SQLite view: project and session columns are populated, enabling filtering by project or session. Agent names like "WeatherAgent" and "MathTutor" are shown with full project context.*
+
+Configure SQLite output with:
+
+```python
+tracecraft.init(sqlite=True)  # Saves to traces/tracecraft.db
+```
 
 ---
 
 ## Keyboard Shortcuts
 
-Master these shortcuts to navigate traces like a pro:
+All TUI actions are keyboard-driven. Press `?` at any time to show the built-in keyboard shortcut reference:
+
+![TraceCraft TUI - Help Screen](../assets/screenshots/tui-help-screen.svg)
+
+*The help screen (press `?`) shows all keyboard shortcuts in context.*
 
 ### Navigation
 
 | Key | Action |
 |-----|--------|
-| `↑` / `↓` | Move up/down in current panel |
-| `←` / `→` | Collapse/expand tree nodes |
-| `Tab` | Switch between panels |
-| `Enter` | Expand selected item / View details |
-| `Home` / `End` | Jump to first/last item |
-| `PgUp` / `PgDn` | Page up/down |
+| `↑` / `↓` | Move up/down in the trace list |
+| `Enter` | Expand/select trace — shows waterfall |
+| `Tab` | Cycle through IO viewer modes (Input → Output → Detail) |
+| `Escape` | Collapse waterfall / clear filter |
+| `r` | Refresh trace data |
+
+### View Modes
+
+| Key | Action |
+|-----|--------|
+| `i` | Switch to **Input** view — shows prompts sent to the model |
+| `o` | Switch to **Output** view — shows model responses |
+| `a` | Switch to **Attributes/Detail** view — shows span metadata |
+| `Tab` | Cycle through Input → Output → Detail |
 
 ### Search & Filter
 
 | Key | Action |
 |-----|--------|
-| `/` | Open search dialog |
-| `f` | Open filter panel |
-| `Esc` | Clear search/filter |
-| `n` / `N` | Next/previous search result |
+| `/` | Focus the filter bar |
+| `Escape` | Clear filter |
 
-### Actions
+### Trace Management
 
 | Key | Action |
 |-----|--------|
-| `e` | Export current trace |
-| `c` | Compare two traces |
-| `r` | Refresh data |
-| `y` | Copy span to clipboard |
-| `?` | Show help |
+| `m` | Mark a trace for comparison |
+| `C` | Compare marked trace with current trace |
+| `V` | View comparison results |
+| `D` | Delete current trace (with confirmation) |
+| `N` | Edit notes for current trace |
+| `A` | Toggle archive status |
+
+### Layout
+
+| Key | Action |
+|-----|--------|
+| `+` / `=` | Grow waterfall/left panel |
+| `-` | Shrink waterfall/left panel |
+| `H` / `[` | Shrink left panel (move divider left) |
+| `L` / `]` | Grow left panel (move divider right) |
+
+### Other
+
+| Key | Action |
+|-----|--------|
+| `p` | Open **Playground** — re-run or edit the selected LLM prompt |
+| `?` | Show help screen |
 | `q` | Quit |
 
 ---
 
 ## Features in Detail
 
-### Trace List View
+### Trace List
 
-The trace list shows all traces at a glance:
+The trace list shows all captured agent runs at a glance. Each row shows:
 
-```
-┌─ TRACE LIST ─────────────────────────────────────────────────────────────────┐
-│  TRACE ID       NAME                    DURATION   STATUS   TOKENS   TIME    │
-│  ─────────────────────────────────────────────────────────────────────────── │
-│▸ a1b2c3...      research_agent          2.34s      ✓        4,521   2m ago  │
-│  d4e5f6...      chat.completions        0.89s      ✓        1,247   5m ago  │
-│  g7h8i9...      rag_query               1.56s      ✗        2,891   8m ago  │
-│  j0k1l2...      summarize_docs          3.21s      ✓        8,432   12m ago │
-│  m3n4o5...      code_review_agent       5.67s      ✓       12,543   15m ago │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+- **Name**: The agent or root span name
+- **Duration**: Total wall-clock time for the entire trace
+- **Tokens**: Total tokens used across all LLM calls in the trace
+- **Status**: Success (`✓`), Error (`✗`), or Warning
+- **Timestamp**: When the trace was recorded
 
-**What you see:**
-
-- **Trace ID**: Unique identifier (truncated for display)
-- **Name**: Root span name or agent name
-- **Duration**: Total trace duration
-- **Status**: ✓ Success, ✗ Error, ⚠ Warning
-- **Tokens**: Total tokens used across all LLM calls
-- **Time**: When the trace was recorded
+Navigate with `↑`/`↓`. Press `Enter` to select a trace and expand the waterfall view.
 
 ---
 
-### Span Tree View
+### Waterfall View
 
-The span tree shows the hierarchical structure of your trace:
+The waterfall shows the complete call hierarchy for the selected trace. Press `Enter` on any trace to expand it:
 
-```
-┌─ SPAN TREE ──────────────────────────────────────────────────────────────────┐
-│  research_agent (2.34s) ✓                                                    │
-│  ├─ retrieve_documents (0.32s) ✓                                             │
-│  │  ├─ vector_search (0.28s) ✓                                               │
-│  │  └─ rerank_results (0.04s) ✓                                              │
-│  ├─ chat.completions [gpt-4] (1.89s) ✓                                       │
-│  │  └─ Tokens: 3,421 (prompt: 2,890, completion: 531)                        │
-│  └─ format_response (0.13s) ✓                                                │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+![TraceCraft TUI - Waterfall View](../assets/screenshots/tui-waterfall-view.svg)
 
-**Features:**
+- **Agent spans** are shown at the top level
+- **Tool calls** are nested under agents
+- **LLM calls** are nested under tools or agents
+- **Timing bars** show relative duration (█ used, ░ waiting)
+- **Token counts** are shown inline for LLM spans
 
-- **Expand/Collapse**: Use `←` `→` or `Enter` to expand/collapse nodes
-- **Color Coding**: Different colors for agents (blue), tools (green), LLM calls (yellow), errors (red)
-- **Inline Metrics**: See token counts, durations, and status inline
-- **Error Highlighting**: Errors are highlighted in red with stack traces visible
+Navigate the waterfall with `↑`/`↓` to select specific spans. Press `i`, `o`, or `a` to inspect the selected span.
 
 ---
 
-### Detail Panel
+### Filter Bar
 
-The detail panel shows everything about the selected span:
+Press `/` to activate the filter bar. Type to filter traces by name or agent:
 
-```
-┌─ DETAILS ────────────────────────────────────────────────────────────────────┐
-│                                                                              │
-│  Span: chat.completions                                                      │
-│  ════════════════════════════════════════════════════════════════════════   │
-│                                                                              │
-│  ┌─ Metadata ────────────────────────────────────────────────────────────┐  │
-│  │  Model:       gpt-4                                                   │  │
-│  │  Provider:    openai                                                  │  │
-│  │  Temperature: 0.7                                                     │  │
-│  │  Max Tokens:  1000                                                    │  │
-│  │  Duration:    1.89s                                                   │  │
-│  │  Status:      Success                                                 │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                              │
-│  ┌─ Token Usage ─────────────────────────────────────────────────────────┐  │
-│  │  Prompt:      2,890 tokens ($0.0867)                                  │  │
-│  │  Completion:    531 tokens ($0.0319)                                  │  │
-│  │  Total:       3,421 tokens ($0.1186)                                  │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                              │
-│  ┌─ Input (Messages) ────────────────────────────────────────────────────┐  │
-│  │  [system] You are a research assistant that provides accurate,       │  │
-│  │           well-sourced information on any topic.                      │  │
-│  │                                                                       │  │
-│  │  [user] Based on these documents, what are the key findings about    │  │
-│  │         renewable energy adoption in Europe?                          │  │
-│  │                                                                       │  │
-│  │         Document 1: European Solar Capacity Report 2024...            │  │
-│  │         Document 2: Wind Energy Growth Analysis...                    │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                              │
-│  ┌─ Output ──────────────────────────────────────────────────────────────┐  │
-│  │  Based on the provided documents, here are the key findings about    │  │
-│  │  renewable energy adoption in Europe:                                 │  │
-│  │                                                                       │  │
-│  │  1. Solar capacity increased by 45% in 2024, with Germany and        │  │
-│  │     Spain leading installations...                                    │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+![TraceCraft TUI - Filter Active](../assets/screenshots/tui-filter-active.svg)
 
-**What you can see:**
+*Filter bar active with search text typed. The result count updates in real-time.*
 
-- Complete input prompts and messages
-- Full output/completion text
-- Token counts with cost estimates
-- Model parameters (temperature, max_tokens, etc.)
-- Custom attributes
-- Error messages and stack traces
-- Timing breakdown
+Press `Escape` to clear the filter and return to the full trace list.
+
+### Filtering for Errors Only
+
+Click the **ERRORS** toggle button or use the filter dropdown to show only traces with errors:
+
+![TraceCraft TUI - Error Traces Only](../assets/screenshots/tui-errors-only.svg)
+
+*Error filter active — shows "9 of 61" matching traces. Error traces are immediately visible for fast debugging.*
+
+This is the fastest way to find and debug failing agent runs.
 
 ---
 
-### Search & Filter
+### Input View
 
-Press `/` to search or `f` to filter:
+Press `i` to view the exact input sent to the selected operation:
 
+![TraceCraft TUI - Input View](../assets/screenshots/tui-input-view.svg)
+
+- **For LLM spans**: Shows system messages, user messages, and any documents/context
+- **For tool spans**: Shows the arguments passed to the tool
+- **For agent spans**: Shows the agent's initial input
+
+---
+
+### Output View
+
+Press `o` to view the output from the selected operation:
+
+![TraceCraft TUI - Output View](../assets/screenshots/tui-output-view.svg)
+
+- **For LLM spans**: Shows the model's response, with token counts and cost estimates
+- **For tool spans**: Shows the tool's return value
+- **For agent spans**: Shows the agent's final output
+
+---
+
+### Attributes View
+
+Press `a` to see all metadata for the selected span:
+
+![TraceCraft TUI - Attributes View](../assets/screenshots/tui-attributes-view.svg)
+
+- Model name and provider
+- Temperature, max tokens, and other LLM parameters
+- Token usage breakdown (prompt, completion, total)
+- Estimated cost per LLM call
+- Custom attributes added via `step.attributes`
+- Error messages and stack traces (for failed spans)
+- Span timing (start time, end time, duration)
+
+---
+
+### Notes
+
+Press `N` to add notes to any trace (requires SQLite storage):
+
+![TraceCraft TUI - Notes Editor](../assets/screenshots/tui-notes-editor.svg)
+
+*Notes editor for the selected trace. Notes persist across TUI sessions in the SQLite database.*
+
+Notes are useful for:
+
+- Annotating interesting or buggy traces for review
+- Documenting findings during debugging sessions
+- Marking A/B test results
+
+Enable SQLite storage for notes support:
+
+```python
+tracecraft.init(sqlite=True)  # Notes require SQLite backend
 ```
-┌─ FILTER ─────────────────────────────────────────────────────────────────────┐
-│                                                                              │
-│  Status:    [All ▼]  [ ] Success only  [ ] Errors only                       │
-│                                                                              │
-│  Duration:  Min: [____] ms    Max: [____] ms                                 │
-│                                                                              │
-│  Tokens:    Min: [____]       Max: [____]                                    │
-│                                                                              │
-│  Name:      [________________________]  (supports regex)                     │
-│                                                                              │
-│  Model:     [________________________]                                       │
-│                                                                              │
-│  Date:      From: [__________]    To: [__________]                           │
-│                                                                              │
-│                                      [Apply]  [Clear]  [Cancel]              │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
-
-**Filter Examples:**
-
-- Find slow traces: Set `Duration Min: 2000` (>2 seconds)
-- Find errors: Check `Errors only`
-- Find specific model: Set `Model: gpt-4`
-- Find by name pattern: Set `Name: research.*` (regex supported)
 
 ---
 
 ### Trace Comparison
 
-Press `c` to compare two traces side-by-side:
+Compare two agent runs to understand performance differences:
 
-```
-┌─ COMPARE TRACES ─────────────────────────────────────────────────────────────┐
-│                                                                              │
-│     TRACE A (a1b2c3...)              │       TRACE B (d4e5f6...)             │
-│  ────────────────────────────────────│────────────────────────────────────── │
-│     Duration: 2.34s                  │       Duration: 4.56s (+95%)          │
-│     Tokens:   4,521                  │       Tokens:   8,932 (+98%)          │
-│     Status:   Success                │       Status:   Success               │
-│                                      │                                       │
-│     research_agent (2.34s)           │       research_agent (4.56s)          │
-│     ├─ web_search (0.45s)            │       ├─ web_search (0.89s) ▲         │
-│     ├─ process (0.12s)               │       ├─ process (0.15s)              │
-│     └─ gpt-4 (1.77s)                 │       └─ gpt-4 (3.52s) ▲▲             │
-│        Tokens: 1,247                 │          Tokens: 5,432 ▲▲             │
-│                                      │                                       │
-│  ────────────────────────────────────│────────────────────────────────────── │
-│     ▲ = Slower    ▲▲ = Much Slower   │       ▼ = Faster    ▼▼ = Much Faster │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+1. Navigate to the first trace and press `m` to **mark** it
+2. Navigate to the second trace and press `C` to **compare**
+3. Select a comparison prompt and model in the picker
+4. Press `V` to **view comparison results**
 
-**Great for:**
+Great for:
 
-- A/B testing different prompts
-- Comparing model performance (gpt-4 vs gpt-4-turbo)
-- Understanding why some requests are slow
-- Debugging regressions
+- A/B testing different prompts or system messages
+- Comparing model performance (gpt-4o vs gpt-4o-mini)
+- Debugging performance regressions between deployments
 
 ---
 
-### Export Options
+### Playground
 
-Press `e` to export the current trace:
+Press `p` on any LLM span to open the **Playground** — an interactive prompt editor that lets you:
 
-```
-┌─ EXPORT ─────────────────────────────────────────────────────────────────────┐
-│                                                                              │
-│  Export trace a1b2c3... to:                                                  │
-│                                                                              │
-│  [1] JSON file         trace_a1b2c3.json                                     │
-│  [2] HTML report       trace_a1b2c3.html    (opens in browser)               │
-│  [3] Clipboard         Copy as JSON                                          │
-│  [4] JSONL append      Append to traces.jsonl                                │
-│                                                                              │
-│  Output directory: [./exports/___________________]                           │
-│                                                                              │
-│                                      [Export]  [Cancel]                      │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+- Edit the system prompt or user messages
+- Re-run the prompt against any configured model
+- See the new response alongside the original
+- Iterate on prompts without changing your code
 
----
-
-## Using TUI with Non-TraceCraft Traces
-
-!!! important "The TUI works with ANY OpenTelemetry data"
-
-    You don't need to use TraceCraft instrumentation. The TUI reads standard
-    OpenTelemetry trace formats.
-
-### From OpenLLMetry / OpenTelemetry
-
-If you're using OpenLLMetry or standard OpenTelemetry instrumentation:
-
-```python
-# Export your OTel traces to JSONL
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-
-# Your existing OTel setup exports to Jaeger, etc.
-# Also export to JSONL for the TUI:
-from tracecraft.exporters import JSONLExporter
-
-tracer_provider.add_span_processor(
-    BatchSpanProcessor(JSONLExporter("traces/my-traces.jsonl"))
-)
-```
-
-Then view in the TUI:
-
-```bash
-tracecraft tui traces/my-traces.jsonl
-```
-
-### From Jaeger Export
-
-Export traces from Jaeger and view them:
-
-```bash
-# Export from Jaeger API
-curl "http://localhost:16686/api/traces?service=my-service" > jaeger-traces.json
-
-# View in TUI (auto-converts Jaeger format)
-tracecraft tui jaeger-traces.json
-```
-
-### From Any OTLP Collector
-
-If you're running an OTLP collector, add a file exporter:
-
-```yaml
-# otel-collector-config.yaml
-exporters:
-  file:
-    path: /var/traces/traces.jsonl
-
-service:
-  pipelines:
-    traces:
-      exporters: [file, jaeger]  # Export to both
-```
-
-Then view:
-
-```bash
-tracecraft tui /var/traces/traces.jsonl
-```
+The Playground connects to real LLM APIs, so your TraceCraft API key configuration must be set for the chosen model.
 
 ---
 
@@ -463,9 +584,6 @@ tracecraft tui /var/traces/traces.jsonl
 # Default trace directory
 export TRACECRAFT_TRACES_DIR=./traces
 
-# Default format
-export TRACECRAFT_TUI_FORMAT=jsonl
-
 # Color theme (dark, light, auto)
 export TRACECRAFT_TUI_THEME=dark
 ```
@@ -473,26 +591,27 @@ export TRACECRAFT_TUI_THEME=dark
 ### Command Line Options
 
 ```bash
-tracecraft tui [OPTIONS] [PATH]
+tracecraft tui [OPTIONS] [SOURCE]
 
 Options:
-  --format [jsonl|sqlite|auto]  Input format (default: auto-detect)
-  --theme [dark|light]          Color theme
-  --filter TEXT                 Pre-apply filter (e.g., "status:error")
-  --watch                       Watch for new traces (live mode)
-  --port INT                    HTTP server port for HTML export
-  -h, --help                    Show help
+  --watch, -w    Watch for new traces in real-time (live mode)
+  --serve, -S    Start OTLP receiver on :4318 before opening TUI
+  -h, --help     Show help
 ```
 
 ### Live Mode
 
-Watch for new traces in real-time:
+Watch for new traces as your agent runs:
 
 ```bash
 tracecraft tui traces/ --watch
 ```
 
-New traces appear automatically as they're written!
+New traces appear automatically as they're written to disk. This is useful when:
+
+- Running long agent workflows and watching them execute step by step
+- Monitoring batch processing jobs in real-time
+- Debugging integration tests
 
 ---
 
@@ -500,41 +619,46 @@ New traces appear automatically as they're written!
 
 ### Quick Debugging Workflow
 
-1. Run your application with TraceCraft or any OTel instrumentation
-2. `tracecraft tui traces/` to launch
-3. Press `f` → Filter to `Errors only`
-4. Press `Enter` on an error trace to see the full stack trace
-5. Navigate the span tree to find which operation failed
+1. Run your agent with `tracecraft.init(jsonl=True)`
+2. `tracecraft tui traces/` to launch the TUI
+3. Press the **ERRORS** toggle to show only failed traces
+4. Press `Enter` on an error trace to expand the waterfall
+5. Navigate to the failing span with `↑`/`↓`
+6. Press `a` to see the full error message and stack trace
 
-### Finding Slow Traces
+### Finding Slow Operations
 
-1. `tracecraft tui traces/`
-2. Press `f` → Set `Duration Min: 2000` (2 seconds)
-3. Compare slow vs fast traces with `c`
+1. Launch the TUI and scan the duration column
+2. Select a slow trace with `Enter` to open the waterfall
+3. Look for the span with the longest timing bar
+4. Press `i` to see what prompt caused the long LLM call
+5. Press `p` to open Playground and iterate on the prompt
 
 ### Cost Analysis
 
-The detail panel shows estimated costs per LLM call:
+Press `a` on any LLM span to see the cost breakdown:
 
 ```
-Token Usage:
-  Prompt:      2,890 tokens ($0.0867)
-  Completion:    531 tokens ($0.0319)
-  Total:       3,421 tokens ($0.1186)
+model_name:    gpt-4o-mini
+input_tokens:  892
+output_tokens: 355
+cost_usd:      $0.000147
 ```
 
-### Sharing Traces
+Compare multiple LLM spans in the waterfall to identify the most expensive calls.
 
-Export to HTML for sharing with teammates:
+### Comparing Runs
 
-1. Select trace → Press `e`
-2. Choose `HTML report`
-3. Open in browser or share the file
+1. Mark the baseline run with `m`
+2. Navigate to the new run and press `C`
+3. Select a comparison model
+4. Press `V` to see a diff of the two runs side-by-side
 
 ---
 
 ## Next Steps
 
-- [Auto-Instrumentation](../integrations/auto-instrumentation.md) - Capture traces automatically
-- [Exporters](exporters.md) - Configure where traces are stored
-- [Configuration](configuration.md) - Full configuration reference
+- [Decorators](decorators.md) — Instrument custom agents and tools
+- [Auto-Instrumentation](../integrations/auto-instrumentation.md) — Zero-code capture for OpenAI/Anthropic
+- [Exporters](exporters.md) — Configure where traces are stored
+- [Configuration](configuration.md) — Full configuration reference

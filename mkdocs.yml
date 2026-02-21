@@ -132,18 +132,17 @@ nav:
     - Installation: getting-started/installation.md
     - Quick Start: getting-started/quickstart.md
     - Core Concepts: getting-started/concepts.md
-  - User Guide:
+  - Terminal UI:
+    - user-guide/tui.md
+  - SDK Guide:
     - user-guide/index.md
     - Decorators: user-guide/decorators.md
     - Configuration: user-guide/configuration.md
     - Exporters: user-guide/exporters.md
     - Processors: user-guide/processors.md
-    - Terminal UI: user-guide/tui.md
     - Multi-Tenancy: user-guide/multi-tenancy.md
     - Performance: user-guide/performance.md
     - Security: user-guide/security.md
-  - Reference:
-    - Quick Reference: reference/quick-reference.md
   - Integrations:
     - integrations/index.md
     - LangChain: integrations/langchain.md
@@ -169,11 +168,8 @@ nav:
     - Processors: api/processors.md
     - Adapters: api/adapters.md
     - Configuration: api/configuration.md
-  - Migration Guides:
-    - migration/index.md
-    - From LangSmith: migration/from-langsmith.md
-    - From Langfuse: migration/from-langfuse.md
-    - From OpenLLMetry: migration/from-openllmetry.md
+  - Reference:
+    - Quick Reference: reference/quick-reference.md
   - FAQ: faq.md
   - Troubleshooting: troubleshooting.md
   - Contributing: contributing.md
@@ -196,6 +192,7 @@ extra:
 
 extra_css:
   - stylesheets/extra.css
+  - stylesheets/chat.css
 
 extra_javascript:
   - javascripts/mathjax.js

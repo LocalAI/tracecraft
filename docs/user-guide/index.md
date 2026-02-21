@@ -1,6 +1,9 @@
 # User Guide
 
-Welcome to the TraceCraft User Guide. This section covers all features and capabilities of TraceCraft in detail.
+Welcome to the TraceCraft SDK Guide. This section covers TraceCraft's Python SDK in detail — decorators, configuration, exporters, processors, and advanced patterns.
+
+!!! tip "Looking for the Terminal UI guide?"
+    The TUI has its own section: [Terminal UI](../user-guide/tui.md)
 
 ## Topics
 
@@ -57,20 +60,6 @@ Welcome to the TraceCraft User Guide. This section covers all features and capab
     Send traces to console, files, OTLP, and more
 
     [:octicons-arrow-right-24: Exporters Guide](exporters.md)
-
-</div>
-
-### Tools
-
-<div class="grid cards" markdown>
-
-- :material-console:{ .lg .middle } __Terminal UI__
-
-    ---
-
-    Interactive trace exploration in your terminal
-
-    [:octicons-arrow-right-24: TUI Guide](tui.md)
 
 </div>
 
@@ -367,5 +356,4 @@ Explore each topic in detail:
 2. [Configuration](configuration.md) - All configuration options
 3. [Exporters](exporters.md) - Export to different backends
 4. [Processors](processors.md) - Process and transform traces
-5. [Terminal UI](tui.md) - Interactive trace exploration
-6. [Multi-Tenancy](multi-tenancy.md) - Handle multiple tenants
+5. [Multi-Tenancy](multi-tenancy.md) - Handle multiple tenants

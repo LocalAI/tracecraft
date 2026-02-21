@@ -11,6 +11,55 @@ Exporters send trace data to different backends. TraceCraft supports multiple ex
 | OTLPExporter | OpenTelemetry Protocol | `tracecraft[otlp]` |
 | MLflowExporter | MLflow tracking | `tracecraft[mlflow]` |
 | HTMLExporter | HTML reports | Built-in |
+| TUI Receiver (`receiver=`) | Stream live to `tracecraft serve --tui` | Built-in |
+
+## TUI Receiver
+
+The fastest way to get traces into the TUI during development. Use the `receiver=` shorthand in `tracecraft.init()` — no manual exporter setup needed.
+
+```python
+# receiver=True → connects to http://localhost:4318 (default TUI receiver address)
+tracecraft.init(
+    auto_instrument=True,
+    receiver=True,
+    service_name="my-agent",
+)
+```
+
+```bash
+# Start receiver + TUI in one command
+tracecraft serve --tui
+```
+
+You can also use a custom URL:
+
+```python
+tracecraft.init(
+    receiver="http://remote-host:4318",
+    service_name="my-agent",
+)
+```
+
+Or configure it in `.tracecraft/config.yaml`:
+
+```yaml
+default:
+  exporters:
+    receiver: true
+    receiver_endpoint: http://localhost:4318
+```
+
+The receiver uses `OTLPExporter` internally with `protocol="http"`. You can combine it with other exporters:
+
+```python
+from tracecraft.exporters.otlp import OTLPExporter
+
+tracecraft.init(
+    receiver=True,                                          # stream to TUI
+    exporters=[OTLPExporter(endpoint="http://jaeger:4317")],  # also send to Jaeger
+    console=False,
+)
+```
 
 ## Console Exporter
 

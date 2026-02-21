@@ -4,9 +4,20 @@
 env: development
 
 default:
+  # Service name shown in the TUI trace list and OTLP traces
+  service_name: my-agent-service
+
   storage:
     type: jsonl
     jsonl_path: traces/tracecraft.jsonl
+
   exporters:
     console: true
     jsonl: true
+    # Set receiver: true to stream traces live to `tracecraft serve --tui`
+    receiver: false
+    receiver_endpoint: http://localhost:4318
+
+  instrumentation:
+    # Set to true or a list like [openai, anthropic] to auto-instrument LLM SDKs
+    auto_instrument: false

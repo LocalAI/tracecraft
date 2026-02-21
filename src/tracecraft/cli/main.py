@@ -266,7 +266,7 @@ def export(
 
 
 @app.command()
-def ui(
+def tui(
     source: Annotated[
         str | None,
         typer.Argument(
@@ -279,29 +279,41 @@ def ui(
         typer.Option("--env", "-e", help="Use storage from environment config"),
     ] = None,
     filter_str: Annotated[str | None, typer.Option("--filter", "-f", help="Initial filter")] = None,
+    serve_flag: Annotated[
+        bool, typer.Option("--serve", "-S", help="Start OTLP receiver on :4318 before opening TUI")
+    ] = False,
 ) -> None:
     """
     Launch the interactive terminal UI.
 
+    With no arguments, reads storage location from .tracecraft/config.yaml (defaults to
+    traces/tracecraft.db if no config is found).
+
     Examples:
+        # Open TUI from config-specified storage (or default SQLite)
+        tracecraft tui
+
+        # Start OTLP receiver on :4318 and open TUI
+        tracecraft tui --serve
+
         # JSONL file
-        tracecraft ui traces/tracecraft.jsonl
+        tracecraft tui traces/tracecraft.jsonl
 
         # SQLite database
-        tracecraft ui traces.db
-        tracecraft ui sqlite:///path/to/traces.db
+        tracecraft tui traces.db
+        tracecraft tui sqlite:///path/to/traces.db
 
         # MLflow (default tracking URI)
-        tracecraft ui mlflow:my_experiment
+        tracecraft tui mlflow:my_experiment
 
         # MLflow (specific server)
-        tracecraft ui mlflow://localhost:5000/production_traces
+        tracecraft tui mlflow://localhost:5000/production_traces
 
         # Watch for new traces
-        tracecraft ui traces.jsonl --watch
+        tracecraft tui traces.jsonl --watch
 
         # Use production environment config
-        tracecraft ui --env production
+        tracecraft tui --env production
     """
     try:
         from tracecraft.tui import run_tui
@@ -312,13 +324,13 @@ def ui(
         )
         raise typer.Exit(1) from None
 
-    # If env specified, use storage from that environment's config
+    # Resolve effective source from config when neither source nor env is explicitly given
     effective_source = source
-    if env and not source:
+    if not source:
         try:
             from tracecraft.core.env_config import load_config
 
-            config = load_config(env=env)
+            config = load_config(env=env)  # env=None → auto-detect
             settings = config.get_settings()
 
             if settings.storage.type == "sqlite" and settings.storage.sqlite_path:
@@ -332,10 +344,57 @@ def ui(
                     effective_source = f"mlflow:{exp}"
             elif settings.storage.type == "jsonl" and settings.storage.jsonl_path:
                 effective_source = settings.storage.jsonl_path
-        except Exception as e:
-            console.print(f"[yellow]Warning: Could not load env config: {e}[/yellow]")
+            else:
+                effective_source = "sqlite://traces/tracecraft.db"
+        except Exception:
+            effective_source = "sqlite://traces/tracecraft.db"
 
-    run_tui(source=effective_source, watch=watch)
+    if serve_flag:
+        try:
+            from tracecraft.receiver import OTLPReceiverServer
+        except ImportError:
+            console.print(
+                "[red]Error: Receiver dependencies not installed.[/red]\n"
+                "Install with: pip install tracecraft[receiver]"
+            )
+            raise typer.Exit(1) from None
+
+        storage_path = Path("traces/tracecraft.db")
+        storage_path.parent.mkdir(parents=True, exist_ok=True)
+
+        from tracecraft.storage.sqlite import SQLiteTraceStore
+
+        store = SQLiteTraceStore(storage_path)
+        tui_source = f"sqlite://{storage_path}"
+
+        server = OTLPReceiverServer(store=store, host="0.0.0.0", port=4318)  # nosec B104
+        console.print("[dim]Starting OTLP receiver on :4318 with TUI...[/dim]")
+        server.start_background()
+        try:
+            run_tui(source=tui_source, watch=True)
+        finally:
+            server.stop()
+    else:
+        run_tui(source=effective_source, watch=watch)
+
+
+@app.command(name="ui", hidden=True)
+def ui_alias(
+    source: Annotated[
+        str | None,
+        typer.Argument(
+            help="Trace source: file.jsonl, file.db, sqlite:///path, mlflow://host/exp, mlflow:exp"
+        ),
+    ] = None,
+    watch: Annotated[bool, typer.Option("--watch", "-w", help="Watch for new traces")] = False,
+    env: Annotated[
+        str | None,
+        typer.Option("--env", "-e", help="Use storage from environment config"),
+    ] = None,
+    filter_str: Annotated[str | None, typer.Option("--filter", "-f", help="Initial filter")] = None,
+) -> None:
+    """Deprecated alias for 'tracecraft tui'. Use 'tracecraft tui' instead."""
+    tui(source=source, watch=watch, env=env, filter_str=filter_str, serve_flag=False)
 
 
 @app.command()

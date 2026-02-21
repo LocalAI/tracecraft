@@ -816,6 +816,9 @@ def _resolve_exporter_settings(
     return bool(use_console), bool(use_jsonl), Path(effective_jsonl_path)
 
 
+DEFAULT_RECEIVER_URL = "http://localhost:4318"
+
+
 def init(
     console: bool | None = None,
     jsonl: bool | None = None,
@@ -832,10 +835,13 @@ def init(
     # Storage configuration
     storage: str | BaseTraceStore | None = None,
     # Convenience parameters that override config
+    service_name: str | None = None,
     redaction_enabled: bool | None = None,
     sampling_rate: float | None = None,
     # Auto-instrumentation
     auto_instrument: bool | list[str] | None = None,
+    # Receiver shorthand
+    receiver: bool | str | None = None,
 ) -> TALRuntime:
     """
     Initialize the TraceCraft runtime.
@@ -873,6 +879,8 @@ def init(
             - None: Use env config or no storage
             - str: "sqlite:///path.db", "mlflow:experiment", "path/to/file.jsonl"
             - BaseTraceStore: Custom storage instance
+        service_name: Service name reported in traces. Defaults to "tracecraft" or
+            the TRACECRAFT_SERVICE_NAME environment variable.
         redaction_enabled: Enable PII redaction (overrides config).
         sampling_rate: Sampling rate 0.0-1.0 (overrides config).
         auto_instrument: Enable auto-instrumentation for LLM providers and frameworks.
@@ -881,6 +889,14 @@ def init(
             - False: Disable auto-instrumentation
             - None: Check TRACECRAFT_AUTO_INSTRUMENT env var (default)
             - ["openai", "langchain"]: Instrument specific providers/frameworks
+        receiver: Send completed traces to a TraceCraft receiver (e.g. ``tracecraft serve --tui``).
+            Options:
+            - True: Send to http://localhost:4318 (default receiver address)
+            - str: Custom receiver URL, e.g. "http://my-host:4318"
+            - None/False: Disabled (default)
+
+            Traces are pushed via OTLP HTTP after each run completes. The receiver
+            stores them and the TUI displays them live.
 
     Returns:
         The TALRuntime instance.
@@ -894,8 +910,16 @@ def init(
         # Force local development mode
         tracecraft.init(mode="local")
 
-        # Enable auto-instrumentation for all providers
-        tracecraft.init(auto_instrument=True)
+        # One-liner: auto-instrument everything, stream to local TUI receiver
+        # (run ``tracecraft serve --tui`` in a separate terminal)
+        tracecraft.init(auto_instrument=True, receiver=True)
+
+        # With a custom receiver address and service name
+        tracecraft.init(
+            auto_instrument=True,
+            receiver="http://localhost:4318",
+            service_name="my-agent-service",
+        )
 
         # Enable auto-instrumentation for specific providers
         tracecraft.init(auto_instrument=["openai", "langchain"])
@@ -935,22 +959,78 @@ def init(
             # Initialize storage backend
             storage_backend = _init_storage(storage, settings.storage)
 
+            # Resolve receiver: explicit param > config file > default (off)
+            effective_receiver = (
+                receiver if receiver is not None else settings.exporters.receiver or False
+            )
+
+            # Resolve receiver endpoint: explicit URL > config file > default
+            if isinstance(receiver, str):
+                effective_receiver_url: str | None = receiver
+            elif effective_receiver:
+                effective_receiver_url = settings.exporters.receiver_endpoint
+            else:
+                effective_receiver_url = None
+
+            # Resolve service_name: explicit param > config file > env var > default
+            import os as _os
+
+            effective_service_name = (
+                service_name
+                or settings.service_name
+                or _os.environ.get("TRACECRAFT_SERVICE_NAME")
+                or "tracecraft"
+            )
+
+            # Build the receiver exporter if requested and merge with any custom exporters
+            all_exporters = list(exporters) if exporters else []
+            if effective_receiver and effective_receiver_url:
+                receiver_exporter = _build_receiver_exporter(
+                    effective_receiver_url, effective_service_name
+                )
+                all_exporters.append(receiver_exporter)
+
             _runtime = TALRuntime(
                 console=use_console,
                 jsonl=use_jsonl,
                 jsonl_path=effective_jsonl_path,
                 console_file=console_file,
                 console_verbose=console_verbose,
-                exporters=exporters,
+                exporters=all_exporters if all_exporters else None,
                 config=config,
                 storage=storage_backend,
             )
 
-            # Handle auto-instrumentation
-            _handle_auto_instrumentation(auto_instrument)
+            # Handle auto-instrumentation (explicit param > config > env var)
+            _handle_auto_instrumentation(
+                auto_instrument,
+                config_auto_instrument=settings.instrumentation.auto_instrument,
+            )
 
         # Return inside lock to prevent race condition
         return _runtime
+
+
+def _build_receiver_exporter(url: str, service_name: str) -> BaseExporter:
+    """
+    Build an OTLPExporter pointed at the TraceCraft receiver.
+
+    Args:
+        url: Receiver endpoint URL (already resolved from param or config).
+        service_name: Service name for traces (already resolved).
+
+    Returns:
+        Configured OTLPExporter using HTTP transport.
+    """
+    from tracecraft.exporters.otlp import OTLPExporter
+
+    logger.info("Receiver exporter configured: %s (service=%s)", url, service_name)
+
+    return OTLPExporter(
+        endpoint=url.rstrip("/"),
+        protocol="http",
+        service_name=service_name,
+    )
 
 
 def _init_storage(
@@ -1040,12 +1120,18 @@ def _parse_storage_string(storage: str) -> BaseTraceStore | None:
         return JSONLTraceStore(storage)
 
 
-def _handle_auto_instrumentation(auto_instrument: bool | list[str] | None) -> None:
+def _handle_auto_instrumentation(
+    auto_instrument: bool | list[str] | None,
+    config_auto_instrument: bool | list[str] = False,
+) -> None:
     """
-    Handle auto-instrumentation based on parameter or environment variable.
+    Handle auto-instrumentation based on parameter, config file, or environment variable.
+
+    Precedence: explicit param > config file > TRACECRAFT_AUTO_INSTRUMENT env var > disabled.
 
     Args:
-        auto_instrument: Auto-instrumentation setting from init().
+        auto_instrument: Auto-instrumentation setting from init() (highest precedence).
+        config_auto_instrument: Setting from .tracecraft/config.yaml.
     """
     import os
 
@@ -1056,28 +1142,36 @@ def _handle_auto_instrumentation(auto_instrument: bool | list[str] | None) -> No
     should_instrument = False
 
     if auto_instrument is True:
-        # Instrument all
+        # Explicit: instrument all
         should_instrument = True
         providers = None
     elif auto_instrument is False:
-        # Explicitly disabled
+        # Explicit: disabled
         should_instrument = False
     elif isinstance(auto_instrument, list):
-        # Specific providers
+        # Explicit: specific providers
         should_instrument = True
         providers = auto_instrument
     else:
-        # Check environment variable
-        env_value = os.environ.get("TRACECRAFT_AUTO_INSTRUMENT", "").lower()
-        if env_value in ("true", "1", "all", "yes"):
+        # Not set explicitly — fall back to config file, then env var
+        if config_auto_instrument is True:
             should_instrument = True
             providers = None
-        elif env_value in ("false", "0", "no", ""):
-            should_instrument = False
-        elif env_value:
-            # Comma-separated list of providers
+        elif isinstance(config_auto_instrument, list) and config_auto_instrument:
             should_instrument = True
-            providers = [p.strip() for p in env_value.split(",") if p.strip()]
+            providers = config_auto_instrument
+        else:
+            # Check environment variable
+            env_value = os.environ.get("TRACECRAFT_AUTO_INSTRUMENT", "").lower()
+            if env_value in ("true", "1", "all", "yes"):
+                should_instrument = True
+                providers = None
+            elif env_value in ("false", "0", "no", ""):
+                should_instrument = False
+            elif env_value:
+                # Comma-separated list of providers
+                should_instrument = True
+                providers = [p.strip() for p in env_value.split(",") if p.strip()]
 
     if should_instrument:
         results = enable_auto_instrumentation(providers)

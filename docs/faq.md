@@ -590,7 +590,7 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
     Then explore persisted traces with the Terminal UI:
 
     ```bash
-    tracecraft ui /var/data/traces/tracecraft.jsonl
+    tracecraft tui /var/data/traces/tracecraft.jsonl
     # or
-    tracecraft ui /var/data/traces/tracecraft.db
+    tracecraft tui /var/data/traces/tracecraft.db
     ```

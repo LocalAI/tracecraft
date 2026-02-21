@@ -261,10 +261,10 @@ The Terminal User Interface included with TraceCraft for browsing and analyzing 
 
 ```bash
 # Launch from a JSONL file
-tracecraft ui traces/agent.jsonl
+tracecraft tui traces/agent.jsonl
 
 # Launch from a SQLite database
-tracecraft ui sqlite://traces/my_traces.db
+tracecraft tui sqlite://traces/my_traces.db
 ```
 
 See also: [Terminal UI Guide](user-guide/tui.md), [OTLPReceiverServer](#otlpreceiverserver)

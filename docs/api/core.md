@@ -59,15 +59,73 @@ Enumeration of step types:
 
 ### init()
 
-Initialize TraceCraft with configuration.
+Initialize TraceCraft with configuration. Returns the global `TraceCraftRuntime` singleton (subsequent calls return the same instance).
+
+**Signature:**
+
+```python
+tracecraft.init(
+    # Service identity
+    service_name: str | None = None,        # shown in TUI + OTLP; reads from config / TRACECRAFT_SERVICE_NAME
+
+    # Built-in exporters
+    console: bool | None = None,            # pretty-print to terminal
+    jsonl: bool | None = None,              # write to JSONL file
+    jsonl_path: str | None = None,          # JSONL output path
+
+    # TUI receiver shorthand
+    receiver: bool | str | None = None,     # True → http://localhost:4318; str → custom URL
+
+    # Auto-instrumentation
+    auto_instrument: bool | list[str] | None = None,  # True / ["openai", "anthropic"] / False
+
+    # Custom exporters added alongside built-ins
+    exporters: list[BaseExporter] | None = None,
+
+    # Storage backend override ("none" disables local storage)
+    storage: str | None = None,
+) -> TraceCraftRuntime
+```
+
+Settings are resolved in this order (highest priority wins):
+
+1. Explicit parameters passed to `init()`
+2. `.tracecraft/config.yaml` (project root or `~`)
+3. `TRACECRAFT_*` environment variables
+4. Built-in defaults
+
+**Examples:**
 
 ```python
 import tracecraft
 
+# Live TUI — stream traces as they happen
 runtime = tracecraft.init(
-    service_name="my-service",
-    console=True,
+    auto_instrument=True,
+    receiver=True,
+    service_name="my-agent",
+)
+
+# File-based — write to JSONL, open TUI separately
+runtime = tracecraft.init(
+    auto_instrument=True,
     jsonl=True,
+    service_name="my-agent",
+)
+
+# Custom receiver URL
+runtime = tracecraft.init(
+    receiver="http://remote-host:4318",
+    service_name="my-agent",
+)
+
+# Custom exporter + receiver together
+from tracecraft.exporters.otlp import OTLPExporter
+
+runtime = tracecraft.init(
+    receiver=True,
+    exporters=[OTLPExporter(endpoint="http://jaeger:4317")],
+    console=False,
 )
 ```
 

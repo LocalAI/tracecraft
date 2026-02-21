@@ -578,17 +578,17 @@ class TestWaterfallView:
 
 
 class TestCLIUICommand:
-    """Tests for the CLI UI command."""
+    """Tests for the CLI tui command (renamed from ui)."""
 
-    def test_ui_command_exists(self) -> None:
-        """Test UI command is registered."""
-        from tracecraft.cli.main import ui
+    def test_tui_command_exists(self) -> None:
+        """Test tui command is registered."""
+        from tracecraft.cli.main import tui
 
-        # Verify the ui function exists and is callable
-        assert callable(ui)
+        # Verify the tui function exists and is callable
+        assert callable(tui)
 
-    def test_ui_command_in_app(self) -> None:
-        """Test UI command is in the app."""
+    def test_tui_command_in_app(self) -> None:
+        """Test tui command is in the app."""
         from tracecraft.cli.main import app
 
         # Get command info from the typer app
@@ -596,4 +596,11 @@ class TestCLIUICommand:
         command_callbacks = [
             cmd.callback.__name__ for cmd in app.registered_commands if cmd.callback
         ]
-        assert "ui" in command_callbacks
+        assert "tui" in command_callbacks
+
+    def test_ui_alias_in_app(self) -> None:
+        """Test ui backward-compat alias is still registered (hidden)."""
+        from tracecraft.cli.main import app
+
+        command_names = [cmd.name for cmd in app.registered_commands if cmd.name]
+        assert "ui" in command_names

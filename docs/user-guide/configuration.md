@@ -1,6 +1,165 @@
 # Configuration
 
-TraceCraft can be configured through code or environment variables. This guide covers all available configuration options.
+TraceCraft can be configured through code, a config file, or environment variables. This guide covers all available configuration options.
+
+## Configuration Precedence
+
+Configuration is applied in this order (later overrides earlier):
+
+1. Default values
+2. Environment variables (`TRACECRAFT_*`)
+3. `.tracecraft/config.yaml` (project or home directory)
+4. Explicit parameters passed to `tracecraft.init()`
+
+Example:
+
+```bash
+# Environment variable sets the service name
+export TRACECRAFT_SERVICE_NAME=env-service
+```
+
+```python
+# Explicit param wins — "code-service" is used, not "env-service"
+tracecraft.init(service_name="code-service")
+```
+
+---
+
+## Config File
+
+The easiest way to configure TraceCraft for a project is a config file at `.tracecraft/config.yaml` in your project root (or `~/.tracecraft/config.yaml` globally). The file is loaded automatically — no code changes required.
+
+### Minimal Config
+
+```yaml
+# .tracecraft/config.yaml
+env: development
+
+default:
+  service_name: my-agent-service
+
+  storage:
+    type: jsonl
+    jsonl_path: traces/tracecraft.jsonl
+
+  exporters:
+    console: true
+    jsonl: true
+    # Stream traces live to `tracecraft serve --tui`
+    receiver: false
+    receiver_endpoint: http://localhost:4318
+
+  instrumentation:
+    # true, false, or a list like [openai, anthropic]
+    auto_instrument: false
+```
+
+### Full Config with Environments
+
+```yaml
+# .tracecraft/config.yaml
+env: development
+
+default:
+  service_name: my-agent-service
+
+  storage:
+    type: jsonl
+    jsonl_path: traces/tracecraft.jsonl
+
+  exporters:
+    console: true
+    jsonl: true
+    otlp: false
+    receiver: false
+    receiver_endpoint: http://localhost:4318
+
+  instrumentation:
+    auto_instrument: false
+
+  processors:
+    redaction_enabled: false
+    redaction_mode: mask      # mask, hash, or remove
+    sampling_enabled: false
+    sampling_rate: 1.0
+    enrichment_enabled: true
+
+environments:
+  # Development: stream live to TUI receiver
+  development:
+    storage:
+      type: sqlite
+      sqlite_path: traces/dev.db
+    exporters:
+      console: true
+      receiver: true            # run: tracecraft serve --tui
+      receiver_endpoint: http://localhost:4318
+    instrumentation:
+      auto_instrument: true     # instrument all available SDKs
+
+  # Staging: SQLite + OTLP, selective auto-instrumentation
+  staging:
+    storage:
+      type: sqlite
+      sqlite_path: traces/staging.db
+    exporters:
+      console: false
+      jsonl: true
+      otlp: true
+      otlp_endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+    instrumentation:
+      auto_instrument:
+        - openai
+        - anthropic
+    processors:
+      redaction_enabled: true
+      redaction_mode: mask
+
+  # Production: OTLP only, no local storage, sampled
+  production:
+    storage:
+      type: none
+    exporters:
+      console: false
+      jsonl: false
+      otlp: true
+      otlp_endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      otlp_headers:
+        Authorization: Bearer ${OTEL_AUTH_TOKEN}
+    instrumentation:
+      auto_instrument: false    # use decorators in production
+    processors:
+      redaction_enabled: true
+      redaction_mode: hash
+      sampling_enabled: true
+      sampling_rate: 0.1        # 10% in production
+
+  # Test: no output, no instrumentation
+  test:
+    storage:
+      type: none
+    exporters:
+      console: false
+      jsonl: false
+      otlp: false
+      receiver: false
+    instrumentation:
+      auto_instrument: false
+```
+
+Set the active environment:
+
+```bash
+export TRACECRAFT_ENV=staging     # via env var
+```
+
+or in the config file:
+
+```yaml
+env: production
+```
+
+---
 
 ## Quick Start
 
@@ -9,67 +168,49 @@ TraceCraft can be configured through code or environment variables. This guide c
 ```python
 import tracecraft
 
-# Simple initialization with defaults
+# Loads .tracecraft/config.yaml automatically
 tracecraft.init()
 ```
-
-This creates a runtime with:
-
-- Console output enabled
-- JSONL file output to `traces/`
-- PII redaction enabled
-- 100% sampling rate
 
 ### Common Configurations
 
 ```python
-# Local development
+# Local development — stream live to TUI receiver
 tracecraft.init(
-    console=True,
-    jsonl=True,
-)
-
-# Production monitoring
-tracecraft.init(
-    service_name="production-agent",
-    otlp_endpoint="https://otlp.example.com",
-    sampling_rate=0.1,
-    enable_pii_redaction=True,
-    console=False,
-)
-
-# Multi-backend export
-from tracecraft.exporters import OTLPExporter, JSONLExporter
-
-tracecraft.init(
-    exporters=[
-        OTLPExporter(endpoint="http://jaeger:4317"),
-        JSONLExporter(filepath="traces.jsonl"),
-    ]
+    auto_instrument=True,
+    receiver=True,
+    service_name="my-agent",
 )
 ```
 
-## Configuration Object
-
-For advanced scenarios, use `TraceCraftConfig`:
+```bash
+tracecraft serve --tui  # start receiver + TUI
+```
 
 ```python
-from tracecraft import TraceCraftRuntime
-from tracecraft.core.config import TraceCraftConfig
-
-config = TraceCraftConfig(
-    service_name="my-service",
-    environment="production",
-    console_enabled=True,
-    jsonl_enabled=True,
-    jsonl_path="./traces/",
-    sampling_rate=0.1,
-    enable_pii_redaction=True,
-    tags=["version:1.0.0", "team:ai"],
+# Local development — write to file, open TUI separately
+tracecraft.init(
+    auto_instrument=True,
+    jsonl=True,
+    service_name="my-agent",
 )
-
-runtime = TraceCraftRuntime(config=config)
 ```
+
+```bash
+tracecraft tui
+```
+
+```python
+# Production — OTLP export, no local output
+tracecraft.init(
+    service_name="production-agent",
+    console=False,
+    jsonl=False,
+    exporters=[OTLPExporter(endpoint="https://otlp.example.com")],
+)
+```
+
+---
 
 ## Configuration Options
 
@@ -77,34 +218,118 @@ runtime = TraceCraftRuntime(config=config)
 
 ```python
 tracecraft.init(
-    service_name="my-agent-service",  # Service identifier
-    environment="production",          # Environment tag
-    tags=["version:1.0.0", "region:us-west"]  # Custom tags
+    service_name="my-agent-service",  # shown in TUI and OTLP traces
 )
 ```
 
-**Environment Variables:**
+**Config file:**
+
+```yaml
+default:
+  service_name: my-agent-service
+```
+
+**Environment variable:**
 
 ```bash
 export TRACECRAFT_SERVICE_NAME=my-service
-export TRACECRAFT_ENVIRONMENT=production
-export TRACECRAFT_TAGS=version:1.0.0,region:us-west
 ```
+
+### TUI Receiver Shorthand
+
+Stream traces live to the `tracecraft serve --tui` receiver without any extra setup:
+
+```python
+# receiver=True → connect to http://localhost:4318 (default)
+tracecraft.init(
+    auto_instrument=True,
+    receiver=True,
+    service_name="my-agent",
+)
+```
+
+```python
+# receiver=<url> → custom receiver address
+tracecraft.init(
+    receiver="http://remote-host:4318",
+    service_name="my-agent",
+)
+```
+
+**Config file:**
+
+```yaml
+default:
+  exporters:
+    receiver: true
+    receiver_endpoint: http://localhost:4318  # optional, this is the default
+```
+
+**Start the receiver:**
+
+```bash
+tracecraft serve --tui
+```
+
+### Auto-Instrumentation
+
+Automatically capture all LLM calls without decorators:
+
+```python
+# Instrument all supported SDKs (OpenAI, Anthropic, LangChain, LlamaIndex)
+tracecraft.init(auto_instrument=True)
+
+# Instrument specific SDKs only
+tracecraft.init(auto_instrument=["openai", "langchain"])
+```
+
+**Config file:**
+
+```yaml
+default:
+  instrumentation:
+    auto_instrument: true           # all SDKs
+
+    # or selectively:
+    # auto_instrument:
+    #   - openai
+    #   - anthropic
+```
+
+**Environment variable:**
+
+```bash
+export TRACECRAFT_AUTO_INSTRUMENT=true
+export TRACECRAFT_AUTO_INSTRUMENT=openai,langchain  # selective
+```
+
+!!! warning "Initialize Before Importing SDKs"
+
+    `tracecraft.init()` must be called **before** importing OpenAI, Anthropic,
+    LangChain, or LlamaIndex. TraceCraft patches at import time — importing first
+    means the patch won't apply.
 
 ### Console Output
 
 ```python
 tracecraft.init(
-    console=True,           # Enable console output
+    console=True,           # Enable console output (default: True)
     console_verbose=False,  # Show all attributes
 )
 ```
 
-**Environment Variables:**
+**Config file:**
+
+```yaml
+default:
+  exporters:
+    console: true
+```
+
+**Environment variable:**
 
 ```bash
 export TRACECRAFT_CONSOLE_ENABLED=true
-export TRACECRAFT_CONSOLE_VERBOSE=false
 ```
 
 ### JSONL File Export
@@ -112,11 +337,22 @@ export TRACECRAFT_CONSOLE_VERBOSE=false
 ```python
 tracecraft.init(
     jsonl=True,                    # Enable JSONL export
-    jsonl_path="./my-traces/",     # Output directory
+    jsonl_path="./my-traces/",     # Output path
 )
 ```
 
-**Environment Variables:**
+**Config file:**
+
+```yaml
+default:
+  exporters:
+    jsonl: true
+  storage:
+    type: jsonl
+    jsonl_path: traces/tracecraft.jsonl
+```
+
+**Environment variable:**
 
 ```bash
 export TRACECRAFT_JSONL_ENABLED=true
@@ -127,13 +363,24 @@ export TRACECRAFT_JSONL_PATH=./my-traces/
 
 ```python
 tracecraft.init(
-    otlp_endpoint="http://localhost:4317",  # OTLP gRPC endpoint
-    otlp_insecure=True,                     # Disable TLS
-    otlp_headers={"Authorization": "Bearer token"},  # Custom headers
+    otlp_endpoint="http://localhost:4317",
+    otlp_insecure=True,
+    otlp_headers={"Authorization": "Bearer token"},
 )
 ```
 
-**Environment Variables:**
+**Config file:**
+
+```yaml
+default:
+  exporters:
+    otlp: true
+    otlp_endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+    otlp_headers:
+      Authorization: Bearer ${OTEL_AUTH_TOKEN}
+```
+
+**Environment variables:**
 
 ```bash
 export TRACECRAFT_OTLP_ENDPOINT=http://localhost:4317
@@ -152,13 +399,20 @@ tracecraft.init(
 )
 ```
 
-**Environment Variables:**
+**Config file:**
+
+```yaml
+default:
+  processors:
+    sampling_enabled: true
+    sampling_rate: 0.1
+```
+
+**Environment variables:**
 
 ```bash
 export TRACECRAFT_SAMPLING_RATE=0.1
 export TRACECRAFT_ALWAYS_KEEP_ERRORS=true
-export TRACECRAFT_ALWAYS_KEEP_SLOW=true
-export TRACECRAFT_SLOW_THRESHOLD_MS=5000
 ```
 
 ### PII Redaction
@@ -176,7 +430,16 @@ tracecraft.init(
 )
 ```
 
-**Environment Variables:**
+**Config file:**
+
+```yaml
+default:
+  processors:
+    redaction_enabled: true
+    redaction_mode: mask   # mask, hash, or remove
+```
+
+**Environment variables:**
 
 ```bash
 export TRACECRAFT_REDACTION_ENABLED=true
@@ -185,7 +448,7 @@ export TRACECRAFT_REDACTION_MODE=mask
 
 ### Processor Order
 
-Control the order of processing pipeline:
+Control the order of the processing pipeline:
 
 ```python
 from tracecraft.core.config import ProcessorOrder
@@ -208,6 +471,47 @@ tracecraft.init(
 )
 ```
 
+---
+
+## Custom Exporters
+
+Create and use custom exporters:
+
+```python
+from tracecraft.exporters import BaseExporter, ConsoleExporter, JSONLExporter
+
+# Use multiple exporters alongside built-in ones
+tracecraft.init(
+    exporters=[
+        ConsoleExporter(),
+        JSONLExporter(filepath="traces.jsonl"),
+        MyCustomExporter(),
+    ]
+)
+```
+
+## Custom Processors
+
+Add custom processors:
+
+```python
+from tracecraft.processors.base import BaseProcessor
+from tracecraft.core.models import AgentRun
+
+class MyCustomProcessor(BaseProcessor):
+    def process(self, run: AgentRun) -> AgentRun | None:
+        run.metadata["custom_field"] = "value"
+        return run
+
+from tracecraft import TraceCraftRuntime, TraceCraftConfig
+
+config = TraceCraftConfig(...)
+runtime = TraceCraftRuntime(config=config)
+runtime.add_processor(MyCustomProcessor())
+```
+
+---
+
 ## Cloud Platform Configurations
 
 ### AWS AgentCore
@@ -218,13 +522,13 @@ from tracecraft.core.config import AWSAgentCoreConfig
 tracecraft.init(
     aws_agentcore=AWSAgentCoreConfig(
         enabled=True,
-        use_xray_propagation=True,  # Use X-Ray trace format
+        use_xray_propagation=True,
         session_id="conversation-123",
     )
 )
 ```
 
-**Environment Variables:**
+**Environment variables:**
 
 ```bash
 export TRACECRAFT_AWS_AGENTCORE_ENABLED=true
@@ -249,14 +553,11 @@ tracecraft.init(
 )
 ```
 
-**Environment Variables:**
+**Environment variables:**
 
 ```bash
 export TRACECRAFT_AZURE_FOUNDRY_ENABLED=true
 export APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...
-export TRACECRAFT_AZURE_CONTENT_RECORDING=true
-export TRACECRAFT_AZURE_AGENT_NAME=customer-support
-export TRACECRAFT_AZURE_AGENT_ID=agent-v1
 ```
 
 ### GCP Vertex Agent
@@ -275,216 +576,12 @@ tracecraft.init(
 )
 ```
 
-**Environment Variables:**
-
-```bash
-export TRACECRAFT_GCP_VERTEX_ENABLED=true
-export GOOGLE_CLOUD_PROJECT=my-project
-export TRACECRAFT_GCP_SESSION_ID=session-123
-export TRACECRAFT_GCP_AGENT_NAME=support-agent
-export TRACECRAFT_GCP_CONTENT_RECORDING=true
-```
-
-## Custom Exporters
-
-Create and use custom exporters:
-
-```python
-from tracecraft.exporters import BaseExporter, ConsoleExporter, JSONLExporter
-
-# Use multiple exporters
-tracecraft.init(
-    exporters=[
-        ConsoleExporter(),
-        JSONLExporter(filepath="traces.jsonl"),
-        MyCustomExporter(),
-    ]
-)
-```
-
-## Custom Processors
-
-Add custom processors:
-
-```python
-from tracecraft.processors.base import BaseProcessor
-from tracecraft.core.models import AgentRun
-
-class MyCustomProcessor(BaseProcessor):
-    def process(self, run: AgentRun) -> AgentRun | None:
-        # Custom processing logic
-        run.metadata["custom_field"] = "value"
-        return run
-
-# Use with runtime
-from tracecraft import TraceCraftRuntime, TraceCraftConfig
-
-config = TraceCraftConfig(...)
-runtime = TraceCraftRuntime(config=config)
-runtime.add_processor(MyCustomProcessor())
-```
-
-## Multi-Tenant Configuration
-
-Different configurations for different tenants:
-
-```python
-from tracecraft import TraceCraftRuntime, TraceCraftConfig
-
-# Tenant A: verbose logging
-tenant_a_config = TraceCraftConfig(
-    service_name="tenant-a",
-    console_enabled=True,
-    sampling_rate=1.0,  # 100% sampling
-)
-tenant_a_runtime = TraceCraftRuntime(config=tenant_a_config)
-
-# Tenant B: minimal logging
-tenant_b_config = TraceCraftConfig(
-    service_name="tenant-b",
-    console_enabled=False,
-    sampling_rate=0.01,  # 1% sampling
-)
-tenant_b_runtime = TraceCraftRuntime(config=tenant_b_config)
-
-# Use with context managers
-with tenant_a_runtime.trace_context():
-    process_tenant_a()
-
-with tenant_b_runtime.trace_context():
-    process_tenant_b()
-```
-
-## Environment-Based Configuration
-
-Use environment variables for different environments:
-
-```python
-import os
-
-env = os.getenv("ENV", "development")
-
-if env == "production":
-    tracecraft.init(
-        service_name="prod-service",
-        otlp_endpoint=os.getenv("OTLP_ENDPOINT"),
-        sampling_rate=0.1,
-        enable_pii_redaction=True,
-        console=False,
-    )
-elif env == "staging":
-    tracecraft.init(
-        service_name="staging-service",
-        otlp_endpoint=os.getenv("OTLP_ENDPOINT"),
-        sampling_rate=0.5,
-        console=True,
-    )
-else:  # development
-    tracecraft.init(
-        service_name="dev-service",
-        console=True,
-        jsonl=True,
-    )
-```
-
-## Configuration Precedence
-
-Configuration is applied in this order (later overrides earlier):
-
-1. Default values
-2. Environment variables
-3. Configuration file
-4. Code-based configuration
-
-Example:
-
-```bash
-# Environment variable
-export TRACECRAFT_SERVICE_NAME=env-service
-
-# This will use "code-service" (code overrides env)
-tracecraft.init(service_name="code-service")
-```
-
-## Complete Configuration Example
-
-```python
-from tracecraft import TraceCraftRuntime
-from tracecraft.core.config import (
-    TraceCraftConfig,
-    RedactionConfig,
-    RedactionMode,
-    SamplingConfig,
-    ProcessorOrder,
-)
-from tracecraft.exporters import OTLPExporter, JSONLExporter, ConsoleExporter
-
-# Create comprehensive configuration
-config = TraceCraftConfig(
-    # Service identification
-    service_name="production-agent",
-    environment="production",
-    tags=["version:2.0.0", "region:us-east", "team:ai"],
-
-    # Console output
-    console_enabled=False,  # Disable in production
-
-    # File output
-    jsonl_enabled=True,
-    jsonl_path="/var/log/traces/",
-
-    # Processing
-    processor_order=ProcessorOrder.SAFETY,
-    max_step_depth=100,
-
-    # Redaction
-    redaction=RedactionConfig(
-        enabled=True,
-        mode=RedactionMode.MASK,
-        custom_patterns=[
-            r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b",  # Email
-            r"\b\d{3}-\d{2}-\d{4}\b",  # SSN
-            r"\b\d{16}\b",  # Credit card
-        ],
-    ),
-
-    # Sampling
-    sampling=SamplingConfig(
-        rate=0.1,  # 10% sample
-        always_keep_errors=True,
-        always_keep_slow=True,
-        slow_threshold_ms=5000,
-    ),
-)
-
-# Create runtime with custom exporters
-runtime = TraceCraftRuntime(config=config)
-
-# Add exporters
-runtime.add_exporter(OTLPExporter(
-    endpoint="https://otlp.example.com:4317",
-    headers={"Authorization": f"Bearer {os.getenv('OTLP_TOKEN')}"}
-))
-runtime.add_exporter(JSONLExporter(
-    filepath="/var/log/traces/production.jsonl"
-))
-```
-
-## Validation
-
-TraceCraft validates configuration at initialization:
-
-```python
-try:
-    tracecraft.init(
-        sampling_rate=1.5,  # Invalid: must be 0.0-1.0
-    )
-except ValueError as e:
-    print(f"Configuration error: {e}")
-```
+---
 
 ## Next Steps
 
-- [Exporters](exporters.md) - Learn about export options
-- [Processors](processors.md) - Configure data processing
-- [Deployment](../deployment/production.md) - Production deployment patterns
+- [Terminal UI Guide](tui.md) — Explore traces in the TUI
+- [Auto-Instrumentation](../integrations/auto-instrumentation.md) — Zero-code LLM tracing
+- [Exporters](exporters.md) — Export to any backend
+- [Processors](processors.md) — Configure data processing
+- [Deployment](../deployment/production.md) — Production deployment patterns

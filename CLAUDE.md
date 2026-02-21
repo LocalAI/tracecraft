@@ -20,7 +20,8 @@ uv run mkdocs build --strict    # Build docs (must pass with zero warnings)
 
 
 # CLI
-uv run tracecraft ui traces/tracecraft.jsonl   # Launch TUI
+uv run tracecraft tui                          # Launch TUI (reads from .tracecraft/config.yaml)
+uv run tracecraft tui --serve                  # Start OTLP receiver :4318 + TUI
 ```
 
 ## Architecture

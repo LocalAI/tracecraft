@@ -1,62 +1,111 @@
 # Quick Start
 
-Get TraceCraft running in under 2 minutes with **zero code changes** to your existing application.
+Get TraceCraft running in under 2 minutes.
 
-## The Fastest Path: Auto-Instrumentation
+## Step 1 — Zero code changes (absolute simplest)
 
-!!! success "No decorators. No code changes. Just trace."
+!!! success "No decorators. No code changes. Just point and trace."
 
-    TraceCraft's auto-instrumentation automatically captures every LLM call in your application.
-    You don't need to add decorators, modify function signatures, or change any code.
+    If your app already emits OTLP traces (via OpenLLMetry, LangChain, LlamaIndex, DSPy,
+    or the standard OTel SDK), TraceCraft can receive them with no modifications to your app.
 
-### Step 1: Install
+**Install:**
 
 ```bash
-pip install "tracecraft[auto,tui]"
+pip install "tracecraft[receiver,tui]"
 ```
 
-### Step 2: Add One Line of Code
+**Start the receiver and TUI:**
+
+```bash
+tracecraft serve --tui
+```
+
+**Run your existing app, unchanged:**
+
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 python your_app.py
+```
+
+Traces stream live into the TUI as they arrive. Works with any OTLP-compatible app —
+OpenLLMetry, LangChain, LlamaIndex, DSPy, or the standard OpenTelemetry SDK.
+
+---
+
+## Step 2 — Config file (one line of code)
+
+If your app does not already emit OTLP traces, create a config file and add a single
+`tracecraft.init()` call before your LLM imports. TraceCraft's auto-instrumentation
+patches the SDKs at runtime and streams traces to the TUI.
+
+**Create `.tracecraft/config.yaml` in your project root:**
+
+```yaml
+# .tracecraft/config.yaml
+default:
+  exporters:
+    receiver: true
+  instrumentation:
+    auto_instrument: true
+```
+
+**Add one line before your LLM imports:**
 
 ```python
 import tracecraft
+tracecraft.init()   # reads .tracecraft/config.yaml automatically
 
-tracecraft.init(auto_instrument=True)
-
-# That's it! Your existing code works unchanged.
-```
-
-### Step 3: Run Your App
-
-```python
-# Your existing code - NO CHANGES NEEDED
+# Your existing code below — no other changes needed
 from openai import OpenAI
-
 client = OpenAI()
-response = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[{"role": "user", "content": "Hello!"}]
-)
-print(response.choices[0].message.content)
 ```
 
-Every LLM call is now automatically traced with:
-
-- Model name and provider
-- Input prompts and output completions
-- Token counts (input, output, total)
-- Latency and timing
-- Streaming support
-- Function/tool calls
-
-### Step 4: Explore Your Traces
-
-Launch the interactive terminal UI:
+**Start the TUI and run your app:**
 
 ```bash
-tracecraft tui traces/
+tracecraft serve --tui && python your_app.py
 ```
 
-You'll see a beautiful, interactive interface to explore all your traces:
+Auto-instrumentation captures:
+
+| SDK | What's Captured |
+|-----|----------------|
+| **OpenAI** | Chat completions, embeddings, streaming, function calls, token usage |
+| **Anthropic** | Messages, streaming, tool use, token counts |
+| **LangChain** | Chains, agents, tools, retrievers, LLM calls |
+| **LlamaIndex** | Query engines, chat engines, agents, retrievers |
+
+---
+
+## Step 3 — SDK instrumentation (optional, richer spans)
+
+Decorators let you add custom semantic meaning, structured inputs/outputs, and hierarchical
+spans beyond what auto-instrumentation captures automatically.
+
+```python
+import tracecraft
+from tracecraft import trace_agent, trace_tool
+
+tracecraft.init()
+
+@trace_agent(name="assistant")
+async def assistant(message: str) -> str:
+    result = await search(message)
+    return result
+
+@trace_tool(name="search")
+async def search(query: str) -> str:
+    ...
+```
+
+For the full decorator API, context managers, custom attributes, and pipeline configuration,
+see the [SDK Guide](../user-guide/index.md).
+
+---
+
+## Explore your traces
+
+Once your app is running and the TUI is open, you will see a live trace list:
 
 ```
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -72,84 +121,50 @@ You'll see a beautiful, interactive interface to explore all your traces:
   [↑↓] Navigate  [Enter] Expand  [/] Search  [f] Filter  [q] Quit
 ```
 
----
-
-## Complete Working Example
-
-Here's a full example you can copy and run:
-
-```python
-# app.py
-import tracecraft
-from openai import OpenAI
-
-# Initialize TraceCraft
-tracecraft.init(auto_instrument=True)
-
-# Your normal application code
-client = OpenAI()
-
-def ask_question(question: str) -> str:
-    """Ask a question - automatically traced!"""
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": question}
-        ]
-    )
-    return response.choices[0].message.content
-
-# Run it
-if __name__ == "__main__":
-    answer = ask_question("What is the capital of France?")
-    print(answer)
-```
-
-Run it:
+You can also open a previously saved trace file:
 
 ```bash
-python app.py
+tracecraft tui
 ```
 
-Then explore your traces:
-
-```bash
-tracecraft tui traces/
-```
+See the [Terminal UI Guide](../user-guide/tui.md) for the full list of keyboard shortcuts,
+filters, and comparison views.
 
 ---
 
-## Auto-Instrumentation Supports
+## FAQ
 
-| SDK | What's Captured |
-|-----|----------------|
-| **OpenAI** | Chat completions, embeddings, streaming, function calls, token usage |
-| **Anthropic** | Messages, streaming, tool use, token counts |
-| **LangChain** | Chains, agents, tools, retrievers, LLM calls |
-| **LlamaIndex** | Query engines, chat engines, agents, retrievers |
+??? question "Do I need to modify my existing code?"
 
-!!! tip "Works with frameworks too"
+    **No, for Path 1.** If your app already emits OTLP traces, just set the
+    `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable and run as-is.
 
-    Auto-instrumentation works alongside framework adapters. LangChain chains,
-    LlamaIndex queries, and direct SDK calls are all captured automatically.
+    **One line, for Path 2.** If your app calls OpenAI or Anthropic directly without
+    existing OTel instrumentation, add `tracecraft.init()` before your LLM imports and
+    TraceCraft auto-instruments the SDKs for you.
 
----
+??? question "What if I'm using LangChain or LlamaIndex?"
 
-## What About Decorators?
+    Both work with Path 1 (OTLP env var) and Path 2 (auto-instrumentation). Framework-specific
+    adapters are also available for richer context — see the
+    [Integrations](../integrations/index.md) page.
 
-!!! info "Decorators are optional"
+??? question "Can I use the TUI without TraceCraft instrumentation?"
 
-    You only need decorators if you want to:
+    **Yes.** The TUI accepts any OpenTelemetry-compatible trace data over OTLP.
+    See the [TUI Guide](../user-guide/tui.md) for details.
 
-    - Add custom semantic meaning (e.g., mark a function as an "agent")
-    - Capture custom inputs/outputs
-    - Create hierarchical trace structures
-    - Add custom attributes to spans
+??? question "Where are traces stored?"
 
-    **For most use cases, auto-instrumentation is sufficient.**
+    With `tracecraft serve --tui`, traces are stored in a local SQLite database managed
+    by the receiver process. With `jsonl=True`, traces are saved to
+    `traces/tracecraft.jsonl` (configurable via `jsonl_path`).
 
-If you do want custom instrumentation, see [Custom Instrumentation](../user-guide/decorators.md).
+??? question "Can I configure this from a file instead of code?"
+
+    Yes. Create `.tracecraft/config.yaml` in your project root. All `tracecraft.init()`
+    keyword arguments are supported as config file keys. See the
+    [Configuration Guide](../user-guide/configuration.md) for the full schema.
 
 ---
 
@@ -190,27 +205,3 @@ If you do want custom instrumentation, see [Custom Instrumentation](../user-guid
     [:octicons-arrow-right-24: Exporters](../user-guide/exporters.md)
 
 </div>
-
----
-
-## FAQ
-
-??? question "Do I need to modify my existing code?"
-
-    **No!** Auto-instrumentation patches the SDKs at runtime. Your existing
-    code works unchanged. Just add the single initialization line.
-
-??? question "What if I'm using LangChain or LlamaIndex?"
-
-    Auto-instrumentation works with these frameworks too. You can also use
-    the framework-specific adapters for richer context, but it's optional.
-
-??? question "Can I use the TUI without TraceCraft instrumentation?"
-
-    **Yes!** The TUI can read any OpenTelemetry-compatible trace data.
-    See the [TUI Guide](../user-guide/tui.md) for details.
-
-??? question "Where are traces stored?"
-
-    By default, traces are saved to `traces/tracecraft.jsonl`. You can
-    configure this with `tracecraft.init(jsonl_path="./my-traces/")`.

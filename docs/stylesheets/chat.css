@@ -1,0 +1,23 @@
+.tc-chat-button {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  background: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  border-radius: 2rem;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  transition: box-shadow .2s, transform .2s;
+}
+.tc-chat-button svg { width: 1.1rem; height: 1.1rem; }
+.tc-chat-button:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  transform: translateY(-2px);
+}

@@ -274,7 +274,7 @@ before the application begins serving requests.
 **Problem**
 
 You configured the OTel receiver (`tracecraft.otel.setup_exporter`) and ran your
-application, but `tracecraft ui` shows an empty trace list.
+application, but `tracecraft tui` shows an empty trace list.
 
 **Cause**
 
@@ -296,7 +296,7 @@ tracer = setup_exporter(
 ```
 
 ```bash
-tracecraft ui traces/receiver.jsonl   # Use the same path
+tracecraft tui traces/receiver.jsonl   # Use the same path
 ```
 
 If no `output_path` was specified, check the default path documented in `setup_exporter`:

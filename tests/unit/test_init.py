@@ -105,6 +105,194 @@ class TestInit:
         assert runtime1 is runtime2
         runtime1.shutdown()
 
+    def test_init_receiver_true_adds_otlp_exporter(self):
+        """receiver=True should add an OTLPExporter to the runtime."""
+        from unittest.mock import patch
+
+        import tracecraft
+        from tracecraft.exporters.otlp import OTLPExporter
+
+        with patch.object(OTLPExporter, "__init__", return_value=None) as mock_init:
+            # Patch close so shutdown doesn't fail on the uninitialized mock
+            with patch.object(OTLPExporter, "close", return_value=None):
+                runtime = tracecraft.init(
+                    receiver=True,
+                    console=False,
+                    jsonl=False,
+                    storage="none",
+                )
+                mock_init.assert_called_once()
+                call_kwargs = mock_init.call_args
+                assert call_kwargs.kwargs["endpoint"] == "http://localhost:4318"
+                assert call_kwargs.kwargs["protocol"] == "http"
+                runtime.shutdown()
+
+    def test_init_receiver_custom_url(self):
+        """receiver=<url> should use the provided URL."""
+        from unittest.mock import patch
+
+        import tracecraft
+        from tracecraft.exporters.otlp import OTLPExporter
+
+        with patch.object(OTLPExporter, "__init__", return_value=None) as mock_init:
+            with patch.object(OTLPExporter, "close", return_value=None):
+                runtime = tracecraft.init(
+                    receiver="http://remote-host:4318",
+                    console=False,
+                    jsonl=False,
+                    storage="none",
+                )
+                call_kwargs = mock_init.call_args
+                assert call_kwargs.kwargs["endpoint"] == "http://remote-host:4318"
+                runtime.shutdown()
+
+    def test_init_receiver_with_service_name(self):
+        """service_name should be forwarded to the receiver exporter."""
+        from unittest.mock import patch
+
+        import tracecraft
+        from tracecraft.exporters.otlp import OTLPExporter
+
+        with patch.object(OTLPExporter, "__init__", return_value=None) as mock_init:
+            with patch.object(OTLPExporter, "close", return_value=None):
+                runtime = tracecraft.init(
+                    receiver=True,
+                    service_name="my-agent-service",
+                    console=False,
+                    jsonl=False,
+                    storage="none",
+                )
+                call_kwargs = mock_init.call_args
+                assert call_kwargs.kwargs["service_name"] == "my-agent-service"
+                runtime.shutdown()
+
+    def test_init_receiver_from_config(self):
+        """receiver and service_name set via .tracecraft/config.yaml are honoured."""
+        from unittest.mock import patch
+
+        import tracecraft
+        from tracecraft.core.env_config import (
+            EnvironmentSettings,
+            ExporterConfig,
+            TraceCraftEnvConfig,
+        )
+        from tracecraft.exporters.otlp import OTLPExporter
+
+        config = TraceCraftEnvConfig(
+            default=EnvironmentSettings(
+                service_name="config-agent",
+                exporters=ExporterConfig(
+                    console=False,
+                    jsonl=False,
+                    receiver=True,
+                    receiver_endpoint="http://config-host:4318",
+                ),
+            )
+        )
+
+        with patch("tracecraft.core.env_config.load_config", return_value=config):
+            with patch.object(OTLPExporter, "__init__", return_value=None) as mock_init:
+                with patch.object(OTLPExporter, "close", return_value=None):
+                    runtime = tracecraft.init(storage="none")
+                    call_kwargs = mock_init.call_args
+                    assert call_kwargs.kwargs["endpoint"] == "http://config-host:4318"
+                    assert call_kwargs.kwargs["service_name"] == "config-agent"
+                    runtime.shutdown()
+
+    def test_init_auto_instrument_from_config(self):
+        """auto_instrument set in config is honoured when not passed to init()."""
+        from unittest.mock import patch
+
+        import tracecraft
+        from tracecraft.core.env_config import (
+            EnvironmentSettings,
+            ExporterConfig,
+            InstrumentationConfig,
+            TraceCraftEnvConfig,
+        )
+
+        config = TraceCraftEnvConfig(
+            default=EnvironmentSettings(
+                exporters=ExporterConfig(console=False, jsonl=False),
+                instrumentation=InstrumentationConfig(auto_instrument=["openai"]),
+            )
+        )
+
+        with patch("tracecraft.core.env_config.load_config", return_value=config):
+            with patch("tracecraft.core.runtime._handle_auto_instrumentation") as mock_handle:
+                runtime = tracecraft.init(storage="none")
+                # auto_instrument was None (not passed), config value should flow through
+                call_args = mock_handle.call_args
+                assert call_args.kwargs["config_auto_instrument"] == ["openai"]
+                runtime.shutdown()
+
+    def test_init_explicit_param_overrides_config(self):
+        """Explicit init() params take precedence over config file values."""
+        from unittest.mock import patch
+
+        import tracecraft
+        from tracecraft.core.env_config import (
+            EnvironmentSettings,
+            ExporterConfig,
+            TraceCraftEnvConfig,
+        )
+        from tracecraft.exporters.otlp import OTLPExporter
+
+        # Config says receiver=True with one endpoint
+        config = TraceCraftEnvConfig(
+            default=EnvironmentSettings(
+                service_name="config-name",
+                exporters=ExporterConfig(
+                    console=False,
+                    jsonl=False,
+                    receiver=True,
+                    receiver_endpoint="http://config-host:4318",
+                ),
+            )
+        )
+
+        with patch("tracecraft.core.env_config.load_config", return_value=config):
+            with patch.object(OTLPExporter, "__init__", return_value=None) as mock_init:
+                with patch.object(OTLPExporter, "close", return_value=None):
+                    # Explicit params override config
+                    runtime = tracecraft.init(
+                        receiver="http://override-host:4318",
+                        service_name="override-name",
+                        storage="none",
+                    )
+                    call_kwargs = mock_init.call_args
+                    assert call_kwargs.kwargs["endpoint"] == "http://override-host:4318"
+                    assert call_kwargs.kwargs["service_name"] == "override-name"
+                    runtime.shutdown()
+
+    def test_init_receiver_combined_with_custom_exporters(self):
+        """receiver= and exporters= should both be active."""
+        from unittest.mock import patch
+
+        import tracecraft
+        from tracecraft.exporters.base import BaseExporter
+        from tracecraft.exporters.otlp import OTLPExporter
+
+        class CustomExporter(BaseExporter):
+            def export(self, run):
+                pass
+
+        custom = CustomExporter()
+
+        with patch.object(OTLPExporter, "__init__", return_value=None):
+            with patch.object(OTLPExporter, "close", return_value=None):
+                runtime = tracecraft.init(
+                    receiver=True,
+                    exporters=[custom],
+                    console=False,
+                    jsonl=False,
+                    storage="none",
+                )
+                # Both the custom exporter and the receiver exporter should be present
+                assert custom in runtime._custom_exporters
+                assert any(isinstance(e, OTLPExporter) for e in runtime._custom_exporters)
+                runtime.shutdown()
+
 
 class TestRuntime:
     """Tests for the TALRuntime class."""

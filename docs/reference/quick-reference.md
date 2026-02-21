@@ -189,6 +189,55 @@ with step("data_preprocessing", type=StepType.WORKFLOW) as s:
 
 ---
 
+## Config File
+
+TraceCraft loads `.tracecraft/config.yaml` from the project root (or `~/.tracecraft/config.yaml`) automatically. Explicit `init()` parameters always win.
+
+**Minimal config:**
+
+```yaml
+env: development
+
+default:
+  service_name: my-agent-service
+
+  exporters:
+    console: true
+    jsonl: true
+    receiver: false                        # true to stream to tracecraft serve --tui
+    receiver_endpoint: http://localhost:4318
+
+  instrumentation:
+    auto_instrument: false                 # true, or [openai, anthropic]
+```
+
+**Per-environment overrides:**
+
+```yaml
+environments:
+  development:
+    exporters:
+      receiver: true
+    instrumentation:
+      auto_instrument: true
+
+  production:
+    storage:
+      type: none
+    exporters:
+      console: false
+      otlp: true
+      otlp_endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+    processors:
+      redaction_enabled: true
+      sampling_enabled: true
+      sampling_rate: 0.1
+```
+
+Set environment: `export TRACECRAFT_ENV=production` or `env: production` in the file.
+
+---
+
 ## Environment Variables
 
 ### Core Variables
@@ -196,6 +245,7 @@ with step("data_preprocessing", type=StepType.WORKFLOW) as s:
 | Variable | Type | Default | Description |
 |---|---|---|---|
 | `TRACECRAFT_SERVICE_NAME` | string | `"tracecraft"` | Service name attached to all traces |
+| `TRACECRAFT_ENV` | string | `"development"` | Active environment (maps to config file `environments:` key) |
 | `TRACECRAFT_CONSOLE_ENABLED` | bool | `true` | Enable console exporter |
 | `TRACECRAFT_JSONL_ENABLED` | bool | `true` | Enable JSONL file exporter |
 | `TRACECRAFT_JSONL_PATH` | path | `traces/tracecraft.jsonl` | JSONL output file path |
@@ -305,32 +355,39 @@ ProcessorOrder.EFFICIENCY  # Sample -> Redact -> Enrich (high-throughput)
 
 All commands are run via `uv run tracecraft` or `tracecraft` if installed globally.
 
-### ui — Interactive Terminal UI
+### tui — Interactive Terminal UI
 
 ```bash
-tracecraft ui [SOURCE] [OPTIONS]
+tracecraft tui [SOURCE] [OPTIONS]
+
+# Open TUI from config-specified storage (default: traces/tracecraft.db)
+tracecraft tui
+
+# Start OTLP receiver on :4318 and open TUI
+tracecraft tui --serve
 
 # Launch TUI with a JSONL file
-tracecraft ui traces/tracecraft.jsonl
+tracecraft tui traces/tracecraft.jsonl
 
 # SQLite database
-tracecraft ui traces.db
-tracecraft ui sqlite:///path/to/traces.db
+tracecraft tui traces.db
+tracecraft tui sqlite:///path/to/traces.db
 
 # MLflow experiment
-tracecraft ui mlflow:my_experiment
-tracecraft ui mlflow://localhost:5000/production_traces
+tracecraft tui mlflow:my_experiment
+tracecraft tui mlflow://localhost:5000/production_traces
 
 # Watch mode (live updates)
-tracecraft ui traces.jsonl --watch
+tracecraft tui traces.jsonl --watch
 
 # Use environment config
-tracecraft ui --env production
+tracecraft tui --env production
 
 Options:
   --watch, -w     Watch for new traces
   --env, -e       Use storage from environment config
   --filter, -f    Initial filter string
+  --serve, -S     Start OTLP receiver on :4318 before opening TUI
 ```
 
 ### serve — OTLP Receiver with Optional TUI
@@ -501,14 +558,19 @@ Options:
 
 ## Common Patterns
 
-### Basic Setup
+### Basic Setup (Live TUI)
 
 ```python
 import tracecraft
 
-# Auto-detects environment; console + JSONL by default
-runtime = tracecraft.init()
+# Stream traces live to tracecraft serve --tui
+runtime = tracecraft.init(
+    auto_instrument=True,
+    receiver=True,
+    service_name="my-agent",
+)
 
+# All LLM calls traced automatically — decorators optional
 @tracecraft.trace_agent(name="my_agent")
 def my_agent(query: str) -> str:
     result = call_llm(query)
@@ -517,6 +579,22 @@ def my_agent(query: str) -> str:
 @tracecraft.trace_llm(name="call_llm", model="gpt-4o", provider="openai")
 def call_llm(prompt: str) -> str:
     return openai_client.chat.completions.create(...)
+```
+
+```bash
+tracecraft serve --tui
+```
+
+### Basic Setup (File-Based TUI)
+
+```python
+import tracecraft
+
+runtime = tracecraft.init(auto_instrument=True, jsonl=True)
+```
+
+```bash
+tracecraft tui
 ```
 
 ### Production Setup

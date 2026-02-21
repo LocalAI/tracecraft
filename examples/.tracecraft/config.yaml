@@ -1,11 +1,12 @@
 # TraceCraft Configuration
-# This file controls storage, exporters, and processors per environment.
+# This file controls storage, exporters, instrumentation, and processors per environment.
 #
 # Configuration is loaded from (in order of precedence):
-# 1. Environment variables (TRACECRAFT_*)
-# 2. .tracecraft/config.yaml in current directory
-# 3. ~/.tracecraft/config.yaml
-# 4. Default values
+# 1. Explicit parameters passed to tracecraft.init()
+# 2. Environment variables (TRACECRAFT_*)
+# 3. .tracecraft/config.yaml in current directory
+# 4. ~/.tracecraft/config.yaml
+# 5. Default values
 #
 # Set environment via TRACECRAFT_ENV or the 'env' field below.
 
@@ -14,6 +15,10 @@ env: development
 
 # Default settings (used when no environment-specific override)
 default:
+  # Service name shown in the TUI trace list and OTLP traces
+  # Also reads from TRACECRAFT_SERVICE_NAME env var
+  service_name: my-agent-service
+
   storage:
     # Storage backend type: jsonl, sqlite, mlflow, or none
     type: jsonl
@@ -25,10 +30,22 @@ default:
     console: true
     # JSONL file export (trace records)
     jsonl: true
-    # OpenTelemetry Protocol export
+    # OpenTelemetry Protocol export (Jaeger, Grafana, Langfuse, etc.)
     otlp: false
     # MLflow tracking server export
     mlflow: false
+    # TraceCraft TUI receiver — stream traces to `tracecraft serve --tui`
+    receiver: false
+    receiver_endpoint: http://localhost:4318  # default TUI receiver address
+
+  instrumentation:
+    # Auto-instrument LLM SDKs and frameworks without decorators.
+    # Also reads from TRACECRAFT_AUTO_INSTRUMENT env var.
+    # Options:
+    #   false         — disabled (default)
+    #   true          — instrument all (openai, anthropic, langchain, llamaindex)
+    #   [openai, langchain]  — specific providers only
+    auto_instrument: false
 
   processors:
     # Enable PII/secret redaction
@@ -42,7 +59,7 @@ default:
 
 # Environment-specific overrides
 environments:
-  # Development: Local storage with console output
+  # Development: stream to local TUI receiver with auto-instrumentation
   development:
     storage:
       type: sqlite
@@ -50,9 +67,13 @@ environments:
       sqlite_wal_mode: true
     exporters:
       console: true
-      jsonl: true
+      jsonl: false
+      receiver: true             # run: tracecraft serve --tui
+      receiver_endpoint: http://localhost:4318
+    instrumentation:
+      auto_instrument: true      # instrument all available SDKs
 
-  # Staging: SQLite with OTLP export
+  # Staging: SQLite with OTLP export, no receiver
   staging:
     storage:
       type: sqlite
@@ -62,11 +83,16 @@ environments:
       jsonl: true
       otlp: true
       otlp_endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      receiver: false
+    instrumentation:
+      auto_instrument:
+        - openai
+        - anthropic
     processors:
       redaction_enabled: true
       redaction_mode: mask
 
-  # Production: No local storage, OTLP export only
+  # Production: No local storage, OTLP export only, no receiver
   production:
     storage:
       type: none  # Don't store locally
@@ -77,13 +103,16 @@ environments:
       otlp_endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
       otlp_headers:
         Authorization: Bearer ${OTEL_AUTH_TOKEN}
+      receiver: false
+    instrumentation:
+      auto_instrument: false     # use decorators only in production
     processors:
       redaction_enabled: true
       redaction_mode: hash
       sampling_enabled: true
       sampling_rate: 0.1  # Sample 10% in production
 
-  # Test: In-memory only, no exports
+  # Test: In-memory only, no exports, no instrumentation
   test:
     storage:
       type: none
@@ -91,6 +120,9 @@ environments:
       console: false
       jsonl: false
       otlp: false
+      receiver: false
+    instrumentation:
+      auto_instrument: false
     processors:
       redaction_enabled: false
       sampling_enabled: false

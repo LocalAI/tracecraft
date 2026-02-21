@@ -6,207 +6,190 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-> **Vendor-neutral LLM observability SDK** - Instrument once, observe anywhere.
+> **Vendor-neutral LLM observability — instrument once, observe anywhere.**
 
-TraceCraft is the "LiteLLM for Observability" - a portable Python instrumentation SDK that lets you capture consistent agent/LLM trace semantics and route them to any backend (Langfuse, Datadog, Phoenix, or any OTLP-compatible system).
+TraceCraft is a Python observability SDK with a built-in **Terminal UI (TUI)** that lets you visually explore, debug, and analyze agent traces right in your terminal — no browser, no cloud dashboard, no waiting.
+
+---
+
+## The fastest path: zero code changes
+
+If your app already uses OpenAI, Anthropic, LangChain, LlamaIndex, or any OpenTelemetry-compatible framework, TraceCraft can observe it **without touching a single line of application code**.
+
+**Step 1 — Install and set one environment variable:**
+
+```bash
+pip install "tracecraft[receiver,tui]"
+
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+```
+
+**Step 2 — Start the receiver and TUI together:**
+
+```bash
+tracecraft serve --tui
+```
+
+**Step 3 — Run your existing app unchanged:**
+
+```bash
+python your_app.py
+```
+
+Traces from any OTLP-compatible framework (OpenLLMetry, LangChain, LlamaIndex, DSPy, or any standard OpenTelemetry SDK) stream live into the TUI the moment they arrive. No `init()` call. No decorators. No code changes.
+
+---
+
+![TraceCraft TUI - Main View](docs/assets/screenshots/tui-main-view.svg)
+
+*All your agent runs at a glance — name, duration, token usage, and status.*
+
+![TraceCraft TUI - Waterfall and Detail View](docs/assets/screenshots/tui-waterfall-view.svg)
+
+*Hierarchical waterfall view with timing bars. See exactly where your agent spends its time. Navigate to any LLM step and press `i` for the prompt, `o` for the response, or `a` for attributes.*
+
+---
+
+## Path 2 — Config file + one line
+
+When you want a persistent local setup — custom service name, JSONL export, PII redaction — drop a config file into your project and add one line to your app:
+
+**`.tracecraft/config.yaml`:**
+
+```yaml
+# .tracecraft/config.yaml
+default:
+  exporters:
+    receiver: true         # stream to tracecraft serve --tui
+  instrumentation:
+    auto_instrument: true  # patches OpenAI, Anthropic, LangChain, LlamaIndex
+```
+
+**Your app:**
+
+```python
+import tracecraft
+
+tracecraft.init()  # reads .tracecraft/config.yaml automatically
+```
+
+**Then start the TUI:**
+
+```bash
+tracecraft serve --tui
+```
+
+Or, if you prefer to write traces to a file and open the TUI separately:
+
+```bash
+tracecraft tui
+```
+
+> **Note:** Call `tracecraft.init()` **before** importing any LLM SDK. TraceCraft patches SDKs at import time — importing first means the patch won't apply.
+
+---
+
+## SDK decorators
+
+For fine-grained control — custom span names, explicit inputs/outputs, structured step hierarchies — TraceCraft provides `@trace_agent`, `@trace_tool`, `@trace_llm`, and `@trace_retrieval` decorators, plus a `step()` context manager for inline instrumentation. See the [SDK Guide](https://tracecraft.dev/getting-started/quickstart/) for details.
+
+---
+
+## TUI Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Navigate traces |
+| `Enter` | Expand trace — shows waterfall |
+| `i` | View input/prompt |
+| `o` | View output/response |
+| `a` | View attributes and metadata |
+| `/` | Filter traces |
+| `Tab` | Cycle view modes |
+| `m` + `C` | Mark and compare two traces |
+| `p` | Open playground |
+| `q` | Quit |
+
+---
 
 ## Why TraceCraft?
 
 | Feature | TraceCraft | LangSmith | Langfuse | Phoenix |
 |---------|------------|-----------|----------|---------|
-| **Vendor Lock-in** | None - export anywhere | LangChain ecosystem | Langfuse backend | Arize ecosystem |
-| **Framework Support** | LangChain, LlamaIndex, PydanticAI, custom | LangChain only | Multiple | Multiple |
-| **Local Development** | Full offline support | Cloud required | Self-host option | Self-host option |
+| **Terminal UI** | **Yes — built-in** | No | No | No |
+| **Zero-Code Instrumentation** | Yes | No | No | No |
+| **Vendor Lock-in** | None | LangChain | Langfuse | Arize |
+| **Local Development** | Full offline | Cloud required | Self-host | Self-host |
 | **OpenTelemetry Native** | Built on OTel | Proprietary | Proprietary | OTel compatible |
-| **PII Redaction** | Built-in SDK | Backend only | Backend only | Backend only |
-| **Schema Support** | OTel GenAI + OpenInference | Proprietary | Proprietary | OpenInference |
+| **PII Redaction** | SDK-level | Backend only | Backend only | Backend only |
 | **Cost** | Free & Open Source | Paid tiers | Paid tiers | Paid tiers |
+
+---
 
 ## Features
 
-- **Local-First DX**: Beautiful console output + HTML reports without any backend setup
-- **Built on OTel, Not Replacing It**: Higher-level abstractions on a proven foundation
-- **Dual-Dialect Schema**: Supports both OTel GenAI and OpenInference conventions
-- **Governance Built-In**: PII redaction + client-side sampling in the SDK
-- **Framework Agnostic**: Works with LangChain, LlamaIndex, PydanticAI, or custom code
-- **Multiple Export Targets**: Console, JSONL, OTLP, MLflow, HTML reports
+- **Built-in Terminal UI**: Explore, filter, compare, and debug traces without leaving your terminal
+- **Local-First**: All traces stay on your machine — the TUI is fully offline
+- **Zero-Code OTLP Receiver**: Set one env var, run `tracecraft serve --tui`, observe any OTLP app
+- **Auto-Instrumentation**: Two lines capture all OpenAI, Anthropic, LangChain, and LlamaIndex calls automatically
+- **Decorators**: `@trace_agent`, `@trace_tool`, `@trace_llm`, `@trace_retrieval` for custom tracing
+- **Dual-Dialect Schema**: OTel GenAI and OpenInference conventions
+- **PII Redaction**: Client-side redaction before data ever leaves your app
+- **Export Anywhere**: Console, JSONL, SQLite, OTLP, MLflow, HTML reports
+
+---
 
 ## Installation
 
 ```bash
-pip install tracecraft
-```
+# OTLP receiver + TUI (zero code changes path)
+pip install "tracecraft[receiver,tui]"
 
-Or with uv (recommended):
+# TUI + auto-instrumentation
+pip install "tracecraft[auto,tui]"
 
-```bash
-uv add tracecraft
-```
-
-### Optional Dependencies
-
-Install with specific framework support:
-
-```bash
-# LangChain integration
-pip install "tracecraft[langchain]"
-
-# LlamaIndex integration
-pip install "tracecraft[llamaindex]"
-
-# PydanticAI integration
-pip install "tracecraft[pydantic-ai]"
-
-# OTLP export (for Jaeger, Grafana, etc.)
-pip install "tracecraft[otlp]"
-
-# Terminal UI for trace exploration
-pip install "tracecraft[tui]"
+# With specific frameworks
+pip install "tracecraft[langchain,tui]"
+pip install "tracecraft[llamaindex,tui]"
 
 # All features
 pip install "tracecraft[all]"
 ```
 
-## Quick Start
-
-### Basic Usage (5 minutes)
-
-```python
-import tracecraft
-from tracecraft import trace_agent, trace_tool
-
-# Initialize with defaults (console + JSONL output)
-tracecraft.init()
-
-@trace_agent(name="research_agent")
-async def research(query: str) -> str:
-    """Research agent that searches and synthesizes information."""
-    results = await search(query)
-    return synthesize(results)
-
-@trace_tool(name="web_search")
-def search(query: str) -> list[str]:
-    """Search tool that returns results."""
-    # Your search implementation
-    return ["result1", "result2"]
-
-def synthesize(results: list[str]) -> str:
-    return f"Synthesized {len(results)} results"
-
-# Run your agent
-import asyncio
-asyncio.run(research("What is TraceCraft?"))
-```
-
-### With LangChain
-
-```python
-import tracecraft
-from tracecraft.adapters import LangChainAdapter
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-
-# Initialize TraceCraft
-tracecraft.init()
-
-# Wrap your LangChain components
-llm = ChatOpenAI(model="gpt-4")
-adapter = LangChainAdapter()
-
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a helpful assistant."),
-    ("user", "{input}")
-])
-
-chain = prompt | llm
-
-# Use with automatic tracing
-with adapter.trace():
-    response = chain.invoke({"input": "Hello!"})
-```
-
-### With Custom Export
-
-```python
-import tracecraft
-from tracecraft.exporters import OTLPExporter, JSONLExporter
-
-# Export to multiple backends
-tracecraft.init(
-    exporters=[
-        OTLPExporter(endpoint="http://localhost:4317"),  # Jaeger, Grafana, etc.
-        JSONLExporter(filepath="traces.jsonl"),           # Local file
-    ],
-    service_name="my-agent-service"
-)
-```
-
-### Terminal UI
-
-Explore your traces interactively:
+Or with uv:
 
 ```bash
-# View traces from JSONL file
-tracecraft tui traces.jsonl
-
-# View traces from SQLite database
-tracecraft tui traces.db
+uv add "tracecraft[auto,tui]"
 ```
+
+---
 
 ## Framework Support
 
 | Framework | Status | Installation |
 |-----------|--------|--------------|
+| OpenAI | Stable (auto) | `tracecraft[auto]` |
+| Anthropic | Stable (auto) | `tracecraft[auto]` |
 | LangChain | Stable | `tracecraft[langchain]` |
 | LlamaIndex | Stable | `tracecraft[llamaindex]` |
 | PydanticAI | Stable | `tracecraft[pydantic-ai]` |
 | Claude SDK | Beta | `tracecraft[claude-sdk]` |
 | Custom Code | Stable | Base package |
 
-## Architecture
-
-```
-                    Your Application
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────┐
-│                    TraceCraft SDK                    │
-├─────────────────────────────────────────────────────┤
-│  Instrumentation Layer                              │
-│  ├── @trace_agent, @trace_tool decorators           │
-│  ├── Framework adapters (LangChain, LlamaIndex)     │
-│  └── Auto-instrumentation (OpenAI, Anthropic)       │
-├─────────────────────────────────────────────────────┤
-│  Processing Layer                                   │
-│  ├── PII Redaction                                  │
-│  ├── Sampling                                       │
-│  └── Enrichment                                     │
-├─────────────────────────────────────────────────────┤
-│  Export Layer                                       │
-│  ├── Console (Rich)                                 │
-│  ├── JSONL / SQLite                                 │
-│  ├── OTLP (Jaeger, Grafana, Datadog)               │
-│  └── MLflow                                         │
-└─────────────────────────────────────────────────────┘
-                          │
-          ┌───────────────┼───────────────┐
-          ▼               ▼               ▼
-      Langfuse        Datadog         Phoenix
-```
+---
 
 ## Configuration
-
-TraceCraft can be configured via environment variables or code:
 
 ```python
 import tracecraft
 
 tracecraft.init(
-    service_name="my-service",           # Service name for traces
-    environment="production",            # Environment tag
-    sampling_rate=0.1,                   # Sample 10% of traces
-    enable_pii_redaction=True,           # Redact PII automatically
-    console_output=True,                 # Pretty print to console
+    service_name="my-agent-service",
+    jsonl=True,              # Enable JSONL output for the TUI
+    console=True,            # Pretty-print to console
+    auto_instrument=True,    # Auto-capture OpenAI/Anthropic calls
+    enable_pii_redaction=True,
+    sampling_rate=1.0,
 )
 ```
 
@@ -219,52 +202,58 @@ export TRACECRAFT_SAMPLING_RATE=0.1
 export TRACECRAFT_OTLP_ENDPOINT=http://localhost:4317
 ```
 
-## Examples
+---
 
-See the [examples/](examples/) directory for more comprehensive examples:
+## Export to Any Backend
 
-- Basic tracing with decorators
-- LangChain integration
-- LlamaIndex integration
-- Multi-agent workflows
-- Custom processors and exporters
-- Production deployment patterns
+```python
+from tracecraft.exporters import OTLPExporter
+
+tracecraft.init(
+    jsonl=True,  # Keep local TUI access
+    exporters=[
+        OTLPExporter(endpoint="http://localhost:4317"),  # Jaeger, Grafana, etc.
+    ],
+)
+```
+
+Supported backends: Langfuse, Datadog, Phoenix (Arize), Jaeger, Grafana Tempo, Honeycomb, any OTLP system.
+
+---
 
 ## Documentation
 
 - [Full Documentation](https://tracecraft.dev)
+- [Terminal UI Guide](https://tracecraft.dev/user-guide/tui/)
 - [API Reference](https://tracecraft.dev/api)
 - [Migration Guides](docs/migration/)
 - [Deployment Guides](docs/deployment/)
 
+---
+
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-### Quick Development Setup
+### Development Setup
 
 ```bash
-# Clone the repository
 git clone https://github.com/LocalAI/tracecraft.git
 cd tracecraft
-
-# Install with development dependencies
 uv sync --all-extras
-
-# Install pre-commit hooks
 uv run pre-commit install
-
-# Run tests
 uv run pytest
 ```
 
+---
+
 ## Security
 
-For security concerns, please see [SECURITY.md](SECURITY.md).
+See [SECURITY.md](SECURITY.md) for security concerns.
 
 ## License
 
-Apache-2.0 - See [LICENSE](LICENSE) for details.
+Apache-2.0 — See [LICENSE](LICENSE) for details.
 
 ---
 
