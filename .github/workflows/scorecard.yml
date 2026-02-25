@@ -12,10 +12,12 @@ jobs:
   analysis:
     name: Scorecard analysis
     runs-on: ubuntu-latest
+    continue-on-error: true
     permissions:
       contents: read
       security-events: write
       id-token: write
+      actions: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -27,6 +29,7 @@ jobs:
           results_file: results.sarif
           results_format: sarif
           publish_results: true
+          repo_token: ${{ secrets.SCORECARD_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@c4a7bc332abaec03596ff2803dd7f3ca3a238975 # v3
