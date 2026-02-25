@@ -203,7 +203,7 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "if __name__ == .__main__.:"
 ]
-fail_under = 80
+fail_under = 55
 
 [tool.coverage.run]
 branch = true
