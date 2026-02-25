@@ -13,25 +13,24 @@ def reset_runtime():
     """Reset the global runtime singleton before each test."""
     import tracecraft.core.runtime as runtime_module
 
-    # Reset before test
-    with runtime_module._runtime_lock:
-        if runtime_module._runtime is not None:
-            try:
-                runtime_module._runtime.shutdown()
-            except Exception:
-                pass
-        runtime_module._runtime = None
+    # Reset before test — shutdown() acquires _runtime_lock internally,
+    # so we must NOT hold the lock while calling it (avoids deadlock).
+    if runtime_module._runtime is not None:
+        try:
+            runtime_module._runtime.shutdown()
+        except Exception:
+            pass
+    runtime_module._runtime = None
 
     yield
 
     # Cleanup after test
-    with runtime_module._runtime_lock:
-        if runtime_module._runtime is not None:
-            try:
-                runtime_module._runtime.shutdown()
-            except Exception:
-                pass
-        runtime_module._runtime = None
+    if runtime_module._runtime is not None:
+        try:
+            runtime_module._runtime.shutdown()
+        except Exception:
+            pass
+    runtime_module._runtime = None
 
 
 @pytest.fixture
