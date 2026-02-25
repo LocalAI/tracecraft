@@ -60,6 +60,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
 
+      - name: Install pip in venv (required by pip-audit)
+        run: uv pip install pip
+
       - name: Run pip-audit
         uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
         with:

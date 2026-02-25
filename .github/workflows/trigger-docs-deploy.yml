@@ -14,6 +14,7 @@ jobs:
   trigger:
     name: Trigger tracecraft-infra deploy
     runs-on: ubuntu-latest
+    if: ${{ secrets.INFRA_DISPATCH_TOKEN != '' }}
     steps:
       - name: Trigger infra repository deploy
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7

@@ -321,6 +321,14 @@ disable_error_code = ["no-any-return"]
 module = ["tracecraft.storage.sqlite"]
 
 [[tool.mypy.overrides]]
+disable_error_code = ["attr-defined"]
+module = ["tracecraft.storage.cloudtrace"]
+
+[[tool.mypy.overrides]]
+disable_error_code = ["arg-type", "union-attr"]
+module = ["tracecraft.storage.azuremonitor"]
+
+[[tool.mypy.overrides]]
 disable_error_code = ["no-redef"]
 module = ["tracecraft.processors.enrichment"]
 
