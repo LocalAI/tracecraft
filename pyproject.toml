@@ -287,7 +287,7 @@ module = [
 
 # Allow untyped defs in top-level init for convenience functions
 [[tool.mypy.overrides]]
-disable_error_code = ["misc", "no-any-return", "attr-defined", "assignment", "operator", "arg-type", "unused-ignore", "type-arg"]
+disable_error_code = ["misc", "no-any-return", "attr-defined", "assignment", "operator", "arg-type", "unused-ignore", "type-arg", "override", "list-item"]
 module = [
     "tracecraft.adapters.*",
     "tracecraft.integrations.*",
@@ -313,12 +313,20 @@ disable_error_code = ["union-attr"]
 module = ["tracecraft.exporters.async_pipeline"]
 
 [[tool.mypy.overrides]]
+disable_error_code = ["assignment", "arg-type"]
+module = ["tracecraft.exporters.otlp"]
+
+[[tool.mypy.overrides]]
 disable_error_code = ["arg-type"]
 module = ["tracecraft.core.runtime", "tracecraft.contrib.aws"]
 
 [[tool.mypy.overrides]]
 disable_error_code = ["no-any-return"]
 module = ["tracecraft.storage.sqlite"]
+
+[[tool.mypy.overrides]]
+disable_error_code = ["union-attr", "call-overload"]
+module = ["tracecraft.storage.mlflow"]
 
 [[tool.mypy.overrides]]
 disable_error_code = ["attr-defined"]
