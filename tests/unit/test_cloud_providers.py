@@ -3,6 +3,7 @@
 import contextlib
 import os
 from unittest.mock import patch
+from urllib.parse import urlparse
 
 import pytest
 
@@ -97,7 +98,7 @@ class TestAzureHelpers:
         )
         exporter = create_appinsights_exporter(connection_string=conn_str)
 
-        assert "applicationinsights.azure.com" in exporter.endpoint
+        assert urlparse(exporter.endpoint).hostname.endswith("applicationinsights.azure.com")
         assert exporter.protocol == "http"
         assert "x-ms-instrumentation-key" in exporter.headers
 
@@ -140,7 +141,7 @@ class TestGCPHelpers:
         try:
             exporter = create_cloudtrace_exporter(project_id="test-project")
             # If it succeeds, verify the endpoint
-            assert "cloudtrace.googleapis.com" in exporter.endpoint
+            assert urlparse(exporter.endpoint).hostname.endswith("cloudtrace.googleapis.com")
         except ImportError:
             # Expected if google-auth not installed
             pass

@@ -53,7 +53,7 @@ alerting = [
     "httpx>=0.25"
 ]
 all = [
-    "tracecraft[otlp,auto,langchain,llamaindex,pydantic-ai,tiktoken,cli,tui,mlflow,deepeval,ragas,langfuse,datasets,alerting,claude-sdk,receiver]"
+    "tracecraft[otlp,auto,langchain,llamaindex,pydantic-ai,tiktoken,cli,tui,mlflow,deepeval,ragas,langfuse,datasets,alerting,claude-sdk,receiver,storage-all]"
 ]
 auto = [
     "opentelemetry-instrumentation-openai>=0.40",
@@ -80,7 +80,7 @@ cli = [
     "typer>=0.9"
 ]
 cloud = [
-    "tracecraft[aws-agentcore,azure-foundry,gcp-vertex-agent]"
+    "tracecraft[aws-agentcore,azure-foundry,gcp-vertex-agent,storage-all]"
 ]
 datasets = [
     "datasets>=2.0"
@@ -122,7 +122,7 @@ integrations = [
     "tracecraft[deepeval,ragas,langfuse]"
 ]
 langchain = [
-    "langchain-core>=0.1"
+    "langchain-core>=1.2.11"
 ]
 langfuse = [
     "langfuse>=2.0"
@@ -142,7 +142,7 @@ production = [
     "tracecraft[otlp,alerting]"
 ]
 pydantic-ai = [
-    "pydantic-ai>=0.0.1"
+    "pydantic-ai>=1.56.0"
 ]
 ragas = [
     "ragas>=0.1",
@@ -152,6 +152,25 @@ receiver = [
     "starlette>=0.27",
     "uvicorn>=0.20",
     "opentelemetry-proto>=1.20"
+]
+# Convenience bundle for all remote trace backends
+storage-all = [
+    "tracecraft[storage-xray,storage-cloudtrace,storage-azuremonitor,storage-datadog]"
+]
+storage-azuremonitor = [
+    "azure-identity>=1.12",
+    "azure-monitor-query>=1.0"
+]
+storage-cloudtrace = [
+    "google-auth>=2.0",
+    "google-cloud-trace>=1.0"
+]
+storage-datadog = [
+    "httpx>=0.25"
+]
+# Remote trace-read backends (TUI pull integrations)
+storage-xray = [
+    "boto3>=1.26"
 ]
 test = [
     "llama-index-core>=0.14.12",
@@ -190,6 +209,33 @@ fail_under = 80
 branch = true
 source = ["src/tracecraft"]
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.github",
+    "/.claude",
+    "/dev",
+    "/docs",
+    "/examples",
+    "/includes",
+    "/scripts",
+    "/site",
+    "/tests",
+    "/traces",
+    "/mlruns",
+    ".markdownlint.json",
+    ".pre-commit-config.yaml",
+    ".python-version",
+    "CLAUDE.md",
+    "CONTRIBUTING.md",
+    "DOCUMENTATION_SETUP.md",
+    "mkdocs.yml",
+    "*.db",
+    "*.jsonl",
+    "*.svg",
+    "*.html"
+]
+reproducible = true
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/tracecraft"]
 
@@ -225,6 +271,12 @@ module = [
     "anthropic.*",
     "guardrails.*",
     "google.auth.*",
+    "google.cloud.*",
+    "google.protobuf.*",
+    "boto3.*",
+    "botocore.*",
+    "azure.identity.*",
+    "azure.monitor.*",
     "pyperclip.*",
     "pydantic_ai.*",
     "yaml.*",
