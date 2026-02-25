@@ -134,6 +134,7 @@ nav:
     - Core Concepts: getting-started/concepts.md
   - Terminal UI:
     - user-guide/tui.md
+    - Remote Trace Sources: user-guide/remote-trace-sources.md
   - SDK Guide:
     - user-guide/index.md
     - Decorators: user-guide/decorators.md

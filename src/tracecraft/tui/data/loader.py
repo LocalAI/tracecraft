@@ -63,6 +63,10 @@ class TraceLoader:
         - file.db or sqlite:///path - SQLite database
         - mlflow://host:port/experiment - MLflow server
         - mlflow:experiment_name - MLflow with default server
+        - xray://region/service-name - AWS X-Ray (boto3 credential chain)
+        - cloudtrace://project-id/service-name - GCP Cloud Trace (ADC)
+        - azuremonitor://workspace-id/service-name - Azure Monitor (DefaultAzureCredential)
+        - datadog://site/service-name - DataDog APM (DD_API_KEY + DD_APP_KEY)
 
         Args:
             source: Source string specifying where to load traces from.
@@ -109,6 +113,62 @@ class TraceLoader:
             from tracecraft.storage.mlflow import MLflowTraceStore
 
             loader = cls(MLflowTraceStore(experiment_name=experiment_name))
+            loader._source_str = source
+            return loader
+
+        elif source.startswith("xray://"):
+            # Format: xray://region/service-name
+            parsed = urlparse(source)
+            from tracecraft.storage.xray import XRayTraceStore
+
+            loader = cls(
+                XRayTraceStore(
+                    region=parsed.netloc or "us-east-1",
+                    service_name=parsed.path.lstrip("/") or None,
+                )
+            )
+            loader._source_str = source
+            return loader
+
+        elif source.startswith("cloudtrace://"):
+            # Format: cloudtrace://project-id/service-name
+            parsed = urlparse(source)
+            from tracecraft.storage.cloudtrace import CloudTraceTraceStore
+
+            loader = cls(
+                CloudTraceTraceStore(
+                    project_id=parsed.netloc or None,
+                    service_name=parsed.path.lstrip("/") or None,
+                )
+            )
+            loader._source_str = source
+            return loader
+
+        elif source.startswith("azuremonitor://"):
+            # Format: azuremonitor://workspace-id/service-name
+            parsed = urlparse(source)
+            from tracecraft.storage.azuremonitor import AzureMonitorTraceStore
+
+            loader = cls(
+                AzureMonitorTraceStore(
+                    workspace_id=parsed.netloc or None,
+                    service_name=parsed.path.lstrip("/") or None,
+                )
+            )
+            loader._source_str = source
+            return loader
+
+        elif source.startswith("datadog://"):
+            # Format: datadog://site/service-name  (e.g. datadog://us1/my-service)
+            parsed = urlparse(source)
+            from tracecraft.storage.datadog import DataDogTraceStore
+
+            loader = cls(
+                DataDogTraceStore(
+                    site=parsed.netloc or "us1",
+                    service=parsed.path.lstrip("/") or None,
+                )
+            )
             loader._source_str = source
             return loader
 

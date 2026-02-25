@@ -7,6 +7,7 @@ Provides commands for viewing, validating, and exporting traces.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
@@ -344,6 +345,26 @@ def tui(
                     effective_source = f"mlflow:{exp}"
             elif settings.storage.type == "jsonl" and settings.storage.jsonl_path:
                 effective_source = settings.storage.jsonl_path
+            elif settings.storage.type == "xray":
+                region = settings.storage.xray_region or "us-east-1"
+                svc = settings.storage.xray_service_name or ""
+                effective_source = f"xray://{region}/{svc}"
+            elif settings.storage.type == "cloudtrace":
+                project = settings.storage.cloudtrace_project_id or os.environ.get(
+                    "GOOGLE_CLOUD_PROJECT", ""
+                )
+                svc = settings.storage.cloudtrace_service_name or ""
+                effective_source = f"cloudtrace://{project}/{svc}"
+            elif settings.storage.type == "azuremonitor":
+                workspace = settings.storage.azuremonitor_workspace_id or os.environ.get(
+                    "AZURE_MONITOR_WORKSPACE_ID", ""
+                )
+                svc = settings.storage.azuremonitor_service_name or ""
+                effective_source = f"azuremonitor://{workspace}/{svc}"
+            elif settings.storage.type == "datadog":
+                site = settings.storage.datadog_site or "us1"
+                svc = settings.storage.datadog_service or ""
+                effective_source = f"datadog://{site}/{svc}"
             else:
                 effective_source = "sqlite://traces/tracecraft.db"
         except Exception:

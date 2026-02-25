@@ -656,9 +656,32 @@ Compare multiple LLM spans in the waterfall to identify the most expensive calls
 
 ---
 
+## Pulling from Cloud Platforms
+
+The TUI can connect directly to traces stored in AWS X-Ray, GCP Cloud Trace, Azure Monitor, or DataDog — no data migration required.
+
+```bash
+# AWS X-Ray (boto3 credential chain)
+tracecraft tui xray://us-east-1/my-bedrock-agent
+
+# GCP Cloud Trace (Application Default Credentials)
+tracecraft tui cloudtrace://my-gcp-project/my-vertex-agent
+
+# Azure Monitor / Application Insights (DefaultAzureCredential)
+tracecraft tui azuremonitor://xxxxxxxx-workspace-id-xxxx/my-ai-foundry-agent
+
+# DataDog APM (DD_API_KEY + DD_APP_KEY env vars)
+DD_API_KEY=xxx DD_APP_KEY=yyy tracecraft tui datadog://us1/my-service
+```
+
+See the [Remote Trace Sources](remote-trace-sources.md) guide for installation, authentication, config-file usage, and troubleshooting.
+
+---
+
 ## Next Steps
 
 - [Decorators](decorators.md) — Instrument custom agents and tools
 - [Auto-Instrumentation](../integrations/auto-instrumentation.md) — Zero-code capture for OpenAI/Anthropic
 - [Exporters](exporters.md) — Configure where traces are stored
 - [Configuration](configuration.md) — Full configuration reference
+- [Remote Trace Sources](remote-trace-sources.md) — Pull from X-Ray, Cloud Trace, Azure Monitor, DataDog

@@ -578,9 +578,84 @@ tracecraft.init(
 
 ---
 
+## Remote Storage Backends (TUI Read-Only)
+
+The TUI can pull traces from cloud observability platforms without copying data locally. These backends are **read-only** — they never write to the platform.
+
+### StorageConfig Type Values
+
+| `type` | Description | Required Extra |
+|--------|-------------|---------------|
+| `jsonl` | JSONL file (default) | built-in |
+| `sqlite` | SQLite database | built-in |
+| `mlflow` | MLflow tracking server | `tracecraft[mlflow]` |
+| `none` | No local storage | built-in |
+| `xray` | AWS X-Ray (read-only) | `tracecraft[storage-xray]` |
+| `cloudtrace` | GCP Cloud Trace (read-only) | `tracecraft[storage-cloudtrace]` |
+| `azuremonitor` | Azure Monitor (read-only) | `tracecraft[storage-azuremonitor]` |
+| `datadog` | DataDog APM (read-only) | `tracecraft[storage-datadog]` |
+
+### X-Ray Config
+
+```yaml
+default:
+  storage:
+    type: xray
+    xray_region: us-east-1
+    xray_service_name: my-bedrock-agent   # optional, None = all services
+    xray_lookback_hours: 1
+    xray_cache_ttl_seconds: 60
+# Auth: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_PROFILE / instance profile
+```
+
+### Cloud Trace Config
+
+```yaml
+default:
+  storage:
+    type: cloudtrace
+    cloudtrace_project_id: my-gcp-project   # or set GOOGLE_CLOUD_PROJECT
+    cloudtrace_service_name: my-agent       # optional
+    cloudtrace_lookback_hours: 1
+    cloudtrace_cache_ttl_seconds: 60
+# Auth: GOOGLE_APPLICATION_CREDENTIALS / gcloud ADC / Workload Identity
+```
+
+### Azure Monitor Config
+
+```yaml
+default:
+  storage:
+    type: azuremonitor
+    # Never hardcode workspace_id — use AZURE_MONITOR_WORKSPACE_ID env var
+    azuremonitor_workspace_id: null
+    azuremonitor_service_name: my-agent     # optional (cloud_RoleName)
+    azuremonitor_lookback_hours: 1
+    azuremonitor_cache_ttl_seconds: 60
+# Auth: DefaultAzureCredential (managed identity → az login → env vars)
+```
+
+### DataDog Config
+
+```yaml
+default:
+  storage:
+    type: datadog
+    datadog_site: us1                       # us1, us3, us5, eu1, ap1
+    datadog_service: my-service             # optional
+    datadog_lookback_hours: 1
+    datadog_cache_ttl_seconds: 60
+# Secrets: DD_API_KEY and DD_APP_KEY must be set as env vars — never in config
+```
+
+For full details on authentication, CLI usage, and troubleshooting, see the [Remote Trace Sources](remote-trace-sources.md) guide.
+
+---
+
 ## Next Steps
 
 - [Terminal UI Guide](tui.md) — Explore traces in the TUI
+- [Remote Trace Sources](remote-trace-sources.md) — Pull from X-Ray, Cloud Trace, Azure Monitor, DataDog
 - [Auto-Instrumentation](../integrations/auto-instrumentation.md) — Zero-code LLM tracing
 - [Exporters](exporters.md) — Export to any backend
 - [Processors](processors.md) — Configure data processing

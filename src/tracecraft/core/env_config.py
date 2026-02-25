@@ -160,7 +160,16 @@ def get_environment_defaults(env: str) -> dict[str, bool]:
 class StorageConfig(BaseModel):
     """Storage backend configuration."""
 
-    type: Literal["jsonl", "sqlite", "mlflow", "none"] = "jsonl"
+    type: Literal[
+        "jsonl",
+        "sqlite",
+        "mlflow",
+        "none",
+        "xray",
+        "cloudtrace",
+        "azuremonitor",
+        "datadog",
+    ] = "jsonl"
 
     # JSONL settings
     jsonl_path: str | None = None
@@ -172,6 +181,35 @@ class StorageConfig(BaseModel):
     # MLflow settings
     mlflow_tracking_uri: str | None = None
     mlflow_experiment_name: str | None = None
+
+    # X-Ray (AWS / Bedrock AgentCore)
+    # Auth: boto3 credential chain (env vars, ~/.aws/credentials, instance profile)
+    xray_region: str = "us-east-1"
+    xray_service_name: str | None = None  # None = all services
+    xray_lookback_hours: int = 1
+    xray_cache_ttl_seconds: int = 60
+
+    # Cloud Trace (GCP / Vertex AI Agent Builder)
+    # Auth: google.auth.default() ADC chain
+    cloudtrace_project_id: str | None = None  # falls back to GOOGLE_CLOUD_PROJECT
+    cloudtrace_service_name: str | None = None
+    cloudtrace_lookback_hours: int = 1
+    cloudtrace_cache_ttl_seconds: int = 60
+
+    # Azure Monitor (AI Foundry / Application Insights)
+    # Auth: DefaultAzureCredential (managed identity → CLI → env vars)
+    # Secrets: AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID — never in config
+    azuremonitor_workspace_id: str | None = None  # falls back to AZURE_MONITOR_WORKSPACE_ID
+    azuremonitor_service_name: str | None = None
+    azuremonitor_lookback_hours: int = 1
+    azuremonitor_cache_ttl_seconds: int = 60
+
+    # DataDog
+    # Secrets: DD_API_KEY + DD_APP_KEY env vars only — never stored in config
+    datadog_site: str = "us1"  # us1, us3, us5, eu1, ap1
+    datadog_service: str | None = None
+    datadog_lookback_hours: int = 1
+    datadog_cache_ttl_seconds: int = 60
 
 
 class ExporterConfig(BaseModel):
