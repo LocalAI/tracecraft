@@ -147,7 +147,14 @@ class TestGCPHelpers:
             pass
         except Exception as e:
             # Auth errors are expected if not authenticated with GCP
-            assert "RefreshError" in type(e).__name__ or "Reauthentication" in str(e)
+            err_name = type(e).__name__
+            err_msg = str(e)
+            assert (
+                "RefreshError" in err_name
+                or "DefaultCredentialsError" in err_name
+                or "Reauthentication" in err_msg
+                or "default credentials were not found" in err_msg
+            )
 
     def test_configure_for_cloud_run_uses_k_service(self):
         """Test Cloud Run uses K_SERVICE env var."""
