@@ -7,13 +7,16 @@ on:
       - 'docs/**'
       - 'mkdocs.yml'
 
+permissions:
+  contents: read
+
 jobs:
   trigger:
     name: Trigger tracecraft-infra deploy
     runs-on: ubuntu-latest
     steps:
       - name: Trigger infra repository deploy
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           github-token: ${{ secrets.INFRA_DISPATCH_TOKEN }}
           script: |
