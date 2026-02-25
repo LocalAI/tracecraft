@@ -329,7 +329,7 @@ def _create_snapshot_trace_file(tmp_path: Path) -> Path:
 
 
 @pytest.mark.skipif(not TEXTUAL_AVAILABLE, reason="textual not installed")
-@pytest.mark.skipif(os.environ.get("CI"), reason="TUI snapshots differ on CI runners")
+@pytest.mark.skipif(bool(os.environ.get("CI")), reason="TUI snapshots differ on CI runners")
 class TestAutoInstrumentedTraceSnapshots:
     """Visual snapshot tests for TUI displaying auto-instrumented traces.
 

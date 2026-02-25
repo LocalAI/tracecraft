@@ -75,7 +75,7 @@ class FilterBarTestApp(App):
 
 
 @pytest.mark.skipif(not TEXTUAL_AVAILABLE, reason="textual not installed")
-@pytest.mark.skipif(os.environ.get("CI"), reason="TUI snapshots differ on CI runners")
+@pytest.mark.skipif(bool(os.environ.get("CI")), reason="TUI snapshots differ on CI runners")
 class TestFilterBarSnapshots:
     """Snapshot tests for the FilterBar widget."""
 
