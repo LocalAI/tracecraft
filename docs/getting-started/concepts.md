@@ -1,10 +1,10 @@
 # Core Concepts
 
-Understanding the core concepts of Trace Craft will help you use it effectively.
+Understanding the core concepts of TraceCraft will help you use it effectively.
 
 ## Architectural Overview
 
-Trace Craft is built on three main layers:
+TraceCraft is built on three main layers:
 
 ```mermaid
 graph TB
@@ -12,7 +12,7 @@ graph TB
         A[Application]
     end
 
-    subgraph "Trace Craft SDK"
+    subgraph "TraceCraft SDK"
         B[Instrumentation Layer]
         C[Processing Layer]
         D[Export Layer]
@@ -65,7 +65,7 @@ Sends processed traces to destinations:
 
 ### Traces and Spans
 
-Trace Craft follows OpenTelemetry's trace model:
+TraceCraft follows OpenTelemetry's trace model:
 
 ```mermaid
 graph TB
@@ -110,7 +110,7 @@ Key properties of a run:
 
 ### Step Types
 
-Trace Craft categorizes operations into semantic types:
+TraceCraft categorizes operations into semantic types:
 
 ```python
 from tracecraft.core.models import StepType
@@ -126,7 +126,7 @@ These types help backends understand your trace semantics.
 
 ### Decorators
 
-Trace Craft provides specialized decorators for each step type:
+TraceCraft provides specialized decorators for each step type:
 
 #### @trace_agent
 
@@ -351,7 +351,7 @@ tracecraft.init(
 
 ### Schema Support
 
-Trace Craft supports two schema conventions:
+TraceCraft supports two schema conventions:
 
 #### OTel GenAI Conventions
 
@@ -383,11 +383,11 @@ The Arize AI OpenInference schema:
 }
 ```
 
-Trace Craft automatically emits both schemas, making traces compatible with multiple backends.
+TraceCraft automatically emits both schemas, making traces compatible with multiple backends.
 
 ### Propagation
 
-Trace Craft propagates trace context across:
+TraceCraft propagates trace context across:
 
 - **Async boundaries**: Preserves context in async/await
 - **Process boundaries**: Via W3C Trace Context headers
@@ -449,7 +449,7 @@ with step("processing") as s:
 
 ### 4. Handle Errors
 
-Let Trace Craft capture errors automatically:
+Let TraceCraft capture errors automatically:
 
 ```python
 @trace_agent(name="agent")

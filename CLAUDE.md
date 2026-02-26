@@ -1,4 +1,4 @@
-# Trace Craft
+# TraceCraft
 
 Vendor-neutral LLM observability SDK - instrument once, observe anywhere.
 
@@ -99,6 +99,6 @@ with runtime.run("task_name") as run:
 
 - The `init()` function in `core/runtime.py` is the main entry point - it creates a global singleton runtime
 - Decorators in `instrumentation/decorators.py` create Steps and attach them to the current AgentRun via context vars
-- Adapters translate framework-specific callbacks/spans into Trace Craft Steps
+- Adapters translate framework-specific callbacks/spans into TraceCraft Steps
 - Processors run in a pipeline (configurable order: SAFETY or EFFICIENCY) before export
 - The TUI reads from JSONL/SQLite storage for offline trace exploration

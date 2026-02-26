@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of Trace Craft
+- Initial release of TraceCraft
 - Core tracing runtime with decorator-based instrumentation
 - Framework adapters for LangChain, LlamaIndex, PydanticAI, and Claude SDK
 - Exporters: console, JSONL, OTLP, MLflow, HTML

@@ -1,6 +1,6 @@
 # GCP Vertex AI Agent Builder Deployment Guide
 
-Deploy Trace Craft-instrumented applications to GCP with Cloud Trace and Vertex AI Agent Builder observability.
+Deploy TraceCraft-instrumented applications to GCP with Cloud Trace and Vertex AI Agent Builder observability.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Deploy Trace Craft-instrumented applications to GCP with Cloud Trace and Vertex 
 |                                                              |
 |  +------------------+      +------------------------------+  |
 |  |   Your Agent     |----->|    Cloud Trace               |  |
-|  |  (Trace Craft     |      |   (OTel/Cloud Trace API)     |  |
+|  |  (TraceCraft     |      |   (OTel/Cloud Trace API)     |  |
 |  |   enabled)       |      +------------------------------+  |
 |  +------------------+                     |                  |
 |                                           v                  |
@@ -36,7 +36,7 @@ Deploy Trace Craft-instrumented applications to GCP with Cloud Trace and Vertex 
 gcloud services enable cloudtrace.googleapis.com --project=YOUR_PROJECT_ID
 ```
 
-### 2. Install Trace Craft
+### 2. Install TraceCraft
 
 ```bash
 pip install tracecraft[gcp-vertex-agent]
@@ -72,7 +72,7 @@ exporter = create_vertex_agent_exporter(
     reasoning_engine_id="re-001",
 )
 
-# Initialize Trace Craft
+# Initialize TraceCraft
 tracecraft.init(
     exporters=[exporter],
     console=False,  # Disable console in production
@@ -268,7 +268,7 @@ Example:
 X-Cloud-Trace-Context: 105445aa7843bc8bf206b12000100000/12345678901234567;o=1
 ```
 
-Trace Craft also supports W3C Trace Context (`traceparent` header) which GCP natively understands.
+TraceCraft also supports W3C Trace Context (`traceparent` header) which GCP natively understands.
 
 ## Session Tracking for Multi-Turn
 
@@ -290,7 +290,7 @@ run = AgentRun(
 
 ## OTel GenAI Semantic Conventions
 
-Trace Craft exports traces following OTel GenAI semantic conventions:
+TraceCraft exports traces following OTel GenAI semantic conventions:
 
 ### Agent Spans
 

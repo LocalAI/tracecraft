@@ -1,6 +1,6 @@
 # Security Guide
 
-Trace Craft follows a security-first design philosophy: sensitive data is protected by default, not as an afterthought. This guide covers PII redaction, credential handling, compliance considerations, and best practices for operating Trace Craft in security-conscious environments.
+TraceCraft follows a security-first design philosophy: sensitive data is protected by default, not as an afterthought. This guide covers PII redaction, credential handling, compliance considerations, and best practices for operating TraceCraft in security-conscious environments.
 
 ---
 
@@ -8,7 +8,7 @@ Trace Craft follows a security-first design philosophy: sensitive data is protec
 
 ### Security-First Design Philosophy
 
-Trace Craft makes safe behavior the default:
+TraceCraft makes safe behavior the default:
 
 - **PII redaction is enabled by default.** You must explicitly disable it.
 - **17 built-in patterns** cover the most common credential and PII types out of the box.
@@ -17,7 +17,7 @@ Trace Craft makes safe behavior the default:
 
 ### What Is Protected by Default
 
-Out of the box, with no configuration changes, Trace Craft redacts:
+Out of the box, with no configuration changes, TraceCraft redacts:
 
 - Email addresses
 - Phone numbers
@@ -168,7 +168,7 @@ config = TraceCraftConfig(
 Patterns are compiled as Python `re` patterns and applied to all string values in the trace dict.
 
 !!! warning "ReDoS Safety"
-    Avoid patterns with nested quantifiers or catastrophic backtracking characteristics. Trace Craft's built-in patterns are designed to be ReDoS-safe, and custom patterns should be too. Test patterns with tools like `regexr.com` or Python's `re` module before deploying.
+    Avoid patterns with nested quantifiers or catastrophic backtracking characteristics. TraceCraft's built-in patterns are designed to be ReDoS-safe, and custom patterns should be too. Test patterns with tools like `regexr.com` or Python's `re` module before deploying.
 
 ### Field-Based Rules
 
@@ -268,7 +268,7 @@ def authenticate(username: str, password: str) -> bool:
 
 ## Compliance Considerations
 
-Trace Craft provides tools to help meet compliance requirements, but compliance is the responsibility of your organization. This section outlines common patterns.
+TraceCraft provides tools to help meet compliance requirements, but compliance is the responsibility of your organization. This section outlines common patterns.
 
 ### GDPR
 
@@ -302,7 +302,7 @@ The Health Insurance Portability and Accountability Act requires protection of P
 
 **PHI Handling:**
 
-PHI includes names, dates, phone numbers, geographic data, social security numbers, and other identifiers. Trace Craft's built-in patterns cover several of these (phone, SSN, email), but you should add custom rules for domain-specific identifiers:
+PHI includes names, dates, phone numbers, geographic data, social security numbers, and other identifiers. TraceCraft's built-in patterns cover several of these (phone, SSN, email), but you should add custom rules for domain-specific identifiers:
 
 ```python
 from tracecraft.processors.redaction import RedactionRule
@@ -476,7 +476,7 @@ with tenant_b.trace_context():
 
 ### Role-Based Access
 
-Trace Craft does not implement RBAC directly; access control is enforced at the storage layer:
+TraceCraft does not implement RBAC directly; access control is enforced at the storage layer:
 
 - **JSONL files:** Use filesystem ACLs to restrict read access.
 - **SQLite:** Use filesystem permissions per database file.
@@ -511,7 +511,7 @@ def with_audit_context(user_id: str, session_id: str):
 
 ## Security Checklist for Production
 
-Use this checklist before deploying Trace Craft to a production environment:
+Use this checklist before deploying TraceCraft to a production environment:
 
 - [ ] **Redaction enabled.** `RedactionConfig(enabled=True)` is the default; verify it has not been disabled.
 - [ ] **Sensitive parameters excluded.** All functions accepting API keys, passwords, or tokens use `exclude_inputs` or `capture_inputs=False`.

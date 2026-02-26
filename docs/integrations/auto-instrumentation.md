@@ -1,6 +1,6 @@
 # Auto-Instrumentation
 
-Trace Craft can automatically instrument popular LLM SDKs and agent frameworks **without any code changes** to your application — no decorators, no wrappers, no refactoring. Just initialize Trace Craft before your LLM imports and every call is captured.
+TraceCraft can automatically instrument popular LLM SDKs and agent frameworks **without any code changes** to your application — no decorators, no wrappers, no refactoring. Just initialize TraceCraft before your LLM imports and every call is captured.
 
 **Supported:** OpenAI · Anthropic · LangChain · LlamaIndex
 
@@ -49,7 +49,7 @@ tracecraft tui
 !!! warning "Initialize Before Importing SDKs"
 
     `tracecraft.init()` must be called **before** importing OpenAI, Anthropic,
-    LangChain, or LlamaIndex. Trace Craft patches the SDK at import time — if
+    LangChain, or LlamaIndex. TraceCraft patches the SDK at import time — if
     you import first, the patch won't apply.
 
     ```python
@@ -118,7 +118,7 @@ message = client.messages.create(
 
 ### LangChain
 
-Trace Craft patches LangChain's `CallbackManager` to automatically inject its callback handler into **all** chains, agents, and tools — no explicit `callbacks=[...]` required.
+TraceCraft patches LangChain's `CallbackManager` to automatically inject its callback handler into **all** chains, agents, and tools — no explicit `callbacks=[...]` required.
 
 Automatically traces:
 
@@ -151,7 +151,7 @@ result = chain.invoke({"topic": "bears"})
 
 ### LlamaIndex
 
-Trace Craft registers its span handler with LlamaIndex's global instrumentation dispatcher, automatically capturing all query and retrieval operations.
+TraceCraft registers its span handler with LlamaIndex's global instrumentation dispatcher, automatically capturing all query and retrieval operations.
 
 Automatically traces:
 
@@ -383,7 +383,7 @@ tracecraft.init(auto_instrument=True)  # Won't patch already-imported modules
 
 ### Duplicate Spans
 
-If you're seeing duplicate spans, you might be calling `init()` twice. Trace Craft's
+If you're seeing duplicate spans, you might be calling `init()` twice. TraceCraft's
 `init()` is idempotent — the second call is a no-op. If you need to re-instrument,
 call `disable_auto_instrumentation()` first:
 

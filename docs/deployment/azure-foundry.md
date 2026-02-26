@@ -1,6 +1,6 @@
 # Azure AI Foundry Deployment Guide
 
-Deploy Trace Craft-instrumented applications to Azure with AI Foundry observability.
+Deploy TraceCraft-instrumented applications to Azure with AI Foundry observability.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Deploy Trace Craft-instrumented applications to Azure with AI Foundry observabil
 │                                                              │
 │  ┌─────────────────┐      ┌──────────────────────────────┐  │
 │  │   Your Agent    │─────▶│    Application Insights       │  │
-│  │  (Trace Craft    │      │   (AI Foundry Observability)  │  │
+│  │  (TraceCraft    │      │   (AI Foundry Observability)  │  │
 │  │   enabled)      │      └──────────────────────────────┘  │
 │  └─────────────────┘                     │                  │
 │                                          ▼                  │
@@ -36,7 +36,7 @@ Deploy Trace Craft-instrumented applications to Azure with AI Foundry observabil
 3. Click **Overview** > **Connection String**
 4. Copy the connection string
 
-### 2. Install Trace Craft
+### 2. Install TraceCraft
 
 ```bash
 pip install tracecraft[azure-foundry]
@@ -66,7 +66,7 @@ exporter = create_foundry_exporter(
     agent_description="Researches topics and synthesizes information",
 )
 
-# Initialize Trace Craft
+# Initialize TraceCraft
 tracecraft.init(
     exporters=[exporter],
     console=False,  # Disable console in production
@@ -157,7 +157,7 @@ tracecraft.init(exporters=[exporter])
 
 ## OTel GenAI Semantic Conventions
 
-Trace Craft exports traces following OTel GenAI semantic conventions:
+TraceCraft exports traces following OTel GenAI semantic conventions:
 
 ### Agent Spans
 

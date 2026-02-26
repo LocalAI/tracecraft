@@ -1,10 +1,10 @@
 # Integrations
 
-Trace Craft integrates with popular LLM frameworks and cloud platforms.
+TraceCraft integrates with popular LLM frameworks and cloud platforms.
 
 !!! success "No custom integration code required"
 
-    Point any OTLP-instrumented app at Trace Craft and you're done:
+    Point any OTLP-instrumented app at TraceCraft and you're done:
 
     ```bash
     tracecraft serve --tui
@@ -12,7 +12,7 @@ Trace Craft integrates with popular LLM frameworks and cloud platforms.
     ```
 
     Works with OpenLLMetry, LangChain, LlamaIndex, DSPy, PydanticAI, and any standard
-    OpenTelemetry SDK — no Trace Craft-specific code needed.
+    OpenTelemetry SDK — no TraceCraft-specific code needed.
 
 ## Framework Integrations
 
@@ -92,7 +92,7 @@ Trace Craft integrates with popular LLM frameworks and cloud platforms.
 
 ### LangChain
 
-The simplest path requires no Trace Craft-specific code — just set the OTLP endpoint:
+The simplest path requires no TraceCraft-specific code — just set the OTLP endpoint:
 
 ```bash
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 python your_langchain_app.py

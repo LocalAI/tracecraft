@@ -1,24 +1,24 @@
 # Frequently Asked Questions
 
-Find answers to the most common questions about Trace Craft. If your question is not covered here,
+Find answers to the most common questions about TraceCraft. If your question is not covered here,
 open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
 
 ---
 
 ## Getting Started
 
-??? question "What is Trace Craft?"
-    Trace Craft is a vendor-neutral observability SDK for LLM applications. You instrument your
-    code once with Trace Craft decorators or context managers, and then export traces to any
+??? question "What is TraceCraft?"
+    TraceCraft is a vendor-neutral observability SDK for LLM applications. You instrument your
+    code once with TraceCraft decorators or context managers, and then export traces to any
     backend: console, local JSONL files, OTLP-compatible platforms (Jaeger, Honeycomb, Grafana
     Tempo, etc.), MLflow, or static HTML reports.
 
-    Trace Craft captures the full hierarchy of an agent run - agent calls, LLM requests, tool
+    TraceCraft captures the full hierarchy of an agent run - agent calls, LLM requests, tool
     invocations, retrieval operations, and more - without locking you into any vendor's
     proprietary format.
 
-??? question "Which Python version does Trace Craft require?"
-    Trace Craft requires **Python 3.11 or later**. It uses modern Python features including
+??? question "Which Python version does TraceCraft require?"
+    TraceCraft requires **Python 3.11 or later**. It uses modern Python features including
     `X | Y` union syntax, built-in generics (`list[str]`, `dict[str, Any]`), and
     `datetime.now(UTC)`.
 
@@ -27,8 +27,8 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
     pip install tracecraft
     ```
 
-??? question "Which LLM frameworks does Trace Craft support?"
-    Trace Craft ships adapters for the most widely used frameworks:
+??? question "Which LLM frameworks does TraceCraft support?"
+    TraceCraft ships adapters for the most widely used frameworks:
 
     | Framework | Package Extra | How to Enable |
     |-----------|--------------|---------------|
@@ -43,7 +43,7 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
     `@trace_llm`, and `@trace_retrieval` decorators directly, or wrap calls in a
     `with tracecraft.step(...)` context manager.
 
-??? question "Can I use Trace Craft without any LLM framework?"
+??? question "Can I use TraceCraft without any LLM framework?"
     Yes. The decorator API and context manager work with any Python code, regardless of which
     LLM SDK you use.
 
@@ -64,7 +64,7 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
         ...
     ```
 
-??? question "Does Trace Craft require an external service to work?"
+??? question "Does TraceCraft require an external service to work?"
     No. By default `tracecraft.init()` writes traces to the console and optionally to a local
     JSONL file. No network connection or cloud account is needed for development.
 
@@ -80,7 +80,7 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
 
 ## Configuration
 
-??? question "How do I configure Trace Craft differently for development and production?"
+??? question "How do I configure TraceCraft differently for development and production?"
     Use environment variables so the same code runs correctly in both environments:
 
     ```python title="app.py"
@@ -110,8 +110,8 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
     TRACECRAFT_SAMPLING_RATE=0.1
     ```
 
-??? question "What environment variables does Trace Craft read?"
-    Trace Craft respects the following environment variables:
+??? question "What environment variables does TraceCraft read?"
+    TraceCraft respects the following environment variables:
 
     | Variable | Description | Default |
     |----------|-------------|---------|
@@ -202,7 +202,7 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
 
     # Pass the handler at invocation time
     result = chain.invoke(
-        {"query": "What is Trace Craft?"},
+        {"query": "What is TraceCraft?"},
         config={"callbacks": [handler]},
     )
     ```
@@ -257,7 +257,7 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
 
 ??? question "How do I receive traces from an existing OpenTelemetry setup?"
     Use the OTLP receiver to accept traces from any OTLP-compatible source and convert them
-    into Trace Craft steps:
+    into TraceCraft steps:
 
     ```bash
     pip install "tracecraft[receiver]"
@@ -273,11 +273,11 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
     )
     ```
 
-    This is useful when you have an existing OTel pipeline and want to add Trace Craft's TUI,
+    This is useful when you have an existing OTel pipeline and want to add TraceCraft's TUI,
     PII redaction, or JSONL export without changing your instrumentation code.
 
-??? question "Does Trace Craft work with async code?"
-    Yes. All Trace Craft decorators support both synchronous and asynchronous functions.
+??? question "Does TraceCraft work with async code?"
+    Yes. All TraceCraft decorators support both synchronous and asynchronous functions.
     Context variables (`contextvars`) propagate correctly across `await` boundaries within
     a single async task.
 
@@ -300,8 +300,8 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
 
 ## Exporters
 
-??? question "What export backends does Trace Craft support?"
-    Trace Craft ships five built-in exporters:
+??? question "What export backends does TraceCraft support?"
+    TraceCraft ships five built-in exporters:
 
     | Exporter | Class | Use Case |
     |----------|-------|----------|
@@ -397,7 +397,7 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
 
 ## Troubleshooting
 
-??? question "I get ModuleNotFoundError when importing a Trace Craft adapter. What is wrong?"
+??? question "I get ModuleNotFoundError when importing a TraceCraft adapter. What is wrong?"
     Most adapters and exporters are optional dependencies grouped into extras. Install the
     extra that matches the adapter you want:
 
@@ -448,7 +448,7 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
     If the modules are imported at the top of a different file that loads first, move
     `tracecraft.init(auto_instrument=True)` to the very start of your application entry point.
 
-??? question "How do I enable debug logging for Trace Craft itself?"
+??? question "How do I enable debug logging for TraceCraft itself?"
     Set the `tracecraft` logger to `DEBUG` level:
 
     ```python
@@ -468,7 +468,7 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
 
 ## Performance
 
-??? question "How much overhead does Trace Craft add?"
+??? question "How much overhead does TraceCraft add?"
     The overhead depends on your configuration:
 
     | Configuration | Typical Overhead | Max Throughput |
@@ -478,11 +478,11 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
     | 1% sampling, async batch export | <0.5 ms/trace | ~50 K+ traces/s |
 
     For most LLM applications the network latency of the LLM API call (hundreds of
-    milliseconds) far exceeds Trace Craft's instrumentation overhead.
+    milliseconds) far exceeds TraceCraft's instrumentation overhead.
 
     See [High Throughput](deployment/high-throughput.md) for tuning guidance.
 
-??? question "Trace Craft is using a lot of memory. What can I do?"
+??? question "TraceCraft is using a lot of memory. What can I do?"
     High memory usage is almost always caused by a large in-memory export queue. Reduce it
     by lowering the batch size and queue limit on the async exporter:
 
@@ -504,7 +504,7 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
     Also consider lowering `sampling_rate` to reduce the number of traces being queued.
 
 ??? question "What sampling strategies are available?"
-    Trace Craft supports three sampling strategies via `SamplingProcessor`:
+    TraceCraft supports three sampling strategies via `SamplingProcessor`:
 
     ```python
     from tracecraft.processors.sampling import SamplingProcessor
@@ -535,9 +535,9 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
 
 ## Production
 
-??? question "How do I deploy Trace Craft on Kubernetes?"
+??? question "How do I deploy TraceCraft on Kubernetes?"
     The recommended pattern is to run an OpenTelemetry Collector as a DaemonSet or sidecar
-    and point Trace Craft's OTLP exporter at it. This decouples your application from the
+    and point TraceCraft's OTLP exporter at it. This decouples your application from the
     observability backend.
 
     ```yaml title="tracecraft-config.yaml"
@@ -554,8 +554,8 @@ open an issue on [GitHub](https://github.com/LocalAI/tracecraft/issues).
     See the complete [Kubernetes Deployment](deployment/kubernetes.md) guide for Helm
     values, resource limits, and HPA configuration.
 
-??? question "How does Trace Craft integrate with cloud-managed AI platforms?"
-    Trace Craft ships contrib helpers for AWS, Azure, and GCP that handle credential
+??? question "How does TraceCraft integrate with cloud-managed AI platforms?"
+    TraceCraft ships contrib helpers for AWS, Azure, and GCP that handle credential
     resolution and platform-specific export targets:
 
     - **AWS AgentCore:** See [AWS AgentCore](deployment/aws-agentcore.md) for IAM role setup

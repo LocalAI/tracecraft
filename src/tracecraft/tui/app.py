@@ -1,5 +1,5 @@
 """
-Trace Craft Terminal UI - LangSmith-style trace explorer.
+TraceCraft Terminal UI - LangSmith-style trace explorer.
 
 A real-time, interactive terminal interface for exploring
 and debugging LLM/Agent traces with table and waterfall views.
@@ -75,7 +75,7 @@ def _get_bindings() -> list[Any]:
 
 class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
     """
-    Main Trace Craft TUI application.
+    Main TraceCraft TUI application.
 
     Provides a LangSmith-style interface for exploring traces with:
     - Table view showing all traces on the left
@@ -86,7 +86,7 @@ class TraceCraftApp(App if TEXTUAL_AVAILABLE else object):  # type: ignore[misc]
     """
 
     TITLE = "TRACECRAFT"
-    SUB_TITLE = "Trace Craft"
+    SUB_TITLE = "TraceCraft"
 
     CSS = f"""
     /* ============================================

@@ -1,6 +1,6 @@
 # Exporters
 
-Exporters send trace data to different backends. Trace Craft supports multiple exporters simultaneously.
+Exporters send trace data to different backends. TraceCraft supports multiple exporters simultaneously.
 
 ## Available Exporters
 

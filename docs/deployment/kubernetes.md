@@ -1,6 +1,6 @@
 # Kubernetes Deployment Guide
 
-Deploy Trace Craft-instrumented applications to Kubernetes with OTLP export.
+Deploy TraceCraft-instrumented applications to Kubernetes with OTLP export.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Deploy Trace Craft-instrumented applications to Kubernetes with OTLP export.
 │                                                              │
 │  ┌─────────────┐      ┌──────────────────┐                  │
 │  │   Your App  │─────▶│  OTEL Collector  │                  │
-│  │  (Trace Craft│      │   (DaemonSet)    │                  │
+│  │  (TraceCraft│      │   (DaemonSet)    │                  │
 │  │   enabled)  │      └────────┬─────────┘                  │
 │  └─────────────┘               │                            │
 │                                ▼                            │
