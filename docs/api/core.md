@@ -1,6 +1,6 @@
 # Core API
 
-Core functionality of Trace Craft.
+Core functionality of TraceCraft.
 
 ## Module: tracecraft.core
 
@@ -59,7 +59,7 @@ Enumeration of step types:
 
 ### init()
 
-Initialize Trace Craft with configuration. Returns the global `TraceCraftRuntime` singleton (subsequent calls return the same instance).
+Initialize TraceCraft with configuration. Returns the global `TraceCraftRuntime` singleton (subsequent calls return the same instance).
 
 **Signature:**
 

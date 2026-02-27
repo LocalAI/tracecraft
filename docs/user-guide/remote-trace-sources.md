@@ -1,6 +1,6 @@
 # Remote Trace Sources
 
-Trace Craft's TUI can pull traces that already live in your cloud observability platform — no need to copy data locally. Connect directly to AWS X-Ray, GCP Cloud Trace, Azure Monitor, or DataDog and browse those traces with the same interactive interface you use for locally-stored traces.
+TraceCraft's TUI can pull traces that already live in your cloud observability platform — no need to copy data locally. Connect directly to AWS X-Ray, GCP Cloud Trace, Azure Monitor, or DataDog and browse those traces with the same interactive interface you use for locally-stored traces.
 
 !!! info "Read-only connection"
     Remote backends are **read-only**. The TUI fetches and displays traces; it never writes, modifies, or deletes records in your platform. `save()` and `delete()` operations always raise `NotImplementedError`.
@@ -196,7 +196,7 @@ Requires **two environment variables** set at shell level:
 | `DD_APP_KEY` | DataDog Application key (from Organization Settings → Application Keys) |
 
 !!! danger "Never put DataDog credentials in config files"
-    `DD_API_KEY` and `DD_APP_KEY` must be set as environment variables. Trace Craft validates at startup that both are present and raises `ValueError` with a clear error message if either is missing.
+    `DD_API_KEY` and `DD_APP_KEY` must be set as environment variables. TraceCraft validates at startup that both are present and raises `ValueError` with a clear error message if either is missing.
 
 ### Supported Sites
 
@@ -239,7 +239,7 @@ All remote backends use an in-memory TTL cache (default: **60 seconds**) to prev
 
 ### What Gets Populated
 
-Remote backends map platform-specific spans to Trace Craft's canonical `AgentRun` and `Step` models. The accuracy of LLM-specific fields depends on whether your instrumentation wrote them:
+Remote backends map platform-specific spans to TraceCraft's canonical `AgentRun` and `Step` models. The accuracy of LLM-specific fields depends on whether your instrumentation wrote them:
 
 | Field | Populated When |
 |-------|---------------|
@@ -251,7 +251,7 @@ Remote backends map platform-specific spans to Trace Craft's canonical `AgentRun
 | `cloud_trace_id` | Always set to the platform's native trace ID |
 
 !!! tip "Best field coverage"
-    If your agents are instrumented with Trace Craft's own decorators or the OpenTelemetry GenAI semantic conventions, all LLM fields will be populated when viewing traces from any platform.
+    If your agents are instrumented with TraceCraft's own decorators or the OpenTelemetry GenAI semantic conventions, all LLM fields will be populated when viewing traces from any platform.
 
 ### Step Type Inference
 

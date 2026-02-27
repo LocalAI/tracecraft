@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Trace Craft will be documented in this file.
+All notable changes to TraceCraft will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of Trace Craft
+- Initial release of TraceCraft
 - Core instrumentation decorators (`@trace_agent`, `@trace_tool`, `@trace_llm`, `@trace_retrieval`)
 - Console and JSONL exporters
 - OTLP exporter for OpenTelemetry Protocol support
@@ -61,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 0.1.0 - Initial Release
 
-Trace Craft is now available as a vendor-neutral LLM observability SDK. Key features:
+TraceCraft is now available as a vendor-neutral LLM observability SDK. Key features:
 
 - **Local-First Development** - Beautiful console output and JSONL files without any backend
 - **Built on OpenTelemetry** - Industry-standard foundation

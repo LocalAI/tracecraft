@@ -1,10 +1,10 @@
-# Getting Started with Trace Craft
+# Getting Started with TraceCraft
 
-Welcome to Trace Craft! This guide will help you get started with instrumenting your LLM applications for observability.
+Welcome to TraceCraft! This guide will help you get started with instrumenting your LLM applications for observability.
 
-## What is Trace Craft?
+## What is TraceCraft?
 
-Trace Craft is a vendor-neutral observability SDK for LLM applications. It provides:
+TraceCraft is a vendor-neutral observability SDK for LLM applications. It provides:
 
 - **Unified Instrumentation**: Single API that works across different frameworks
 - **Flexible Export**: Send traces to multiple backends simultaneously
@@ -14,11 +14,11 @@ Trace Craft is a vendor-neutral observability SDK for LLM applications. It provi
 
 ## Learning Path
 
-Follow this learning path to master Trace Craft:
+Follow this learning path to master TraceCraft:
 
 ### 1. Installation
 
-Start by installing Trace Craft with the features you need.
+Start by installing TraceCraft with the features you need.
 
 [:octicons-arrow-right-24: Installation Guide](installation.md)
 
@@ -30,7 +30,7 @@ Build your first instrumented application in 5 minutes.
 
 ### 3. Core Concepts
 
-Understand the key concepts behind Trace Craft.
+Understand the key concepts behind TraceCraft.
 
 [:octicons-arrow-right-24: Core Concepts](concepts.md)
 
@@ -110,4 +110,4 @@ tracecraft tui
 
 Ready to dive deeper? Start with the installation guide:
 
-[:octicons-arrow-right-24: Install Trace Craft](installation.md){ .md-button .md-button--primary }
+[:octicons-arrow-right-24: Install TraceCraft](installation.md){ .md-button .md-button--primary }

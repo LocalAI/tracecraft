@@ -1,6 +1,6 @@
 # AWS Bedrock AgentCore Deployment Guide
 
-Deploy Trace Craft-instrumented applications to AWS with X-Ray and Bedrock AgentCore observability.
+Deploy TraceCraft-instrumented applications to AWS with X-Ray and Bedrock AgentCore observability.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Deploy Trace Craft-instrumented applications to AWS with X-Ray and Bedrock Agent
 │                                                              │
 │  ┌─────────────────┐      ┌──────────────────────────────┐  │
 │  │   Your Agent    │─────▶│    ADOT Collector            │  │
-│  │  (Trace Craft    │      │   (Sidecar/DaemonSet)        │  │
+│  │  (TraceCraft    │      │   (Sidecar/DaemonSet)        │  │
 │  │   enabled)      │      └──────────────────────────────┘  │
 │  └─────────────────┘                     │                  │
 │                                          ▼                  │
@@ -29,7 +29,7 @@ Deploy Trace Craft-instrumented applications to AWS with X-Ray and Bedrock Agent
 
 ## Quick Start
 
-### 1. Install Trace Craft
+### 1. Install TraceCraft
 
 ```bash
 pip install tracecraft[aws-agentcore]
@@ -56,7 +56,7 @@ exporter = create_agentcore_exporter(
     use_xray_propagation=True,
 )
 
-# Initialize Trace Craft
+# Initialize TraceCraft
 tracecraft.init(
     exporters=[exporter],
     console=False,  # Disable console in production

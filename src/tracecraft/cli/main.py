@@ -1,5 +1,5 @@
 """
-CLI entry point for Trace Craft commands.
+CLI entry point for TraceCraft commands.
 
 Provides commands for viewing, validating, and exporting traces.
 """
@@ -27,7 +27,7 @@ from tracecraft.core.models import AgentRun, Step, StepType
 # Create the main app
 app = typer.Typer(
     name="tracecraft",
-    help="Trace Craft CLI - View and manage LLM observability traces",
+    help="TraceCraft CLI - View and manage LLM observability traces",
     add_completion=False,
 )
 
@@ -70,7 +70,7 @@ def main(
         ),
     ] = None,
 ) -> None:
-    """Trace Craft CLI - View and manage LLM observability traces."""
+    """TraceCraft CLI - View and manage LLM observability traces."""
     pass
 
 
@@ -172,8 +172,8 @@ def view(
 
 @app.command()
 def info() -> None:
-    """Show Trace Craft configuration and info."""
-    console.print("[bold]Trace Craft Info[/bold]")
+    """Show TraceCraft configuration and info."""
+    console.print("[bold]TraceCraft Info[/bold]")
     console.print()
 
     table = Table(show_header=False)

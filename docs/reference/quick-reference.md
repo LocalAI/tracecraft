@@ -1,6 +1,6 @@
 # Quick Reference
 
-This page provides a condensed reference for Trace Craft's most commonly used APIs, configuration options, CLI commands, and patterns. For full documentation, follow the links in each section.
+This page provides a condensed reference for TraceCraft's most commonly used APIs, configuration options, CLI commands, and patterns. For full documentation, follow the links in each section.
 
 ---
 
@@ -191,7 +191,7 @@ with step("data_preprocessing", type=StepType.WORKFLOW) as s:
 
 ## Config File
 
-Trace Craft loads `.tracecraft/config.yaml` from the project root (or `~/.tracecraft/config.yaml`) automatically. Explicit `init()` parameters always win.
+TraceCraft loads `.tracecraft/config.yaml` from the project root (or `~/.tracecraft/config.yaml`) automatically. Explicit `init()` parameters always win.
 
 **Minimal config:**
 

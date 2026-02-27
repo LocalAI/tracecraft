@@ -1,6 +1,6 @@
 # Cloud Platform Integrations
 
-Trace Craft integrates with major cloud AI platforms.
+TraceCraft integrates with major cloud AI platforms.
 
 ## Supported Platforms
 
@@ -149,7 +149,7 @@ See [GCP Vertex Agent Deployment](../deployment/gcp-vertex-agent.md) for details
 
 ## Multi-Cloud
 
-Use Trace Craft with multiple cloud platforms:
+Use TraceCraft with multiple cloud platforms:
 
 ```python
 config = TraceCraftConfig(

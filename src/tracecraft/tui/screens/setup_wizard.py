@@ -1,7 +1,7 @@
 """
-Setup wizard screen for first-time Trace Craft TUI users.
+Setup wizard screen for first-time TraceCraft TUI users.
 
-Provides a welcome screen with options to initialize Trace Craft
+Provides a welcome screen with options to initialize TraceCraft
 with a global or local database, or open an existing file.
 NOIR SIGNAL theme styling.
 """
@@ -66,7 +66,7 @@ class SetupWizardScreen(Screen if TEXTUAL_AVAILABLE else object):  # type: ignor
     """
     Setup wizard screen for first-time users.
 
-    Displays options for initializing Trace Craft:
+    Displays options for initializing TraceCraft:
     - Global database (~/.tracecraft/)
     - Local database (.tracecraft/ in current directory)
     - Open existing file

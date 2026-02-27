@@ -1,10 +1,10 @@
-# Migrating from OpenLLMetry to Trace Craft
+# Migrating from OpenLLMetry to TraceCraft
 
-This guide helps you migrate from OpenLLMetry (Traceloop) to Trace Craft.
+This guide helps you migrate from OpenLLMetry (Traceloop) to TraceCraft.
 
 ## Key Differences
 
-| Feature | OpenLLMetry | Trace Craft |
+| Feature | OpenLLMetry | TraceCraft |
 |---------|-------------|------------|
 | Focus | Auto-instrumentation | Explicit + auto |
 | Protocol | OpenTelemetry native | OTLP export + local |
@@ -13,7 +13,7 @@ This guide helps you migrate from OpenLLMetry (Traceloop) to Trace Craft.
 
 ## Migration Steps
 
-### 1. Install Trace Craft
+### 1. Install TraceCraft
 
 ```bash
 pip install tracecraft
@@ -34,7 +34,7 @@ Traceloop.init(
 )
 ```
 
-**After (Trace Craft):**
+**After (TraceCraft):**
 
 ```python
 import tracecraft
@@ -71,7 +71,7 @@ def summarize(docs: list):
     return summary
 ```
 
-**After (Trace Craft):**
+**After (TraceCraft):**
 
 ```python
 import tracecraft
@@ -103,7 +103,7 @@ with Traceloop.set_association_properties({
     result = my_function()
 ```
 
-**After (Trace Craft):**
+**After (TraceCraft):**
 
 ```python
 from tracecraft.core.context import run_context
@@ -134,16 +134,16 @@ Traceloop.set_prompt(
 )
 ```
 
-**After (Trace Craft):**
+**After (TraceCraft):**
 
 ```python
-# Trace Craft doesn't manage prompts - use your preferred solution
+# TraceCraft doesn't manage prompts - use your preferred solution
 # Prompts are captured in LLM step inputs automatically
 ```
 
 ## Feature Mapping
 
-| OpenLLMetry Feature | Trace Craft Equivalent |
+| OpenLLMetry Feature | TraceCraft Equivalent |
 |---------------------|----------------------|
 | `@workflow` | `@trace_agent` |
 | `@task` | `@trace_tool` |
@@ -155,12 +155,12 @@ Traceloop.set_prompt(
 
 ## Keeping OpenTelemetry Native
 
-If you want to stay with pure OpenTelemetry but need Trace Craft features:
+If you want to stay with pure OpenTelemetry but need TraceCraft features:
 
 ```python
 from tracecraft.exporters.otlp import OTLPExporter
 
-# Trace Craft converts its traces to OTLP spans
+# TraceCraft converts its traces to OTLP spans
 otlp = OTLPExporter(
     endpoint="http://otel-collector:4317",
     protocol="grpc"

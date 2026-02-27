@@ -1,7 +1,7 @@
 # PydanticAI Integration
 
-Trace Craft integrates with PydanticAI through the `TraceCraftSpanProcessor`, an OpenTelemetry
-`SpanProcessor` that intercepts PydanticAI's Logfire-based spans and converts them to Trace Craft
+TraceCraft integrates with PydanticAI through the `TraceCraftSpanProcessor`, an OpenTelemetry
+`SpanProcessor` that intercepts PydanticAI's Logfire-based spans and converts them to TraceCraft
 Steps. You get full traces — LLM calls, tool use, structured output, and retries — with no changes
 to your PydanticAI agent code.
 
@@ -11,7 +11,7 @@ to your PydanticAI agent code.
 pip install "tracecraft[pydantic-ai]"
 ```
 
-This installs Trace Craft with PydanticAI support, including `opentelemetry-sdk` and
+This installs TraceCraft with PydanticAI support, including `opentelemetry-sdk` and
 `pydantic-ai>=0.0.14`.
 
 ## Quick Start
@@ -26,7 +26,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from pydantic_ai import Agent
 from datetime import UTC, datetime
 
-# Initialize Trace Craft
+# Initialize TraceCraft
 tracecraft.init(console=True)
 
 # Wire the span processor into an OTel TracerProvider
@@ -38,7 +38,7 @@ trace.set_tracer_provider(provider)
 # Create a PydanticAI agent
 agent = Agent("openai:gpt-4o-mini", system_prompt="You are a helpful assistant.")
 
-# Wrap execution in a Trace Craft run
+# Wrap execution in a TraceCraft run
 run = AgentRun(name="pydantic_ai_demo", start_time=datetime.now(UTC))
 with run_context(run):
     result = agent.run_sync("What is the capital of France?")
@@ -152,7 +152,7 @@ asyncio.run(main())
 
 ### Pydantic Models as Output
 
-PydanticAI validates agent responses against a Pydantic model. Trace Craft captures the LLM call
+PydanticAI validates agent responses against a Pydantic model. TraceCraft captures the LLM call
 and the validation result:
 
 ```python
@@ -270,7 +270,7 @@ def lookup_fact(topic: str) -> str:
     """Look up a fact about a topic."""
     facts = {
         "python": "Python was created by Guido van Rossum in 1991.",
-        "tracecraft": "Trace Craft is a vendor-neutral LLM observability SDK.",
+        "tracecraft": "TraceCraft is a vendor-neutral LLM observability SDK.",
     }
     return facts.get(topic.lower(), f"No fact found for '{topic}'.")
 
@@ -364,7 +364,7 @@ for step in run.steps:
 
 ### RunContext Dependencies
 
-PydanticAI uses `RunContext` to inject dependencies into tools. Trace Craft traces the tool
+PydanticAI uses `RunContext` to inject dependencies into tools. TraceCraft traces the tool
 calls transparently regardless of the dependency type:
 
 ```python
@@ -445,7 +445,7 @@ with run_context(run):
 
 ### Automatic Retries
 
-PydanticAI automatically retries failed tool calls and LLM requests. Trace Craft captures each
+PydanticAI automatically retries failed tool calls and LLM requests. TraceCraft captures each
 attempt as a separate step, so you can see exactly where failures occurred:
 
 ```python
@@ -526,7 +526,7 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-Trace Craft marks the LLM step with `is_streaming = True` and accumulates text in
+TraceCraft marks the LLM step with `is_streaming = True` and accumulates text in
 `step.streaming_chunks`.
 
 ### Structured Output Streaming
@@ -597,7 +597,7 @@ with run_context(run):
 
 ### Model Switching
 
-You can run the same agent logic against different models and compare results in Trace Craft:
+You can run the same agent logic against different models and compare results in TraceCraft:
 
 ```python
 from pydantic_ai import Agent
@@ -661,7 +661,7 @@ agent = Agent("openai:gpt-4o-mini")
 run = AgentRun(name="custom_prompt", start_time=datetime.now(UTC))
 with run_context(run):
     result = agent.run_sync(
-        "What is Trace Craft?",
+        "What is TraceCraft?",
         system_prompt=build_system_prompt(user_tier="pro", locale="English"),
     )
     print(result.data)
@@ -734,7 +734,7 @@ finally:
 
 ### 4. Use Descriptive Run Names
 
-Run names appear in the Trace Craft TUI and JSONL exports. Choose names that identify the
+Run names appear in the TraceCraft TUI and JSONL exports. Choose names that identify the
 workflow, user, and session for easy filtering:
 
 ```python
@@ -747,7 +747,7 @@ run = AgentRun(
 ### 5. Handle Tool Errors Explicitly
 
 When a tool raises an exception that is not `ModelRetry`, PydanticAI propagates it to the caller.
-Trace Craft captures the error in the span, but you should still handle it at the application level:
+TraceCraft captures the error in the span, but you should still handle it at the application level:
 
 ```python
 from pydantic_ai.exceptions import UnexpectedModelBehavior

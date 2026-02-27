@@ -1,14 +1,14 @@
-# Trace Craft
+# TraceCraft
 
 **Vendor-neutral LLM observability — instrument once, observe anywhere.**
 
-Trace Craft is a Python observability SDK with a built-in **Terminal UI (TUI)** that lets you visually explore, debug, and analyze your agent traces right in your terminal — no browser, no cloud dashboard, no waiting.
+TraceCraft is a Python observability SDK with a built-in **Terminal UI (TUI)** that lets you visually explore, debug, and analyze your agent traces right in your terminal — no browser, no cloud dashboard, no waiting.
 
 ---
 
 ## The fastest path: zero code changes
 
-If your app already uses OpenAI, Anthropic, LangChain, LlamaIndex, or any OpenTelemetry-compatible framework, Trace Craft can observe it **without touching a single line of application code**.
+If your app already uses OpenAI, Anthropic, LangChain, LlamaIndex, or any OpenTelemetry-compatible framework, TraceCraft can observe it **without touching a single line of application code**.
 
 **Step 1 — Install and set one environment variable:**
 
@@ -38,13 +38,13 @@ Traces from any OTLP-compatible framework (OpenLLMetry, LangChain, LlamaIndex, D
 
 After traces are flowing in, the TUI gives you complete visibility into every agent run:
 
-![Trace Craft TUI - Main View](assets/screenshots/tui-main-view.svg)
+![TraceCraft TUI - Main View](assets/screenshots/tui-main-view.svg)
 
 *All your agent runs at a glance — name, duration, token usage, and status. Select any trace to drill down.*
 
 Select any trace to expand the full call hierarchy with timing bars. Navigate to any LLM step and press `i` for the prompt, `o` for the response, or `a` for all span attributes and metadata.
 
-![Trace Craft TUI - Waterfall and Detail View](assets/screenshots/tui-waterfall-view.svg)
+![TraceCraft TUI - Waterfall and Detail View](assets/screenshots/tui-waterfall-view.svg)
 
 *Hierarchical waterfall view — agents, tools, and LLM calls with precise timing. See exactly where your agent spends its time.*
 
@@ -87,7 +87,7 @@ tracecraft tui
 
 !!! tip "Call `tracecraft.init()` before importing any LLM SDK"
 
-    Trace Craft patches SDKs at import time. Import your LLM libraries **after** calling `init()` so the patches apply correctly.
+    TraceCraft patches SDKs at import time. Import your LLM libraries **after** calling `init()` so the patches apply correctly.
 
 [:octicons-arrow-right-24: Full Configuration Reference](user-guide/configuration.md)
 
@@ -95,15 +95,15 @@ tracecraft tui
 
 ## Path 3 — SDK decorators and custom tracing
 
-For fine-grained control — custom span names, explicit inputs/outputs, structured step hierarchies — Trace Craft provides `@trace_agent`, `@trace_tool`, `@trace_llm`, and `@trace_retrieval` decorators, plus a `step()` context manager for inline instrumentation.
+For fine-grained control — custom span names, explicit inputs/outputs, structured step hierarchies — TraceCraft provides `@trace_agent`, `@trace_tool`, `@trace_llm`, and `@trace_retrieval` decorators, plus a `step()` context manager for inline instrumentation.
 
 [:octicons-arrow-right-24: SDK Guide](getting-started/quickstart.md)
 
 ---
 
-## Why Trace Craft?
+## Why TraceCraft?
 
-| Feature | Trace Craft | LangSmith | Langfuse | Phoenix |
+| Feature | TraceCraft | LangSmith | Langfuse | Phoenix |
 |---------|------------|-----------|----------|---------|
 | **Terminal UI** | **Yes — built-in** | No | No | No |
 | **Zero-Code Instrumentation** | Yes | No | No | No |
@@ -267,4 +267,4 @@ graph LR
 
 ## License
 
-Trace Craft is licensed under the Apache-2.0 License. See [LICENSE](https://github.com/LocalAI/tracecraft/blob/main/LICENSE) for details.
+TraceCraft is licensed under the Apache-2.0 License. See [LICENSE](https://github.com/LocalAI/tracecraft/blob/main/LICENSE) for details.

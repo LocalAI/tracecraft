@@ -1,10 +1,10 @@
 # Multi-Tenancy
 
-Handle multiple tenants with separate configurations using Trace Craft runtimes.
+Handle multiple tenants with separate configurations using TraceCraft runtimes.
 
 ## Overview
 
-Trace Craft supports multi-tenancy through isolated runtimes, each with its own configuration.
+TraceCraft supports multi-tenancy through isolated runtimes, each with its own configuration.
 
 ## Basic Multi-Tenancy
 

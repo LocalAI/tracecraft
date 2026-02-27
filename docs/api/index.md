@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API documentation for Trace Craft.
+Complete API documentation for TraceCraft.
 
 ## Modules
 
@@ -179,7 +179,7 @@ The following pages contain auto-generated API documentation from source code do
 
 ## Type Hints
 
-Trace Craft is fully typed. Import types for static analysis:
+TraceCraft is fully typed. Import types for static analysis:
 
 ```python
 from typing import TYPE_CHECKING

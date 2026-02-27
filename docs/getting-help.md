@@ -1,6 +1,6 @@
 # Getting Help
 
-Trace Craft is maintained by an open-source community. This page describes the best way to get help, report problems, and contribute ideas depending on your situation.
+TraceCraft is maintained by an open-source community. This page describes the best way to get help, report problems, and contribute ideas depending on your situation.
 
 ---
 
@@ -64,7 +64,7 @@ Before opening an issue or starting a discussion, the answer may already exist:
 - You have a question about how to use a feature
 - You want to know the recommended approach for a use case
 - You have a feature idea you want to explore before opening a formal request
-- You want to share a project that uses Trace Craft
+- You want to share a project that uses TraceCraft
 - You are unsure whether something is a bug or intentional behavior
 
 ### Discussion Categories
@@ -73,7 +73,7 @@ Before opening an issue or starting a discussion, the answer may already exist:
 |---|---|
 | **Q&A** | Questions about installation, usage, and configuration |
 | **Ideas** | Feature proposals, enhancement suggestions |
-| **Show and Tell** | Projects, integrations, and examples built with Trace Craft |
+| **Show and Tell** | Projects, integrations, and examples built with TraceCraft |
 | **General** | Everything else |
 
 ### How to Ask an Effective Question
@@ -83,7 +83,7 @@ A well-formed question gets a faster, more useful answer. Include the following:
 **1. Your environment**
 
 ```
-Trace Craft version: 0.x.y  (tracecraft --version)
+TraceCraft version: 0.x.y  (tracecraft --version)
 Python version:    3.11.x  (python --version)
 OS:                macOS 14, Ubuntu 22.04, Windows 11, etc.
 Installation:      pip / uv / conda / source
@@ -125,7 +125,7 @@ Paste the full traceback, not just the last line.
 
 ## Bug Reports (GitHub Issues)
 
-Use **GitHub Issues** when you have confirmed that Trace Craft behaves incorrectly: crashes, wrong output, silent failures, or behavior that contradicts the documentation.
+Use **GitHub Issues** when you have confirmed that TraceCraft behaves incorrectly: crashes, wrong output, silent failures, or behavior that contradicts the documentation.
 
 [:octicons-mark-github-16: Open an Issue](https://github.com/LocalAI/tracecraft/issues/new/choose){ .md-button .md-button--primary }
 
@@ -147,7 +147,7 @@ A clear, concise description of what the bug is.
 
 ## Environment
 
-- Trace Craft version: (output of `tracecraft --version` or `python -c "import tracecraft; print(tracecraft.__version__)"`)
+- TraceCraft version: (output of `tracecraft --version` or `python -c "import tracecraft; print(tracecraft.__version__)"`)
 - Python version: (output of `python --version`)
 - OS: (e.g., macOS 14.5, Ubuntu 22.04, Windows 11)
 - Installation method: (pip, uv, conda, from source)
@@ -155,7 +155,7 @@ A clear, concise description of what the bug is.
 
 ## Steps to Reproduce
 
-1. Install Trace Craft with `pip install tracecraft`
+1. Install TraceCraft with `pip install tracecraft`
 2. Run the following code:
 
 ```python
@@ -185,7 +185,7 @@ Paste the full traceback here. Do not truncate it.
 
 ```python
 # The smallest possible complete script that reproduces the issue.
-# It should be runnable as-is (with Trace Craft installed).
+# It should be runnable as-is (with TraceCraft installed).
 import tracecraft
 
 tracecraft.init()
@@ -208,7 +208,7 @@ After you open an issue, maintainers will apply labels to categorize and priorit
 
 | Label | Meaning |
 |---|---|
-| `bug` | Confirmed defect in Trace Craft |
+| `bug` | Confirmed defect in TraceCraft |
 | `needs-reproduction` | Cannot reproduce without more information |
 | `good first issue` | Suitable for first-time contributors |
 | `help wanted` | Community contributions welcome |
@@ -235,7 +235,7 @@ which specific prompt templates are causing high token costs across runs."
 
 ## Proposed Solution
 
-Describe what you would like Trace Craft to do. Be as specific as you can
+Describe what you would like TraceCraft to do. Be as specific as you can
 about the interface, behavior, and configuration.
 
 Example: "A `PromptTemplateProcessor` that extracts named template variables
@@ -262,7 +262,7 @@ Mockups, links to similar features in other tools, related issues or discussions
 !!! danger "Do Not Report Security Issues Publicly"
     If you discover a security vulnerability - including authentication bypasses, data exposure, or dependency vulnerabilities - **do not open a public GitHub Issue or Discussion**.
 
-    Public disclosure before a fix is available puts all Trace Craft users at risk.
+    Public disclosure before a fix is available puts all TraceCraft users at risk.
 
 ### Responsible Disclosure Process
 
@@ -275,7 +275,7 @@ Mockups, links to similar features in other tools, related issues or discussions
 
 ### What to Include in a Security Report
 
-- Affected Trace Craft version(s)
+- Affected TraceCraft version(s)
 - Description of the vulnerability and its potential impact
 - Step-by-step reproduction instructions
 - Any proof-of-concept code (shared privately)
@@ -330,7 +330,7 @@ If you want to fix a bug yourself, add a feature, or improve the documentation, 
 
 ## Response Time Expectations
 
-Trace Craft is a community-maintained open-source project. Response times are best-effort and depend on maintainer availability.
+TraceCraft is a community-maintained open-source project. Response times are best-effort and depend on maintainer availability.
 
 | Channel | Typical Response |
 |---|---|
