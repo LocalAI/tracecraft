@@ -7,6 +7,9 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 > **Vendor-neutral LLM observability — instrument once, observe anywhere.**
+>
+> [!WARNING]
+> This project is under active development. APIs may change between releases and it is not yet production-ready. Use with that in mind.
 
 TraceCraft is a Python observability SDK with a built-in **Terminal UI (TUI)** that lets you visually explore, debug, and analyze agent traces right in your terminal — no browser, no cloud dashboard, no waiting.
 
@@ -91,7 +94,7 @@ tracecraft tui
 
 ## SDK decorators
 
-For fine-grained control — custom span names, explicit inputs/outputs, structured step hierarchies — TraceCraft provides `@trace_agent`, `@trace_tool`, `@trace_llm`, and `@trace_retrieval` decorators, plus a `step()` context manager for inline instrumentation. See the [SDK Guide](https://tracecraft.dev/getting-started/quickstart/) for details.
+For fine-grained control — custom span names, explicit inputs/outputs, structured step hierarchies — TraceCraft provides `@trace_agent`, `@trace_tool`, `@trace_llm`, and `@trace_retrieval` decorators, plus a `step()` context manager for inline instrumentation. See the [SDK Guide](https://tracecraft.io/getting-started/quickstart/) for details.
 
 ---
 
@@ -170,9 +173,9 @@ uv add "tracecraft[auto,tui]"
 |-----------|--------|--------------|
 | OpenAI | Stable (auto) | `tracecraft[auto]` |
 | Anthropic | Stable (auto) | `tracecraft[auto]` |
-| LangChain | Stable | `tracecraft[langchain]` |
-| LlamaIndex | Stable | `tracecraft[llamaindex]` |
-| PydanticAI | Stable | `tracecraft[pydantic-ai]` |
+| LangChain | Beta | `tracecraft[langchain]` |
+| LlamaIndex | Beta | `tracecraft[llamaindex]` |
+| PydanticAI | Beta | `tracecraft[pydantic-ai]` |
 | Claude SDK | Beta | `tracecraft[claude-sdk]` |
 | Custom Code | Stable | Base package |
 
@@ -223,9 +226,9 @@ Supported backends: Langfuse, Datadog, Phoenix (Arize), Jaeger, Grafana Tempo, H
 
 ## Documentation
 
-- [Full Documentation](https://tracecraft.dev)
-- [Terminal UI Guide](https://tracecraft.dev/user-guide/tui/)
-- [API Reference](https://tracecraft.dev/api)
+- [Full Documentation](https://tracecraft.io)
+- [Terminal UI Guide](https://tracecraft.io/user-guide/tui/)
+- [API Reference](https://tracecraft.io/api)
 - [Migration Guides](docs/migration/)
 - [Deployment Guides](docs/deployment/)
 

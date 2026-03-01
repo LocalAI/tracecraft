@@ -266,7 +266,7 @@ Mockups, links to similar features in other tools, related issues or discussions
 
 ### Responsible Disclosure Process
 
-1. **Email** the security team at `security@tracecraft.dev` with the subject line `[Security] Brief description`.
+1. **Email** the security team at `security@tracecraft.io` with the subject line `[Security] Brief description`.
 2. Include a description of the vulnerability, reproduction steps, and the potential impact.
 3. We will acknowledge receipt within **2 business days**.
 4. We will provide an initial assessment and expected fix timeline within **7 business days**.

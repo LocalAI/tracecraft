@@ -75,7 +75,7 @@ Install with:
 pip install tracecraft
 ```
 
-See the [documentation](https://tracecraft.dev) for complete usage guide.
+See the [documentation](https://tracecraft.io) for complete usage guide.
 
 ---
 

@@ -14,7 +14,7 @@ We take security vulnerabilities seriously. If you discover a security issue, pl
 
 **Please do NOT create public GitHub issues for security vulnerabilities.**
 
-Instead, please report security vulnerabilities by emailing: **<security@tracecraft.dev>**
+Instead, please report security vulnerabilities by emailing: **<security@tracecraft.io>**
 
 Alternatively, you can use GitHub's private vulnerability reporting feature:
 
