@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "python",
+  "bootstrap-sha": "8ff0177079097540407bd49bd0a1df342ee0c06a",
+  "packages": {
+    ".": {
+      "release-type": "python",
+      "extra-files": [
+        "src/tracecraft/__init__.py"
+      ]
+    }
+  }
+}

@@ -172,3 +172,4 @@ snapshot_report.html
 tui_screenshot.svg
 
 # Note: uv.lock IS tracked for reproducible builds
+.oss-eval/

@@ -47,7 +47,7 @@ jobs:
           cyclonedx-py environment -o sbom.cdx.json
 
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45 # v2
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-path: dist/*.tar.gz
 
@@ -159,8 +159,15 @@ jobs:
 
       - name: Generate release notes
         id: release_notes
+        env:
+          # Use env var (not inline ${{ }}) to prevent shell injection — safe pattern
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
           # Generate changelog from commits since last tag
@@ -174,8 +181,9 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
+          tag_name: v${{ steps.release_notes.outputs.version }}
           name: TraceCraft ${{ steps.release_notes.outputs.version }}
           body_path: release_notes.md
           files: |
@@ -183,4 +191,4 @@ jobs:
             dist/*.tar.gz
             sbom.cdx.json
           draft: false
-          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
+          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') || contains(inputs.version, 'rc') || contains(inputs.version, 'beta') || contains(inputs.version, 'alpha') }}

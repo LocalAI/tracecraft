@@ -79,8 +79,8 @@ jobs:
 
       - name: Check version consistency
         run: |
-          PYPROJECT_VERSION=$(grep -Po '(?<=^version = ")[^"]+' pyproject.toml)
-          INIT_VERSION=$(grep -Po '(?<=^__version__ = ")[^"]+' src/tracecraft/__init__.py)
+          PYPROJECT_VERSION=$(grep -Po '^version = "\K[^"]+' pyproject.toml)
+          INIT_VERSION=$(grep -Po '^__version__ = "\K[^"]+' src/tracecraft/__init__.py)
           echo "pyproject.toml version: $PYPROJECT_VERSION"
           echo "__init__.py version:    $INIT_VERSION"
           if [ "$PYPROJECT_VERSION" != "$INIT_VERSION" ]; then

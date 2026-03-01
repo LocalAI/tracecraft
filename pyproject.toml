@@ -188,7 +188,7 @@ tui = [
 tracecraft = "tracecraft.cli.main:app"
 
 [project.urls]
-Documentation = "https://tracecraft.dev"
+Documentation = "https://tracecraft.io"
 Homepage = "https://github.com/LocalAI/tracecraft"
 Repository = "https://github.com/LocalAI/tracecraft"
 
