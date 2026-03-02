@@ -54,7 +54,7 @@ from tracecraft.instrumentation.decorators import (
 # Alias for more descriptive naming
 TraceCraftRuntime = TALRuntime
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __all__ = [
     # Core models
     "AgentRun",
