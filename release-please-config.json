@@ -4,6 +4,7 @@
   "bootstrap-sha": "8ff0177079097540407bd49bd0a1df342ee0c06a",
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": true,
+  "skip-github-release": true,
   "packages": {
     ".": {
       "release-type": "python",
