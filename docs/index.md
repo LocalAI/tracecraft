@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/tracecraft-logo.png" alt="TraceCraft" width="100%">
+</p>
+
 # TraceCraft
 
 **Vendor-neutral LLM observability — instrument once, observe anywhere.**
@@ -147,15 +151,15 @@ For fine-grained control — custom span names, explicit inputs/outputs, structu
 
 ```mermaid
 graph LR
-    External[Any OTLP App] -->|OTEL_EXPORTER_OTLP_ENDPOINT| Receiver[tracecraft serve]
-    App[Your App + tracecraft.init()] -->|auto-instr / decorators| JSONL[JSONL / SQLite]
+    External["Any OTLP App"] -->|"OTEL_EXPORTER_OTLP_ENDPOINT"| Receiver["tracecraft serve"]
+    App["Your App + tracecraft.init()"] -->|"auto-instr / decorators"| JSONL["JSONL / SQLite"]
     Receiver --> JSONL
 
-    JSONL --> TUI[Terminal UI]
+    JSONL --> TUI["Terminal UI"]
 
-    App -->|OTLP export| Langfuse
-    App -->|OTLP export| Datadog
-    App -->|OTLP export| Phoenix
+    App -->|"OTLP export"| Langfuse
+    App -->|"OTLP export"| Datadog
+    App -->|"OTLP export"| Phoenix
 ```
 
 **Path 1 — Zero code changes (OTLP env var):**
