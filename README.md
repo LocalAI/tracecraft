@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/tracecraft-logo.png" alt="TraceCraft" width="400">
+  <img src="docs/assets/tracecraft-logo.png" alt="TraceCraft" width="100%">
 </p>
 
 <p align="center">
