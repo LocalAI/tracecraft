@@ -33,6 +33,8 @@ theme:
   font:
     text: Roboto
     code: Roboto Mono
+  logo: assets/tracecraft-logo.png
+  favicon: assets/tracecraft-logo.png
   icon:
     repo: fontawesome/brands/github
   features:

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/tracecraft-logo.png" alt="TraceCraft" width="400">
+</p>
+
 # TraceCraft
 
 **Vendor-neutral LLM observability — instrument once, observe anywhere.**

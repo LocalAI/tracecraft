@@ -1,4 +1,8 @@
-# TraceCraft
+<p align="center">
+  <img src="docs/assets/tracecraft-logo.png" alt="TraceCraft" width="400">
+</p>
+
+<p align="center">
 
 [![CI](https://github.com/LocalAI/tracecraft/actions/workflows/ci.yml/badge.svg)](https://github.com/LocalAI/tracecraft/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/LocalAI/tracecraft/branch/main/graph/badge.svg)](https://codecov.io/gh/LocalAI/tracecraft)
@@ -6,7 +10,9 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-**Vendor-neutral LLM observability — instrument once, observe anywhere.**
+</p>
+
+<p align="center"><strong>Vendor-neutral LLM observability — instrument once, observe anywhere.</strong></p>
 
 > [!WARNING]
 > This project is under active development. APIs may change between releases and it is not yet production-ready. Use with that in mind.
