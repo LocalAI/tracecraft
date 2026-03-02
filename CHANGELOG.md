@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/LocalAI/tracecraft/compare/v0.2.0...v0.2.1) (2026-03-02)
+
+
+### Bug Fixes
+
+* **ci:** update scorecard action to use correct SHA for publish verification ([#6](https://github.com/LocalAI/tracecraft/issues/6)) ([51676d3](https://github.com/LocalAI/tracecraft/commit/51676d3f1f3c8e55962caf1bdb32ab1179606ecb))
+
 ## [0.2.0](https://github.com/LocalAI/tracecraft/compare/v0.1.0...v0.2.0) (2026-03-02)
 
 
