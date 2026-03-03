@@ -249,7 +249,7 @@ graph LR
 
     LangChain, LlamaIndex, PydanticAI, Claude SDK adapters
 
-    [:octicons-arrow-right-24: Integrations](integrations/index.md)
+    [:octicons-arrow-right-24: Integrations](integrations/)
 
 - :material-api:{ .lg .middle } **API Reference**
 
@@ -257,7 +257,7 @@ graph LR
 
     Complete API documentation for decorators, exporters, and more
 
-    [:octicons-arrow-right-24: API Reference](api/index.md)
+    [:octicons-arrow-right-24: API Reference](api/)
 
 </div>
 

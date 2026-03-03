@@ -143,4 +143,4 @@ runtime = get_runtime()
 
 - [Decorators API](decorators.md)
 - [Configuration API](configuration.md)
-- [User Guide](../user-guide/index.md)
+- [User Guide](../user-guide/)

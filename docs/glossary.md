@@ -10,7 +10,7 @@ This glossary defines the key terms used in TraceCraft and the broader LLM obser
 
 A framework-specific integration that translates the tracing callbacks and lifecycle hooks of an external framework into TraceCraft Steps. Adapters exist for LangChain, LlamaIndex, and PydanticAI. Rather than modifying your framework code, you install the adapter once and TraceCraft automatically captures all relevant operations.
 
-See also: [Integrations](integrations/index.md), [Step](#step)
+See also: [Integrations](integrations/), [Step](#step)
 
 ---
 
@@ -550,5 +550,5 @@ See also: [Propagation](#propagation), [Trace Context](#trace-context)
 ## See Also
 
 - [Core Concepts](getting-started/concepts.md) - Conceptual overview of how TraceCraft works
-- [API Reference](api/index.md) - Full API documentation
-- [User Guide](user-guide/index.md) - Feature documentation and how-to guides
+- [API Reference](api/) - Full API documentation
+- [User Guide](user-guide/) - Feature documentation and how-to guides

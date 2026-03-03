@@ -745,4 +745,4 @@ async def handle_request(query: str) -> str:
 - [LangChain Integration](langchain.md)
 - [PydanticAI Integration](pydantic-ai.md)
 - [Auto-Instrumentation](auto-instrumentation.md)
-- [User Guide](../user-guide/index.md)
+- [User Guide](../user-guide/)

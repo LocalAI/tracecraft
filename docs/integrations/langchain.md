@@ -457,4 +457,4 @@ for item in items:
 
 - [LlamaIndex Integration](llamaindex.md)
 - [PydanticAI Integration](pydantic-ai.md)
-- [User Guide](../user-guide/index.md)
+- [User Guide](../user-guide/)

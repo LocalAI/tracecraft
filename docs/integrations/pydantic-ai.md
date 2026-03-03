@@ -840,4 +840,4 @@ async def handle_request(prompt: str) -> str:
 - [LlamaIndex Integration](llamaindex.md)
 - [LangChain Integration](langchain.md)
 - [Auto-Instrumentation](auto-instrumentation.md)
-- [User Guide](../user-guide/index.md)
+- [User Guide](../user-guide/)

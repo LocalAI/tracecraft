@@ -70,7 +70,7 @@ tracecraft.init()   # reads from .tracecraft/config.yaml
 tracecraft serve --tui && python your_app.py
 ```
 
-Auto-instrumentation and decorators add rich structured spans — [→ SDK Guide](../user-guide/index.md)
+Auto-instrumentation and decorators add rich structured spans — [→ SDK Guide](../user-guide/)
 
 ## Key Features at a Glance
 

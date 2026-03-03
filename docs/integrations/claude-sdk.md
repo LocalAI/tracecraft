@@ -569,4 +569,4 @@ tool_use_id   str | None  — ID of the Task tool call that created the subagent
 - [LangChain Integration](langchain.md)
 - [LlamaIndex Integration](llamaindex.md)
 - [Auto-Instrumentation](auto-instrumentation.md)
-- [User Guide](../user-guide/index.md)
+- [User Guide](../user-guide/)
