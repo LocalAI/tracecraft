@@ -476,7 +476,7 @@ tracecraft.init(
 
 Now that you understand the concepts, dive into specific topics:
 
-- [User Guide](../user-guide/index.md) - Detailed feature documentation
+- [User Guide](../user-guide/) - Detailed feature documentation
 - [Decorators](../user-guide/decorators.md) - Complete decorator reference
 - [Configuration](../user-guide/configuration.md) - All configuration options
 - [Processors](../user-guide/processors.md) - Data processing pipelines

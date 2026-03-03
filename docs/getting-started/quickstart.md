@@ -99,7 +99,7 @@ async def search(query: str) -> str:
 ```
 
 For the full decorator API, context managers, custom attributes, and pipeline configuration,
-see the [SDK Guide](../user-guide/index.md).
+see the [SDK Guide](../user-guide/).
 
 ---
 
@@ -147,7 +147,7 @@ filters, and comparison views.
 
     Both work with Path 1 (OTLP env var) and Path 2 (auto-instrumentation). Framework-specific
     adapters are also available for richer context — see the
-    [Integrations](../integrations/index.md) page.
+    [Integrations](../integrations/) page.
 
 ??? question "Can I use the TUI without TraceCraft instrumentation?"
 

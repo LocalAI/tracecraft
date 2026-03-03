@@ -24,7 +24,7 @@ Before opening an issue or starting a discussion, the answer may already exist:
 
     Step-by-step documentation for all features
 
-    [:octicons-arrow-right-24: User Guide](user-guide/index.md)
+    [:octicons-arrow-right-24: User Guide](user-guide/)
 
 - :material-api:{ .lg .middle } **API Reference**
 
@@ -32,7 +32,7 @@ Before opening an issue or starting a discussion, the answer may already exist:
 
     Complete reference for all classes and functions
 
-    [:octicons-arrow-right-24: API Reference](api/index.md)
+    [:octicons-arrow-right-24: API Reference](api/)
 
 - :material-text-search:{ .lg .middle } **Search the Docs**
 
